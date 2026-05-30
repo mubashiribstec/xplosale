@@ -128,19 +128,20 @@ model User {
   employerProfile  EmployerProfile?
   jobSeekerProfile JobSeekerProfile?
   networkProfile   NetworkProfile?
-  sentMessages     Message[]        @relation("SentMessages")
+  sentMessages     Message[]           @relation("SentMessages")
   notifications    Notification[]
-  adminActions     AdminActionLog[] @relation("AdminActions")
+  adminActions     AdminActionLog[]    @relation("AdminActions")
   escrowAsBuyer    EscrowTransaction[] @relation("EscrowBuyer")
   escrowAsSeller   EscrowTransaction[] @relation("EscrowSeller")
-  listingReviews   ListingReview[]  @relation("ReviewAuthor")
-  applications     Application[]    @relation("ApplicationUser")
+  listingReviews   ListingReview[]     @relation("ReviewAuthor")
+  ownedCompanies   Company[]           @relation("CompanyOwner")
+  postedJobPostings JobPosting[]       @relation("JobPostingPoster")
   postLikes        PostLike[]
   postComments     PostComment[]
   connectionsAsRequester Connection[] @relation("ConnectionRequester")
   connectionsAsRecipient Connection[] @relation("ConnectionRecipient")
-  chatRoomsAsA     ChatRoom[]      @relation("ChatParticipantA")
-  chatRoomsAsB     ChatRoom[]      @relation("ChatParticipantB")
+  chatRoomsAsA     ChatRoom[]          @relation("ChatParticipantA")
+  chatRoomsAsB     ChatRoom[]          @relation("ChatParticipantB")
 }
 
 model Region {
@@ -336,6 +337,7 @@ model Company {
   verifiedEmployer Boolean  @default(false)
   createdAt        DateTime @default(now())
 
+  owner            User              @relation("CompanyOwner", fields: [ownerId], references: [id])
   region           Region            @relation(fields: [regionId], references: [id])
   employerProfiles EmployerProfile[]
   jobPostings      JobPosting[]
@@ -385,6 +387,7 @@ model JobPosting {
   updatedAt      DateTime   @updatedAt
 
   company      Company       @relation(fields: [companyId], references: [id])
+  postedBy     User          @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
   region       Region        @relation(fields: [regionId], references: [id])
   applications Application[]
 
@@ -393,18 +396,16 @@ model JobPosting {
 }
 
 model Application {
-  id              String            @id @default(cuid())
-  jobPostingId    String
-  jobSeekerId     String
-  applicantUserId String
-  resumeUrl       String
-  coverLetter     String?
-  status          ApplicationStatus @default(APPLIED)
-  createdAt       DateTime          @default(now())
+  id           String            @id @default(cuid())
+  jobPostingId String
+  jobSeekerId  String
+  resumeUrl    String
+  coverLetter  String?
+  status       ApplicationStatus @default(APPLIED)
+  createdAt    DateTime          @default(now())
 
   jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id])
   jobSeeker  JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
-  applicant  User             @relation("ApplicationUser", fields: [applicantUserId], references: [id])
 
   @@unique([jobPostingId, jobSeekerId])
 }
@@ -512,6 +513,9 @@ model Connection {
   requester User @relation("ConnectionRequester", fields: [requesterId], references: [id])
   recipient User @relation("ConnectionRecipient", fields: [recipientId], references: [id])
 
+  // INVARIANT: before inserting, check both (A,B) and (B,A) directions don't exist.
+  // Use src/core/network/connectionGuard.ts — DB-level bidirectional uniqueness
+  // cannot be expressed in Prisma schema DSL and is enforced at the application layer.
   @@unique([requesterId, recipientId])
 }
 

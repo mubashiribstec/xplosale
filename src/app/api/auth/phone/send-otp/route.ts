@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) return err("Invalid phone number", 422, parsed.error.flatten().fieldErrors);
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    // Pass null when IP is unavailable so sendOtp skips per-IP limiting rather
+    // than collapsing all headerless requests into a shared "unknown" bucket.
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
     const result = await sendOtp(parsed.data.phone, ip);
 
     if (!result.ok) {

@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "",
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Starting seed...");
@@ -273,6 +277,8 @@ async function main() {
   const connectionNames = ["Aisha Malik", "Usman Tariq", "Fatima Noor", "Hamza Shah", "Zainab Qureshi"];
   const connectionPhones = ["+92-304-4444444", "+92-305-5555555", "+92-306-6666666", "+92-307-7777777", "+92-308-8888888"];
 
+  const connectionHandles = ["aishamalik", "usmantariq", "fatimanoor", "hamzashah", "zainabqureshi"];
+
   for (let i = 0; i < 5; i++) {
     const connUser = await prisma.user.upsert({
       where: { phone: connectionPhones[i] },
@@ -287,16 +293,37 @@ async function main() {
       },
     });
 
-    await prisma.connection
-      .create({
+    // Create NetworkProfile for each connection user so profile links work
+    await prisma.networkProfile.upsert({
+      where: { userId: connUser.id },
+      update: {},
+      create: {
+        userId: connUser.id,
+        handle: connectionHandles[i],
+        headline: `Professional in Lahore`,
+        visibility: "PUBLIC",
+      },
+    });
+
+    // Check both directions before inserting to enforce bidirectional uniqueness
+    const existing = await prisma.connection.findFirst({
+      where: {
+        OR: [
+          { requesterId: networkUser.id, recipientId: connUser.id },
+          { requesterId: connUser.id, recipientId: networkUser.id },
+        ],
+      },
+    });
+    if (!existing) {
+      await prisma.connection.create({
         data: {
           requesterId: networkUser.id,
           recipientId: connUser.id,
           status: "ACCEPTED",
           acceptedAt: new Date(),
         },
-      })
-      .catch(() => {}); // ignore duplicates on re-seed
+      });
+    }
   }
 
   console.log(`Created network profile + 2 posts + 5 connections`);

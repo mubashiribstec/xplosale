@@ -1,7 +1,8 @@
 import crypto from "crypto";
-import { kvGet, kvSet, kvDel, kvIncr } from "@/core/adapters/kv";
+import { kv, kvSet, kvDel, kvIncr } from "@/core/adapters/kv";
 import { rateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 const OTP_TTL = 300; // 5 minutes
 const OTP_DIGITS = 6;
@@ -13,45 +14,94 @@ function generateOtp(): string {
 }
 
 function hashOtp(otp: string, phone: string): string {
-  return crypto.createHmac("sha256", process.env.NEXTAUTH_SECRET ?? "dev-secret")
+  return crypto
+    .createHmac("sha256", env.NEXTAUTH_SECRET)
     .update(`${phone}:${otp}`)
     .digest("hex");
 }
 
+// Exported for CNIC verification (Phase 5): salted hash of the CNIC number
+export function hashCnic(cnicNumber: string): string {
+  return crypto
+    .createHmac("sha256", env.CNIC_HASH_SALT)
+    .update(cnicNumber)
+    .digest("hex");
+}
+
+// Lua script: atomically check lockout, compare hash, increment failures, consume on success.
+// Returns "locked" | "expired" | "invalid" | "ok"
+const VERIFY_OTP_LUA = `
+local attemptsKey = KEYS[1]
+local hashKey = KEYS[2]
+local expectedHash = ARGV[1]
+local maxAttempts = tonumber(ARGV[2])
+local lockoutWindow = tonumber(ARGV[3])
+
+local attempts = tonumber(redis.call('GET', attemptsKey)) or 0
+if attempts >= maxAttempts then
+  return 'locked'
+end
+
+local storedHash = redis.call('GET', hashKey)
+if storedHash == false then
+  return 'expired'
+end
+
+if storedHash ~= expectedHash then
+  redis.call('INCR', attemptsKey)
+  redis.call('EXPIRE', attemptsKey, lockoutWindow)
+  return 'invalid'
+end
+
+redis.call('DEL', hashKey)
+redis.call('DEL', attemptsKey)
+return 'ok'
+`;
+
 export async function sendOtp(
   phone: string,
-  ip: string
+  ip: string | null
 ): Promise<{ ok: true } | { ok: false; error: string; retryAfter?: number }> {
   // Per-phone rate limit: 3/hour
   const phoneLimit = await rateLimit(`otp:send:phone:${phone}`, 3, 3600);
   if (!phoneLimit.allowed) {
-    return { ok: false, error: "Too many OTP requests for this number. Try again later.", retryAfter: phoneLimit.resetAt };
+    return {
+      ok: false,
+      error: "Too many OTP requests for this number. Try again later.",
+      retryAfter: phoneLimit.resetAt,
+    };
   }
 
-  // Per-IP rate limit: 5/hour
-  const ipLimit = await rateLimit(`otp:send:ip:${ip}`, 5, 3600);
-  if (!ipLimit.allowed) {
-    return { ok: false, error: "Too many OTP requests from this IP. Try again later.", retryAfter: ipLimit.resetAt };
+  // Per-IP rate limit: 5/hour — skipped when IP is unavailable to avoid shared bucket DoS
+  if (ip) {
+    const ipLimit = await rateLimit(`otp:send:ip:${ip}`, 5, 3600);
+    if (!ipLimit.allowed) {
+      return {
+        ok: false,
+        error: "Too many OTP requests from this IP. Try again later.",
+        retryAfter: ipLimit.resetAt,
+      };
+    }
   }
 
   const otp = generateOtp();
   const hash = hashOtp(otp, phone);
 
-  // Store hash in Redis
   await kvSet(`otp:hash:${phone}`, hash, OTP_TTL);
-  // Reset attempt counter on fresh send
   await kvDel(`otp:attempts:${phone}`);
 
-  // Write audit row (fire-and-forget, don't block on it)
-  prisma.otpCode.create({
-    data: {
-      phone,
-      codeHash: hash,
-      expiresAt: new Date(Date.now() + OTP_TTL * 1000),
-    },
-  }).catch(() => {});
+  // Audit row — fire-and-forget but log failures so infrastructure issues surface
+  prisma.otpCode
+    .create({
+      data: {
+        phone,
+        codeHash: hash,
+        expiresAt: new Date(Date.now() + OTP_TTL * 1000),
+      },
+    })
+    .catch((e: unknown) => console.error("[OTP audit] Failed to write OtpCode row:", e));
 
-  // MOCK SMS — log to console only. Wire real SMS provider in production.
+  // MOCK SMS — logs to console only. Wire a real SMS provider in production.
   console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
 
   return { ok: true };
@@ -61,33 +111,39 @@ export async function verifyOtp(
   phone: string,
   otp: string
 ): Promise<{ ok: true } | { ok: false; error: string; locked?: boolean }> {
-  // Check lockout
+  const expectedHash = hashOtp(otp, phone);
   const attemptsKey = `otp:attempts:${phone}`;
-  const attempts = parseInt((await kvGet(attemptsKey)) ?? "0", 10);
-  if (attempts >= MAX_VERIFY_ATTEMPTS) {
+  const hashKey = `otp:hash:${phone}`;
+
+  // Single atomic Lua script: check lockout → compare → increment failures → consume on match.
+  // Eliminates both the timing side-channel and the check-then-act race condition.
+  const result = (await kv.eval(
+    VERIFY_OTP_LUA,
+    2,
+    attemptsKey,
+    hashKey,
+    expectedHash,
+    String(MAX_VERIFY_ATTEMPTS),
+    String(VERIFY_LOCKOUT_WINDOW)
+  )) as string;
+
+  if (result === "locked") {
     return { ok: false, error: "Too many failed attempts. Please request a new OTP.", locked: true };
   }
-
-  const storedHash = await kvGet(`otp:hash:${phone}`);
-  if (!storedHash) {
+  if (result === "expired") {
     return { ok: false, error: "OTP expired or not found. Please request a new one." };
   }
-
-  const expectedHash = hashOtp(otp, phone);
-  if (expectedHash !== storedHash) {
-    await kvIncr(attemptsKey, VERIFY_LOCKOUT_WINDOW);
+  if (result === "invalid") {
     return { ok: false, error: "Invalid OTP. Please try again." };
   }
 
-  // Valid — consume it
-  await kvDel(`otp:hash:${phone}`);
-  await kvDel(attemptsKey);
-
-  // Mark audit row as consumed
-  prisma.otpCode.updateMany({
-    where: { phone, consumedAt: null, codeHash: storedHash },
-    data: { consumedAt: new Date() },
-  }).catch(() => {});
+  // result === "ok" — token consumed atomically by the Lua script
+  prisma.otpCode
+    .updateMany({
+      where: { phone, consumedAt: null, codeHash: expectedHash },
+      data: { consumedAt: new Date() },
+    })
+    .catch((e: unknown) => console.error("[OTP audit] Failed to mark OtpCode consumed:", e));
 
   return { ok: true };
 }
