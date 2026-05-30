@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "ایکسپلوسیل",
+    "tagline": "بیچیں۔ بھرتی کریں۔ جڑیں۔ تصدیق شدہ۔",
+    "login": "لاگ ان",
+    "logout": "لاگ آؤٹ",
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ",
+    "loading": "لوڈ ہو رہا ہے...",
+    "error": "کچھ غلط ہو گیا",
+    "verified": "تصدیق شدہ"
+  },
+  "nav": {
+    "marketplace": "مارکیٹ پلیس",
+    "jobs": "ملازمتیں",
+    "network": "نیٹ ورک",
+    "messages": "پیغامات",
+    "account": "اکاؤنٹ"
+  },
+  "auth": {
+    "enterPhone": "اپنا فون نمبر درج کریں",
+    "enterOtp": "فون پر بھیجا گیا OTP درج کریں",
+    "sendOtp": "OTP بھیجیں",
+    "verifyOtp": "OTP تصدیق کریں",
+    "phoneLabel": "فون نمبر"
+  }
+}

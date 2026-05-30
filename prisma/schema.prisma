@@ -1,0 +1,553 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  EMPLOYER
+  ADMIN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  EXPIRED
+  SOLD
+}
+
+enum PropertyType {
+  HOUSE
+  APARTMENT
+  PLOT
+  COMMERCIAL
+  OTHER
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+enum AgentTier {
+  NONE
+  BASIC
+  PRO
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  EXPIRED
+}
+
+enum RemoteType {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum ApplicationStatus {
+  APPLIED
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  CONNECTIONS
+}
+
+enum ChatContext {
+  LISTING
+  JOB_APPLICATION
+  NETWORK_DM
+}
+
+enum MessageKind {
+  TEXT
+  OFFER
+  VISIT
+  ATTACHMENT
+  SYSTEM
+}
+
+enum NotificationKind {
+  LISTING_APPROVED
+  MESSAGE
+  OFFER
+  JOB_APPLIED
+  CONNECTION_REQ
+  ENDORSEMENT
+  ADMIN
+}
+
+// ─── Core ────────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String             @id @default(cuid())
+  phone              String             @unique
+  name               String
+  cnHash             String?            @unique
+  role               Role               @default(USER)
+  isPhoneVerified    Boolean            @default(false)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  defaultRegionId    String?
+  languagePref       String             @default("en")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  defaultRegion    Region?          @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
+  sellerProfile    SellerProfile?
+  employerProfile  EmployerProfile?
+  jobSeekerProfile JobSeekerProfile?
+  networkProfile   NetworkProfile?
+  sentMessages     Message[]        @relation("SentMessages")
+  notifications    Notification[]
+  adminActions     AdminActionLog[] @relation("AdminActions")
+  escrowAsBuyer    EscrowTransaction[] @relation("EscrowBuyer")
+  escrowAsSeller   EscrowTransaction[] @relation("EscrowSeller")
+  listingReviews   ListingReview[]  @relation("ReviewAuthor")
+  applications     Application[]    @relation("ApplicationUser")
+  postLikes        PostLike[]
+  postComments     PostComment[]
+  connectionsAsRequester Connection[] @relation("ConnectionRequester")
+  connectionsAsRecipient Connection[] @relation("ConnectionRecipient")
+  chatRoomsAsA     ChatRoom[]      @relation("ChatParticipantA")
+  chatRoomsAsB     ChatRoom[]      @relation("ChatParticipantB")
+}
+
+model Region {
+  id       String   @id @default(cuid())
+  name     String
+  nameUr   String
+  city     String
+  country  String   @default("PK")
+  slug     String   @unique
+  parentId String?
+  lat      Float?
+  lng      Float?
+
+  parent      Region?   @relation("RegionChildren", fields: [parentId], references: [id])
+  children    Region[]  @relation("RegionChildren")
+  users       User[]    @relation("UserDefaultRegion")
+  listings    Listing[]
+  jobPostings JobPosting[]
+  companies   Company[]
+}
+
+model OtpCode {
+  id          String    @id @default(cuid())
+  phone       String
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model ChatRoom {
+  id             String      @id @default(cuid())
+  contextType    ChatContext
+  contextId      String
+  participantAId String
+  participantBId String
+  createdAt      DateTime    @default(now())
+
+  participantA User      @relation("ChatParticipantA", fields: [participantAId], references: [id])
+  participantB User      @relation("ChatParticipantB", fields: [participantBId], references: [id])
+  messages     Message[]
+
+  @@unique([contextType, contextId, participantAId, participantBId])
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  roomId    String
+  senderId  String
+  body      String
+  kind      MessageKind @default(TEXT)
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@index([roomId, createdAt])
+}
+
+model AdminActionLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AdminActions", fields: [adminId], references: [id])
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  kind      NotificationKind
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+// ─── Marketplace ─────────────────────────────────────────────────────────────
+
+model SellerProfile {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  agentTier    AgentTier @default(NONE)
+  bio          String?
+  areasServed  Json?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings Listing[]
+}
+
+model Listing {
+  id                String        @id @default(cuid())
+  sellerProfileId   String
+  category          String
+  title             String
+  description       String
+  price             Decimal
+  currency          String        @default("PKR")
+  regionId          String
+  lat               Float?
+  lng               Float?
+  status            ListingStatus @default(DRAFT)
+  featured          Boolean       @default(false)
+  expiresAt         DateTime?
+  propertyType      PropertyType?
+  beds              Int?
+  baths             Int?
+  areaValue         Float?
+  areaUnit          String?
+  fbrValuationMin   Decimal?
+  fbrValuationMax   Decimal?
+  videoUrl          String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  sellerProfile      SellerProfile       @relation(fields: [sellerProfileId], references: [id])
+  region             Region              @relation(fields: [regionId], references: [id])
+  images             ListingImage[]
+  escrowTransactions EscrowTransaction[]
+  reviews            ListingReview[]
+
+  @@index([status, regionId, createdAt])
+  @@index([status, featured])
+}
+
+model ListingImage {
+  id        String @id @default(cuid())
+  listingId String
+  url       String
+  order     Int
+  width     Int
+  height    Int
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model EscrowTransaction {
+  id          String       @id @default(cuid())
+  listingId   String
+  buyerId     String
+  sellerId    String
+  amount      Decimal
+  currency    String       @default("PKR")
+  status      EscrowStatus @default(HELD)
+  createdAt   DateTime     @default(now())
+  releasedAt  DateTime?
+  refundedAt  DateTime?
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  buyer   User    @relation("EscrowBuyer", fields: [buyerId], references: [id])
+  seller  User    @relation("EscrowSeller", fields: [sellerId], references: [id])
+}
+
+model ListingReview {
+  id        String   @id @default(cuid())
+  listingId String
+  authorId  String
+  rating    Int
+  body      String?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  author  User    @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  @@unique([listingId, authorId])
+}
+
+// ─── Jobs ────────────────────────────────────────────────────────────────────
+
+model Company {
+  id               String   @id @default(cuid())
+  ownerId          String
+  name             String
+  industry         String?
+  size             String?
+  websiteUrl       String?
+  logoUrl          String?
+  regionId         String
+  verifiedEmployer Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  region           Region            @relation(fields: [regionId], references: [id])
+  employerProfiles EmployerProfile[]
+  jobPostings      JobPosting[]
+}
+
+model EmployerProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  companyId     String
+  roleAtCompany String?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model JobSeekerProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  headline           String?
+  summary            String?
+  currentRoleTitle   String?
+  openToWork         Boolean  @default(true)
+  resumeUrl          String?
+  expectedSalaryMin  Int?
+  expectedSalaryMax  Int?
+  currency           String?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[] @relation("JobSeekerApplications")
+  jobAlerts    JobAlert[]
+}
+
+model JobPosting {
+  id             String     @id @default(cuid())
+  companyId      String
+  postedByUserId String
+  title          String
+  description    String
+  regionId       String
+  remoteType     RemoteType @default(ONSITE)
+  salaryMin      Int?
+  salaryMax      Int?
+  currency       String     @default("PKR")
+  status         JobStatus  @default(DRAFT)
+  expiresAt      DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  region       Region        @relation(fields: [regionId], references: [id])
+  applications Application[]
+
+  @@index([status, regionId, createdAt])
+  @@index([companyId, status])
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  jobPostingId    String
+  jobSeekerId     String
+  applicantUserId String
+  resumeUrl       String
+  coverLetter     String?
+  status          ApplicationStatus @default(APPLIED)
+  createdAt       DateTime          @default(now())
+
+  jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id])
+  jobSeeker  JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  applicant  User             @relation("ApplicationUser", fields: [applicantUserId], references: [id])
+
+  @@unique([jobPostingId, jobSeekerId])
+}
+
+model JobAlert {
+  id          String   @id @default(cuid())
+  jobSeekerId String
+  queryJson   Json
+  frequency   String   @default("daily")
+  createdAt   DateTime @default(now())
+
+  jobSeeker JobSeekerProfile @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+}
+
+// ─── Network ─────────────────────────────────────────────────────────────────
+
+model NetworkProfile {
+  id                   String            @id @default(cuid())
+  userId               String            @unique
+  handle               String            @unique
+  headline             String?
+  summary              String?
+  currentRole          String?
+  location             String?
+  profilePhotoUrl      String?
+  bannerUrl            String?
+  visibility           ProfileVisibility @default(PUBLIC)
+  verifiedProfessional Boolean           @default(false)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences          Experience[]
+  educations           Education[]
+  profileSkills        ProfileSkill[]
+  posts                Post[]
+  endorsementsGiven    Endorsement[]  @relation("EndorsementGiver")
+  endorsementsReceived Endorsement[]  @relation("EndorsementReceiver")
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  profileId   String
+  company     String
+  title       String
+  start       DateTime
+  end         DateTime?
+  description String?
+
+  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id          String    @id @default(cuid())
+  profileId   String
+  institution String
+  degree      String?
+  start       DateTime
+  end         DateTime?
+
+  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  profileSkills ProfileSkill[]
+  endorsements  Endorsement[]
+}
+
+model ProfileSkill {
+  id        String @id @default(cuid())
+  profileId String
+  skillId   String
+
+  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill   Skill          @relation(fields: [skillId], references: [id])
+
+  @@unique([profileId, skillId])
+}
+
+model Endorsement {
+  id                String   @id @default(cuid())
+  giverProfileId    String
+  receiverProfileId String
+  skillId           String
+  createdAt         DateTime @default(now())
+
+  giverProfile    NetworkProfile @relation("EndorsementGiver", fields: [giverProfileId], references: [id], onDelete: Cascade)
+  receiverProfile NetworkProfile @relation("EndorsementReceiver", fields: [receiverProfileId], references: [id], onDelete: Cascade)
+  skill           Skill          @relation(fields: [skillId], references: [id])
+
+  @@unique([giverProfileId, receiverProfileId, skillId])
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  requesterId String
+  recipientId String
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+
+  requester User @relation("ConnectionRequester", fields: [requesterId], references: [id])
+  recipient User @relation("ConnectionRecipient", fields: [recipientId], references: [id])
+
+  @@unique([requesterId, recipientId])
+}
+
+model Post {
+  id              String   @id @default(cuid())
+  authorProfileId String
+  body            String
+  mediaUrls       Json?
+  createdAt       DateTime @default(now())
+
+  authorProfile NetworkProfile @relation(fields: [authorProfileId], references: [id], onDelete: Cascade)
+  likes         PostLike[]
+  comments      PostComment[]
+
+  @@index([authorProfileId, createdAt])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+}

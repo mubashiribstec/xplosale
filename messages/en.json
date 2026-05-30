@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "Xplosale",
+    "tagline": "Sell. Hire. Connect. Verified.",
+    "login": "Login",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "verified": "Verified"
+  },
+  "nav": {
+    "marketplace": "Marketplace",
+    "jobs": "Jobs",
+    "network": "Network",
+    "messages": "Messages",
+    "account": "Account"
+  },
+  "auth": {
+    "enterPhone": "Enter your phone number",
+    "enterOtp": "Enter the OTP sent to your phone",
+    "sendOtp": "Send OTP",
+    "verifyOtp": "Verify OTP",
+    "phoneLabel": "Phone Number"
+  }
+}
