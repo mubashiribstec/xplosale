@@ -1,22 +1,36 @@
 import Redis from "ioredis";
+import { env } from "@/lib/env";
 
 declare global {
   // eslint-disable-next-line no-var
-  var __kv: Redis | undefined;
-}
-
-function createKv(): Redis {
-  const url = process.env.UPSTASH_REDIS_URL;
-  if (!url) {
-    throw new Error("UPSTASH_REDIS_URL is not set");
-  }
-  return new Redis(url, {
-    maxRetriesPerRequest: 3,
-    lazyConnect: true,
-  });
+  var __redis: Redis | undefined;
 }
 
 export const kv: Redis =
-  globalThis.__kv ?? (globalThis.__kv = createKv());
+  globalThis.__redis ??
+  (globalThis.__redis = new Redis(env.UPSTASH_REDIS_URL, {
+    tls: env.UPSTASH_REDIS_URL.startsWith("rediss://") ? {} : undefined,
+    connectTimeout: 8000,
+    maxRetriesPerRequest: 3,
+    lazyConnect: true,
+  }));
 
-if (process.env.NODE_ENV !== "production") globalThis.__kv = kv;
+export async function kvGet(key: string): Promise<string | null> {
+  return kv.get(key);
+}
+
+export async function kvSet(key: string, value: string, ttlSeconds: number): Promise<void> {
+  await kv.set(key, value, "EX", ttlSeconds);
+}
+
+export async function kvDel(key: string): Promise<void> {
+  await kv.del(key);
+}
+
+export async function kvIncr(key: string, ttlSeconds: number): Promise<number> {
+  const pipeline = kv.pipeline();
+  pipeline.incr(key);
+  pipeline.expire(key, ttlSeconds);
+  const results = await pipeline.exec();
+  return (results?.[0]?.[1] as number) ?? 0;
+}
