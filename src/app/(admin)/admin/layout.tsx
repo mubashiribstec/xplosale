@@ -5,6 +5,7 @@ import { getSession } from "@/core/auth/session";
 const navLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/verifications", label: "Verifications" },
+  { href: "/admin/partners", label: "Partners" },
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/audit", label: "Audit Log" },

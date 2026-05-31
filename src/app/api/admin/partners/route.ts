@@ -8,13 +8,17 @@ export async function GET() {
     if (!session) return err("Unauthorized", 401);
     if ((session.user as { role: string }).role !== "ADMIN") return err("Forbidden", 403);
 
-    const pending = await prisma.user.findMany({
-      where: { verificationStatus: "PENDING" },
-      select: { id: true, name: true, phone: true, email: true, createdAt: true, verificationStatus: true, docType: true },
+    const applications = await prisma.partnerApplication.findMany({
+      where: { status: "PENDING" },
+      include: {
+        user: {
+          select: { id: true, name: true, phone: true, email: true, verificationStatus: true },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
 
-    return ok(pending);
+    return ok(applications);
   } catch (e) {
     return parseError(e);
   }

@@ -79,6 +79,23 @@ enum ConnectionStatus {
   BLOCKED
 }
 
+enum IdentityDocType {
+  CNIC
+  PASSPORT
+}
+
+enum PartnerType {
+  INDIVIDUAL
+  BUSINESS
+  AGENCY
+}
+
+enum PartnerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ProfileVisibility {
   PUBLIC
   CONNECTIONS
@@ -112,36 +129,44 @@ enum NotificationKind {
 
 model User {
   id                 String             @id @default(cuid())
-  phone              String             @unique
-  name               String
+  phone              String?            @unique
+  email              String?            @unique
+  emailVerified      DateTime?
+  name               String?
   cnHash             String?            @unique
   role               Role               @default(USER)
   isPhoneVerified    Boolean            @default(false)
   verificationStatus VerificationStatus @default(UNVERIFIED)
+  docType            IdentityDocType?
+  isPartner          Boolean            @default(false)
+  partnerType        PartnerType?
   defaultRegionId    String?
   languagePref       String             @default("en")
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  defaultRegion    Region?          @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
-  sellerProfile    SellerProfile?
-  employerProfile  EmployerProfile?
-  jobSeekerProfile JobSeekerProfile?
-  networkProfile   NetworkProfile?
-  sentMessages     Message[]           @relation("SentMessages")
-  notifications    Notification[]
-  adminActions     AdminActionLog[]    @relation("AdminActions")
-  escrowAsBuyer    EscrowTransaction[] @relation("EscrowBuyer")
-  escrowAsSeller   EscrowTransaction[] @relation("EscrowSeller")
-  listingReviews   ListingReview[]     @relation("ReviewAuthor")
-  ownedCompanies   Company[]           @relation("CompanyOwner")
-  postedJobPostings JobPosting[]       @relation("JobPostingPoster")
-  postLikes        PostLike[]
-  postComments     PostComment[]
-  connectionsAsRequester Connection[] @relation("ConnectionRequester")
-  connectionsAsRecipient Connection[] @relation("ConnectionRecipient")
-  chatRoomsAsA     ChatRoom[]          @relation("ChatParticipantA")
-  chatRoomsAsB     ChatRoom[]          @relation("ChatParticipantB")
+  defaultRegion       Region?             @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
+  sellerProfile       SellerProfile?
+  employerProfile     EmployerProfile?
+  jobSeekerProfile    JobSeekerProfile?
+  networkProfile      NetworkProfile?
+  sentMessages        Message[]           @relation("SentMessages")
+  notifications       Notification[]
+  adminActions        AdminActionLog[]    @relation("AdminActions")
+  escrowAsBuyer       EscrowTransaction[] @relation("EscrowBuyer")
+  escrowAsSeller      EscrowTransaction[] @relation("EscrowSeller")
+  listingReviews      ListingReview[]     @relation("ReviewAuthor")
+  ownedCompanies      Company[]           @relation("CompanyOwner")
+  postedJobPostings   JobPosting[]        @relation("JobPostingPoster")
+  postLikes           PostLike[]
+  postComments        PostComment[]
+  connectionsAsRequester Connection[]    @relation("ConnectionRequester")
+  connectionsAsRecipient Connection[]    @relation("ConnectionRecipient")
+  chatRoomsAsA        ChatRoom[]          @relation("ChatParticipantA")
+  chatRoomsAsB        ChatRoom[]          @relation("ChatParticipantB")
+  accounts            Account[]
+  sessions            Session[]
+  partnerApplication  PartnerApplication?
 }
 
 model Region {
@@ -396,13 +421,14 @@ model JobPosting {
 }
 
 model Application {
-  id           String            @id @default(cuid())
-  jobPostingId String
-  jobSeekerId  String
-  resumeUrl    String
-  coverLetter  String?
-  status       ApplicationStatus @default(APPLIED)
-  createdAt    DateTime          @default(now())
+  id              String            @id @default(cuid())
+  jobPostingId    String
+  jobSeekerId     String
+  applicantUserId String?
+  resumeUrl       String
+  coverLetter     String?
+  status          ApplicationStatus @default(APPLIED)
+  createdAt       DateTime          @default(now())
 
   jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id])
   jobSeeker  JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
@@ -554,4 +580,60 @@ model PostComment {
 
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   author User @relation(fields: [authorId], references: [id])
+}
+
+// ─── NextAuth Adapter ─────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Partner ──────────────────────────────────────────────────────────────────
+
+model PartnerApplication {
+  id           String                   @id @default(cuid())
+  userId       String                   @unique
+  partnerType  PartnerType
+  businessName String?
+  website      String?
+  description  String
+  status       PartnerApplicationStatus @default(PENDING)
+  reviewedAt   DateTime?
+  reviewedById String?
+  reason       String?
+  createdAt    DateTime                 @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

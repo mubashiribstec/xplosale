@@ -113,12 +113,12 @@ export default async function PeoplePage({
                       {photoUrl ? (
                         <img
                           src={photoUrl}
-                          alt={person.name}
+                          alt={person.name ?? np.handle}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-lg">
-                          {person.name[0].toUpperCase()}
+                          {(person.name ?? np.handle)[0].toUpperCase()}
                         </div>
                       )}
                     </Link>
@@ -127,7 +127,7 @@ export default async function PeoplePage({
                         href={`/n/${np.handle}`}
                         className="font-semibold text-gray-900 text-sm hover:underline block truncate"
                       >
-                        {person.name}
+                        {person.name ?? np.handle}
                       </Link>
                       {np.headline && (
                         <p className="text-xs text-gray-500 truncate">{np.headline}</p>

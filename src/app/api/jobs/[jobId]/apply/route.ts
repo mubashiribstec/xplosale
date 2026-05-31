@@ -4,6 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateRoom, createNotification } from "@/core/messaging/rooms";
+import { getUserTier } from "@/lib/tier";
 
 const applySchema = z.object({
   coverLetter: z.string().max(2000).optional(),
@@ -20,10 +21,25 @@ export async function POST(
 
     const { jobId } = await params;
 
-    const jobSeekerId_profile = await prisma.jobSeekerProfile.findUnique({ where: { userId } });
+    const [jobSeekerId_profile, dbUser] = await Promise.all([
+      prisma.jobSeekerProfile.findUnique({ where: { userId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true } }),
+    ]);
     if (!jobSeekerId_profile) return err("Create a job seeker profile first", 422);
 
     if (!jobSeekerId_profile.resumeUrl) return err("Upload a resume first", 422);
+
+    const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
+    if (tier === "BASIC") {
+      const dayStart = new Date();
+      dayStart.setHours(0, 0, 0, 0);
+      const todayCount = await prisma.application.count({
+        where: { applicantUserId: userId, createdAt: { gte: dayStart } },
+      });
+      if (todayCount >= 10) {
+        return err("Daily application limit reached (10/day for Basic accounts). Verify your identity to apply without limits.", 429);
+      }
+    }
 
     const jobPosting = await prisma.jobPosting.findUnique({ where: { id: jobId } });
     if (!jobPosting) return err("Job not found", 404);

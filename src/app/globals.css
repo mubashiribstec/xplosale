@@ -12,6 +12,21 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Script-specific font overrides — applied when the corresponding CSS var is present on <html> */
+:root:has([class*="--font-noto-arabic"]) body,
+html[lang="ar"] body,
+html[lang="ur"] body {
+  font-family: var(--font-noto-arabic), Arial, sans-serif;
+}
+
+html[lang="hi"] body {
+  font-family: var(--font-noto-devanagari), Arial, sans-serif;
+}
+
+html[lang="zh"] body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

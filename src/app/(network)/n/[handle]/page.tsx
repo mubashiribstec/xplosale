@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import ConnectButton from "@/components/shared/ConnectButton";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import { getUserTier } from "@/lib/tier";
 
 export default async function ProfilePage({
   params,
@@ -15,7 +16,7 @@ export default async function ProfilePage({
   const profile = await prisma.networkProfile.findUnique({
     where: { handle },
     include: {
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, verificationStatus: true, isPartner: true } },
       experiences: { orderBy: { start: "desc" } },
       educations: { orderBy: { start: "desc" } },
       profileSkills: {
@@ -72,7 +73,7 @@ export default async function ProfilePage({
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="w-20 h-20 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center text-2xl text-gray-400">
-            {profile.user.name[0].toUpperCase()}
+            {(profile.user.name ?? profile.handle)[0].toUpperCase()}
           </div>
           <h1 className="text-xl font-bold text-gray-900">{profile.user.name}</h1>
           {profile.headline && <p className="text-gray-500 mt-1">{profile.headline}</p>}
@@ -127,12 +128,12 @@ export default async function ProfilePage({
               {photoUrl ? (
                 <img
                   src={photoUrl}
-                  alt={profile.user.name}
+                  alt={profile.user.name ?? profile.handle}
                   className="w-20 h-20 rounded-full border-4 border-white object-cover"
                 />
               ) : (
                 <div className="w-20 h-20 rounded-full border-4 border-white bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold">
-                  {profile.user.name[0].toUpperCase()}
+                  {(profile.user.name ?? profile.handle)[0].toUpperCase()}
                 </div>
               )}
               {callerId && callerId !== profile.userId && (
@@ -146,8 +147,13 @@ export default async function ProfilePage({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold text-gray-900">{profile.user.name}</h1>
-              {profile.verifiedProfessional && <VerifiedBadge />}
+              <h1 className="text-2xl font-bold text-gray-900">{profile.user.name ?? profile.handle}</h1>
+              {(() => {
+                const tier = getUserTier({ isPartner: profile.user.isPartner, verificationStatus: profile.user.verificationStatus });
+                if (tier === "PARTNER") return <VerifiedBadge tier="PARTNER" />;
+                if (tier === "VERIFIED" || profile.verifiedProfessional) return <VerifiedBadge tier="VERIFIED" />;
+                return null;
+              })()}
             </div>
             {profile.headline && <p className="text-gray-600 mt-0.5">{profile.headline}</p>}
             {profile.currentRole && (

@@ -11,7 +11,7 @@ type PostCardProps = {
       handle: string;
       headline: string | null;
       profilePhotoUrl: string | null;
-      user: { name: string };
+      user: { name: string | null };
     };
     _count: { likes: number; comments: number };
   };
@@ -39,7 +39,7 @@ export default function PostCard({ post, likedByMe, currentUserId: _currentUserI
     }
   }
 
-  const initials = post.authorProfile.user.name
+  const initials = (post.authorProfile.user.name ?? post.authorProfile.handle)
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -55,7 +55,7 @@ export default function PostCard({ post, likedByMe, currentUserId: _currentUserI
           {post.authorProfile.profilePhotoUrl ? (
             <img
               src={post.authorProfile.profilePhotoUrl}
-              alt={post.authorProfile.user.name}
+              alt={post.authorProfile.user.name ?? post.authorProfile.handle}
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
@@ -69,7 +69,7 @@ export default function PostCard({ post, likedByMe, currentUserId: _currentUserI
             href={`/n/${post.authorProfile.handle}`}
             className="font-semibold text-gray-900 text-sm hover:underline"
           >
-            {post.authorProfile.user.name}
+            {post.authorProfile.user.name ?? post.authorProfile.handle}
           </a>
           {post.authorProfile.headline && (
             <p className="text-xs text-gray-500 truncate">{post.authorProfile.headline}</p>

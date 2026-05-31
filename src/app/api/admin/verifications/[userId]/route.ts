@@ -8,7 +8,7 @@ import { hashCnic } from "@/core/auth/otp";
 const bodySchema = z.object({
   action: z.enum(["approve", "reject"]),
   reason: z.string().optional(),
-  cnicNumber: z.string().optional(), // required for approve
+  cnicNumber: z.string().optional(), // required for approve when docType is CNIC
 });
 
 export async function POST(
@@ -33,25 +33,31 @@ export async function POST(
     if (!user) return err("User not found", 404);
     if (user.verificationStatus !== "PENDING") return err("User is not pending verification", 400);
 
-    if (action === "approve") {
-      if (!cnicNumber) return err("cnicNumber is required for approval", 422);
-      const cnHash = hashCnic(cnicNumber);
+    const isPassport = user.docType === "PASSPORT";
+    const actionLabel = isPassport ? "IDENTITY_APPROVED" : "CNIC_APPROVED";
+    const rejectLabel = isPassport ? "IDENTITY_REJECTED" : "CNIC_REJECTED";
 
-      // Check for duplicate CNIC
-      const existing = await prisma.user.findUnique({ where: { cnHash } });
-      if (existing && existing.id !== userId) {
-        return err("This CNIC is already registered to another account", 409);
+    if (action === "approve") {
+      // CNIC requires the actual number to hash; passport does not
+      if (!isPassport && !cnicNumber) return err("cnicNumber is required for CNIC approval", 422);
+
+      const updateData: Record<string, unknown> = { verificationStatus: "VERIFIED" };
+
+      if (cnicNumber) {
+        const cnHash = hashCnic(cnicNumber);
+        const existing = await prisma.user.findUnique({ where: { cnHash } });
+        if (existing && existing.id !== userId) {
+          return err("This CNIC is already registered to another account", 409);
+        }
+        updateData.cnHash = cnHash;
       }
 
       await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { verificationStatus: "VERIFIED", cnHash },
-        }),
+        prisma.user.update({ where: { id: userId }, data: updateData }),
         prisma.adminActionLog.create({
           data: {
             adminId,
-            action: "CNIC_APPROVED",
+            action: actionLabel,
             targetType: "User",
             targetId: userId,
             reason: reason ?? "Documents verified",
@@ -60,14 +66,11 @@ export async function POST(
       ]);
     } else {
       await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { verificationStatus: "REJECTED" },
-        }),
+        prisma.user.update({ where: { id: userId }, data: { verificationStatus: "REJECTED" } }),
         prisma.adminActionLog.create({
           data: {
             adminId,
-            action: "CNIC_REJECTED",
+            action: rejectLabel,
             targetType: "User",
             targetId: userId,
             reason: reason ?? "Documents rejected",

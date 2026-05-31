@@ -6,7 +6,7 @@ type NetProfile = { handle: string; headline: string | null } | null;
 
 type ConnectionUser = {
   id: string;
-  name: string;
+  name: string | null;
   networkProfile: NetProfile;
 };
 
@@ -108,7 +108,7 @@ export default function ConnectionManager({ connections, currentUserId }: Connec
                   href={other.networkProfile ? `/n/${other.networkProfile.handle}` : "#"}
                   className="font-medium text-gray-900 text-sm hover:underline"
                 >
-                  {other.name}
+                  {other.name ?? other.networkProfile?.handle ?? "User"}
                 </a>
                 {other.networkProfile?.headline && (
                   <p className="text-xs text-gray-500 mt-0.5">{other.networkProfile.headline}</p>

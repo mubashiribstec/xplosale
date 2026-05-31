@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Message } from "@prisma/client";
 
 type MessageWithSender = Message & {
-  sender: { id: string; name: string };
+  sender: { id: string; name: string | null };
 };
 
 interface ChatThreadProps {
@@ -91,7 +91,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
                 }`}
               >
                 {!isOwn && (
-                  <p className="text-xs font-medium mb-1 opacity-70">{msg.sender.name}</p>
+                  <p className="text-xs font-medium mb-1 opacity-70">{msg.sender.name ?? "User"}</p>
                 )}
                 <p className="whitespace-pre-wrap">{msg.body}</p>
               </div>
