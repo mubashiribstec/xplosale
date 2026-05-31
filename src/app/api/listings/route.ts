@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const beds = searchParams.get("beds");
+    const keyword = searchParams.get("keyword");
     const statusParam = searchParams.get("status");
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
@@ -40,6 +41,13 @@ export async function GET(req: NextRequest) {
     const where: Prisma.ListingWhereInput = {
       status: status as Prisma.EnumListingStatusFilter,
     };
+
+    if (keyword) {
+      where.OR = [
+        { title: { contains: keyword, mode: "insensitive" } },
+        { description: { contains: keyword, mode: "insensitive" } },
+      ];
+    }
 
     if (regionSlug) {
       where.region = { slug: regionSlug };

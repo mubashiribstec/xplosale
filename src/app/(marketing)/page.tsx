@@ -1,5 +1,6 @@
 import { getTranslations, getLocale } from 'next-intl/server';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import GlobalSearchBar from '@/components/shared/GlobalSearchBar';
 
 export default async function MarketingHome() {
   const t = await getTranslations('common');
@@ -15,6 +16,9 @@ export default async function MarketingHome() {
       <section className="flex flex-col items-center justify-center flex-1 gap-6 px-4 text-center">
         <h1 className="text-4xl font-bold">{t('appName')}</h1>
         <p className="text-xl text-gray-600">{t('tagline')}</p>
+        <div className="w-full max-w-xl mt-2">
+          <GlobalSearchBar placeholder="Search properties, jobs, people..." />
+        </div>
         <nav className="flex flex-wrap gap-4 justify-center mt-4">
           <a href="/marketplace" className="text-blue-600 hover:underline">{nav('marketplace')}</a>
           <a href="/jobs" className="text-blue-600 hover:underline">{nav('jobs')}</a>
