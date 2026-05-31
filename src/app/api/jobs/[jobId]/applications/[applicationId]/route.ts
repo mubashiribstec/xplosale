@@ -22,7 +22,11 @@ export async function PATCH(
 
     const job = await prisma.jobPosting.findUnique({ where: { id: jobId } });
     if (!job) return err("Job not found", 404);
-    if (job.postedByUserId !== userId) return err("Forbidden", 403);
+
+    const { canAccessJobApplications } = await import("@/verticals/jobs/ats/permissions");
+    const userRole = (session.user as { role: string }).role;
+    const allowed = await canAccessJobApplications(userId, jobId, userRole);
+    if (!allowed) return err("Forbidden", 403);
 
     const body = await req.json() as unknown;
     const parsed = patchSchema.safeParse(body);

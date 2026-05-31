@@ -12,6 +12,9 @@ enum Role {
   USER
   EMPLOYER
   ADMIN
+  EMPLOYER_RECRUITER
+  EMPLOYER_HIRING_MANAGER
+  EMPLOYER_INTERVIEWER
 }
 
 enum VerificationStatus {
@@ -105,6 +108,7 @@ enum ChatContext {
   LISTING
   JOB_APPLICATION
   NETWORK_DM
+  ADMIN_DM
 }
 
 enum MessageKind {
@@ -123,6 +127,22 @@ enum NotificationKind {
   CONNECTION_REQ
   ENDORSEMENT
   ADMIN
+  MENTION
+  TEST_ASSIGNED
+  INTERVIEW_SCHEDULED
+  INTERVIEW_REMINDER
+  SCORECARD_REQUESTED
+  ADMIN_BROADCAST
+  ADMIN_DM
+  BAN_NOTICE
+  DATA_EXPORT_READY
+}
+
+enum HiringTeamRole {
+  RECRUITER
+  HIRING_MANAGER
+  INTERVIEWER
+  OBSERVER
 }
 
 // ─── Core ────────────────────────────────────────────────────────────────────
@@ -164,9 +184,10 @@ model User {
   connectionsAsRecipient Connection[]    @relation("ConnectionRecipient")
   chatRoomsAsA        ChatRoom[]          @relation("ChatParticipantA")
   chatRoomsAsB        ChatRoom[]          @relation("ChatParticipantB")
-  accounts            Account[]
-  sessions            Session[]
-  partnerApplication  PartnerApplication?
+  accounts                Account[]
+  sessions                Session[]
+  partnerApplication      PartnerApplication?
+  hiringTeamMemberships   HiringTeam[]
 }
 
 model Region {
@@ -366,6 +387,7 @@ model Company {
   region           Region            @relation(fields: [regionId], references: [id])
   employerProfiles EmployerProfile[]
   jobPostings      JobPosting[]
+  pipelineStages   PipelineStage[]
 }
 
 model EmployerProfile {
@@ -415,6 +437,7 @@ model JobPosting {
   postedBy     User          @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
   region       Region        @relation(fields: [regionId], references: [id])
   applications Application[]
+  hiringTeam   HiringTeam[]
 
   @@index([status, regionId, createdAt])
   @@index([companyId, status])
@@ -428,10 +451,12 @@ model Application {
   resumeUrl       String
   coverLetter     String?
   status          ApplicationStatus @default(APPLIED)
+  currentStageId  String?
   createdAt       DateTime          @default(now())
 
-  jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id])
-  jobSeeker  JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  jobPosting    JobPosting       @relation(fields: [jobPostingId], references: [id])
+  jobSeeker     JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  currentStage  PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
 
   @@unique([jobPostingId, jobSeekerId])
 }
@@ -444,6 +469,38 @@ model JobAlert {
   createdAt   DateTime @default(now())
 
   jobSeeker JobSeekerProfile @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+}
+
+model PipelineStage {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  order      Int
+  color      String   @default("#6B7280")
+  isInitial  Boolean  @default(false)
+  isHired    Boolean  @default(false)
+  isRejected Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications Application[] @relation("ApplicationStage")
+
+  @@unique([companyId, order])
+  @@index([companyId])
+}
+
+model HiringTeam {
+  id           String         @id @default(cuid())
+  jobPostingId String
+  userId       String
+  role         HiringTeamRole
+  addedAt      DateTime       @default(now())
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobPostingId, userId])
+  @@index([jobPostingId])
 }
 
 // ─── Network ─────────────────────────────────────────────────────────────────

@@ -42,12 +42,20 @@ export default async function EmployerJobsPage() {
               Job Postings — {employerProfile.company.name}
             </h1>
           </div>
-          <Link
-            href="/me/employer/jobs/new"
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + Post new job
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href={`/employer/${employerProfile.companyId}/pipeline-settings`}
+              className="px-3 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:border-gray-300 transition-colors"
+            >
+              Pipeline settings
+            </Link>
+            <Link
+              href="/me/employer/jobs/new"
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + Post new job
+            </Link>
+          </div>
         </div>
 
         {jobs.length === 0 ? (
@@ -91,6 +99,12 @@ export default async function EmployerJobsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 justify-end">
+                        <Link
+                          href={`/employer/${employerProfile.companyId}/jobs/${job.id}/pipeline`}
+                          className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                          Pipeline
+                        </Link>
                         <Link
                           href={`/me/employer/jobs/${job.id}/edit`}
                           className="text-xs text-blue-600 hover:text-blue-700 font-medium"
