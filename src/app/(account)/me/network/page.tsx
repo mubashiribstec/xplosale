@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import ImageUploader from "@/components/shared/ImageUploader";
 
 type NetProfile = {
   handle: string;
@@ -10,12 +11,14 @@ type NetProfile = {
   currentRole: string | null;
   location: string | null;
   visibility: "PUBLIC" | "CONNECTIONS";
+  profilePhotoUrl: string | null;
+  bannerUrl: string | null;
 } | null;
 
 export default function NetworkProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<NetProfile>(null);
-  const [form, setForm] = useState({ handle: "", headline: "", summary: "", currentRole: "", location: "", visibility: "PUBLIC" as "PUBLIC" | "CONNECTIONS" });
+  const [form, setForm] = useState({ handle: "", headline: "", summary: "", currentRole: "", location: "", visibility: "PUBLIC" as "PUBLIC" | "CONNECTIONS", profilePhotoUrl: "", bannerUrl: "" });
   const [handleState, setHandleState] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -24,7 +27,7 @@ export default function NetworkProfilePage() {
     fetch("/api/account/profile/network")
       .then((r) => r.json())
       .then(({ data: d }) => {
-        if (d) { setProfile(d); setForm({ handle: d.handle, headline: d.headline ?? "", summary: d.summary ?? "", currentRole: d.currentRole ?? "", location: d.location ?? "", visibility: d.visibility ?? "PUBLIC" }); }
+        if (d) { setProfile(d); setForm({ handle: d.handle, headline: d.headline ?? "", summary: d.summary ?? "", currentRole: d.currentRole ?? "", location: d.location ?? "", visibility: d.visibility ?? "PUBLIC", profilePhotoUrl: d.profilePhotoUrl ?? "", bannerUrl: d.bannerUrl ?? "" }); }
       });
   }, []);
 
@@ -66,6 +69,22 @@ export default function NetworkProfilePage() {
         <button onClick={() => router.push("/me")} className="text-sm text-gray-400 hover:text-gray-600 mb-4">← Back</button>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">{profile ? "Edit" : "Set up"} Network Profile</h1>
         <form onSubmit={handleSave} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+          <ImageUploader
+            purpose="profile_photo"
+            label="Profile Photo"
+            currentUrl={form.profilePhotoUrl || undefined}
+            onUpload={({ url }) => {
+              setForm((prev) => ({ ...prev, profilePhotoUrl: url }));
+            }}
+          />
+          <ImageUploader
+            purpose="banner"
+            label="Banner Image"
+            currentUrl={form.bannerUrl || undefined}
+            onUpload={({ url }) => {
+              setForm((prev) => ({ ...prev, bannerUrl: url }));
+            }}
+          />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Handle *</label>
             <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">

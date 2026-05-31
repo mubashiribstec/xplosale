@@ -13,6 +13,8 @@ const schema = z.object({
   currentRole: z.string().max(100).optional(),
   location: z.string().max(100).optional(),
   visibility: z.enum(["PUBLIC", "CONNECTIONS"]).optional(),
+  profilePhotoUrl: z.string().url().optional(),
+  bannerUrl: z.string().url().optional(),
 });
 
 export async function GET() {

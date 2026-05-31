@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import ResumeUploader from "@/components/shared/ResumeUploader";
 
 type JSProfile = {
   headline: string | null;
@@ -19,6 +20,7 @@ export default function JobSeekerProfilePage() {
   const [form, setForm] = useState({ headline: "", summary: "", currentRoleTitle: "", openToWork: true, expectedSalaryMin: "", expectedSalaryMax: "", currency: "PKR" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [resumeKey, setResumeKey] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/account/profile/job-seeker")
@@ -26,6 +28,7 @@ export default function JobSeekerProfilePage() {
       .then(({ data }) => {
         if (data) {
           setProfile(data);
+          if (data.resumeUrl) setResumeKey(data.resumeUrl);
           setForm({
             headline: data.headline ?? "",
             summary: data.summary ?? "",
@@ -99,6 +102,13 @@ export default function JobSeekerProfilePage() {
             <input type="checkbox" checked={form.openToWork} onChange={(e) => set("openToWork", e.target.checked)} className="rounded" />
             <span className="text-sm text-gray-700">Open to work</span>
           </label>
+          <ResumeUploader
+            currentKey={resumeKey ?? undefined}
+            onUpload={(key) => {
+              setResumeKey(key);
+              setMsg("Resume uploaded successfully.");
+            }}
+          />
           {msg && <p className="text-sm text-blue-600">{msg}</p>}
           <button type="submit" disabled={saving}
             className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
