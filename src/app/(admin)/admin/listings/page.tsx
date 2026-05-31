@@ -1,12 +1,7 @@
-import { redirect } from "next/navigation";
-import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import AdminListingsQueue from "@/components/shared/AdminListingsQueue";
 
 export default async function AdminListingsPage() {
-  const session = await getSession();
-  if (!session) redirect("/auth/login");
-  if ((session.user as { role: string }).role !== "ADMIN") redirect("/");
 
   const listings = await prisma.listing.findMany({
     where: { status: "PENDING_REVIEW" },
