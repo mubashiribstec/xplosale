@@ -26,7 +26,9 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
-    const status = statusParam ?? "ACTIVE";
+    const session = await getSession();
+    const isAdmin = session ? (session.user as unknown as { role: string }).role === "ADMIN" : false;
+    const status = (isAdmin && statusParam) ? statusParam : "ACTIVE";
 
     const where: Record<string, unknown> = { status };
 
@@ -42,12 +44,8 @@ export async function GET(req: NextRequest) {
       where.title = { contains: keyword, mode: "insensitive" };
     }
 
-    if (minSalary || maxSalary) {
-      const salaryFilter: Record<string, number> = {};
-      if (minSalary) salaryFilter.gte = parseInt(minSalary, 10);
-      if (maxSalary) salaryFilter.lte = parseInt(maxSalary, 10);
-      where.salaryMin = salaryFilter;
-    }
+    if (minSalary) where.salaryMin = { gte: parseInt(minSalary, 10) };
+    if (maxSalary) where.salaryMax = { lte: parseInt(maxSalary, 10) };
 
     const [jobs, total] = await Promise.all([
       prisma.jobPosting.findMany({
