@@ -38,7 +38,7 @@ export async function POST(
       }),
     ]);
 
-    await createNotification(listing.sellerProfile.userId, "LISTING_APPROVED", {
+    await createNotification(listing.sellerProfile.userId, "ADMIN", {
       listingId,
       status: "REJECTED",
       reason,

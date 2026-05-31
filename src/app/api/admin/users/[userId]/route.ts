@@ -21,7 +21,9 @@ export async function PATCH(
 
     const adminId = getUserId(session);
     const { userId } = await params;
-    const body = bodySchema.parse(await req.json());
+    const parsed = bodySchema.safeParse(await req.json());
+    if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
+    const body = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return err("User not found", 404);

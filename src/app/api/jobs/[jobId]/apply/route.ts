@@ -28,6 +28,7 @@ export async function POST(
     const jobPosting = await prisma.jobPosting.findUnique({ where: { id: jobId } });
     if (!jobPosting) return err("Job not found", 404);
     if (jobPosting.status !== "ACTIVE") return err("Job is not accepting applications", 422);
+    if (jobPosting.postedByUserId === userId) return err("Cannot apply to your own job posting", 422);
 
     const body = await req.json() as unknown;
     const parsed = applySchema.safeParse(body);

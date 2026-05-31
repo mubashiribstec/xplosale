@@ -36,8 +36,8 @@ export async function rateLimit(
   const resetAt = Math.floor((now + windowMs) / 1000);
 
   return {
-    allowed: count <= limit,
-    remaining: Math.max(0, limit - count),
+    allowed: count < limit,
+    remaining: Math.max(0, limit - count - 1),
     resetAt,
   };
 }

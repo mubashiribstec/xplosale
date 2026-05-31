@@ -38,6 +38,8 @@ export async function POST(
 
     const { key, width, height, order } = parsed.data;
 
+    if (!key.startsWith(`listings/${listingId}/`)) return err('Invalid image key', 422);
+
     const image = await prisma.listingImage.create({
       data: { listingId, url: key, order, width, height },
     });

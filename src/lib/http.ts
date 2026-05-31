@@ -18,7 +18,7 @@ export function parseError(e: unknown): NextResponse<ApiError> {
     return err("Validation error", 422, e.flatten().fieldErrors);
   }
   if (e instanceof Error) {
-    return err(e.message, 500);
+    console.error("[API error]", e.message);
   }
-  return err("Unknown error", 500);
+  return err("Internal server error", 500);
 }
