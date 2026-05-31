@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Serve local uploads as static files (STORAGE_MODE=local only)
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/public/:path*",
+        destination: "/api/upload/serve-public/:path*",
+      },
+    ];
+  },
   async headers() {
     const isProd = process.env.NODE_ENV === "production";
     return [
