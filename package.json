@@ -11,7 +11,11 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
-    "healthcheck": "tsx scripts/healthcheck.ts"
+    "healthcheck": "tsx scripts/healthcheck.ts",
+    "validate:env": "tsx scripts/validate-env.ts",
+    "docker:dev": "docker compose up",
+    "docker:build": "docker build -t xplosale .",
+    "docker:run": "docker run --env-file .env -p 3000:3000 xplosale"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

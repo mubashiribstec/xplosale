@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Xplosale
 
-## Getting Started
+Pakistan's trust-first multi-vertical marketplace — real estate listings, jobs, and professional networking.
 
-First, run the development server:
+## Verticals
+
+- **Marketplace** `/m` — property listings with FBR valuation, offer flow, escrow
+- **Jobs** `/jobs` — job postings, applications, company profiles
+- **Network** `/n` — professional profiles, feed, connections, endorsements
+
+## Stack
+
+- Next.js 16 (App Router, standalone output)
+- Prisma 7 + PostgreSQL
+- NextAuth v5 (phone OTP)
+- Upstash Redis (rate limiting, pub/sub)
+- Supabase S3 (object storage) or local filesystem
+- `sharp` for image processing → WebP
+- `next-intl` v4 (English + Urdu, RTL)
+- PWA (service worker, installable)
+
+## Local Development
+
+### Prerequisites
+- Node.js 22+, pnpm 9+
+- PostgreSQL 16 and Redis 7 (or use Docker Compose)
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. Install dependencies
+pnpm install
+
+# 2. Copy env and fill in values
+cp .env.example .env
+# Edit .env — set STORAGE_MODE=local for local dev
+
+# 3. Start infrastructure (if using Docker)
+docker compose up postgres redis -d
+
+# 4. Run migrations and seed
+pnpm prisma:migrate
+pnpm prisma:seed
+
+# 5. Start dev server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Validate all required env vars
+pnpm validate:env
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run healthcheck (requires running services)
+pnpm healthcheck
+```
 
-## Learn More
+## Production (Docker)
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Build image
+pnpm docker:build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run with env file
+pnpm docker:run
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Or use Docker Compose:
+```bash
+docker compose up
+```
 
-## Deploy on Vercel
+## Database
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm prisma:migrate    # run pending migrations
+pnpm prisma:seed       # seed demo data
+pnpm prisma:studio     # open Prisma Studio
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+See `.env.example` for all required variables with documentation.
+
+Key vars:
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | ✓ | PostgreSQL connection (pooler for runtime) |
+| `DIRECT_URL` | ✓ | PostgreSQL direct connection (for migrations) |
+| `NEXTAUTH_SECRET` | ✓ | ≥32 char secret for NextAuth JWT |
+| `UPSTASH_REDIS_URL` | ✓ | Redis URL (`redis://` local or `rediss://` Upstash) |
+| `CNIC_HASH_SALT` | ✓ | ≥32 char salt for CNIC hashing |
+| `STORAGE_MODE` | — | `local` (default dev) or `s3` (production) |
+| `SUPABASE_S3_*` | S3 only | S3 credentials for Supabase storage |
