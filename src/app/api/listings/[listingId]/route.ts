@@ -72,7 +72,7 @@ export async function PATCH(
       include: { sellerProfile: { select: { userId: true } } },
     });
     if (!listing) return err("Listing not found", 404);
-    if (listing.sellerProfile.userId !== userId && !isAdmin) return err("Forbidden", 403);
+    if (!listing.sellerProfile || (listing.sellerProfile.userId !== userId && !isAdmin)) return err("Forbidden", 403);
 
     const body = await req.json() as unknown;
     const parsed = patchSchema.safeParse(body);
@@ -118,7 +118,7 @@ export async function DELETE(
       include: { sellerProfile: { select: { userId: true } } },
     });
     if (!listing) return err("Listing not found", 404);
-    if (listing.sellerProfile.userId !== userId && !isAdmin) return err("Forbidden", 403);
+    if (!listing.sellerProfile || (listing.sellerProfile.userId !== userId && !isAdmin)) return err("Forbidden", 403);
 
     await prisma.listing.delete({ where: { id: listingId } });
 

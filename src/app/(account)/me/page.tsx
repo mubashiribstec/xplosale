@@ -10,17 +10,16 @@ export default async function MePage() {
 
   const user = session.user as { id: string; phone: string; name: string; role: string };
 
-  const [sellerProfile, jobSeekerProfile, employerProfile, networkProfile] = await Promise.all([
+  const [sellerProfile, jobSeekerProfile, employerProfile, networkProfile, dbUser] = await Promise.all([
     prisma.sellerProfile.findUnique({ where: { userId: user.id } }),
     prisma.jobSeekerProfile.findUnique({ where: { userId: user.id } }),
     prisma.employerProfile.findUnique({ where: { userId: user.id }, include: { company: true } }),
     prisma.networkProfile.findUnique({ where: { userId: user.id } }),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { verificationStatus: true, name: true, phone: true, role: true },
+    }),
   ]);
-
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { verificationStatus: true, name: true, phone: true, role: true },
-  });
 
   const isVerified = dbUser?.verificationStatus === "VERIFIED";
   const isPending = dbUser?.verificationStatus === "PENDING";

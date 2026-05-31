@@ -39,17 +39,18 @@ export async function POST(req: NextRequest) {
 
     const { handle, ...rest } = parsed.data;
 
-    // Enforce handle uniqueness (excluding own profile on update)
-    const existing = await prisma.networkProfile.findUnique({ where: { handle } });
-    if (existing && existing.userId !== userId) {
-      return err("This handle is already taken", 409);
+    try {
+      const profile = await prisma.networkProfile.upsert({
+        where: { userId },
+        update: { handle, ...rest },
+        create: { userId, handle, visibility: "PUBLIC", ...rest },
+      });
+      return ok(profile);
+    } catch (upsertErr) {
+      if (upsertErr instanceof Error && (upsertErr as { code?: string }).code === "P2002") {
+        return err("This handle is already taken", 409);
+      }
+      throw upsertErr;
     }
-
-    const profile = await prisma.networkProfile.upsert({
-      where: { userId },
-      update: { handle, ...rest },
-      create: { userId, handle, visibility: "PUBLIC", ...rest },
-    });
-    return ok(profile);
   } catch (e) { return parseError(e); }
 }

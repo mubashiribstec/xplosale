@@ -16,14 +16,17 @@ export default async function JobDetailPage({
     ? (session.user as unknown as { role: string }).role === "ADMIN"
     : false;
 
-  const job = await prisma.jobPosting.findUnique({
-    where: { id: jobId },
-    include: {
-      company: true,
-      region: true,
-      _count: { select: { applications: true } },
-    },
-  });
+  const [job, jobSeekerProfileRaw] = await Promise.all([
+    prisma.jobPosting.findUnique({
+      where: { id: jobId },
+      include: {
+        company: true,
+        region: true,
+        _count: { select: { applications: true } },
+      },
+    }),
+    userId ? prisma.jobSeekerProfile.findUnique({ where: { userId } }) : null,
+  ]);
 
   if (!job) notFound();
 
@@ -33,9 +36,7 @@ export default async function JobDetailPage({
     notFound();
   }
 
-  const isJobSeeker = userId
-    ? !!(await prisma.jobSeekerProfile.findUnique({ where: { userId } }))
-    : false;
+  const isJobSeeker = !!jobSeekerProfileRaw;
 
   const salary =
     job.salaryMin || job.salaryMax

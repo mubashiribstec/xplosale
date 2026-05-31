@@ -43,6 +43,7 @@ export async function POST(
       },
       update: {
         coverLetter: parsed.data.coverLetter,
+        status: "APPLIED",
       },
       create: {
         jobPostingId: jobId,

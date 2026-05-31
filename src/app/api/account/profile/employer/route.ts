@@ -49,15 +49,17 @@ export async function POST(req: NextRequest) {
 
     let profile;
     if (existing) {
-      // Update existing company + profile
-      await prisma.company.update({
-        where: { id: existing.companyId },
-        data: { name: companyName, industry, size, websiteUrl: websiteUrl || undefined, regionId: region.id },
-      });
-      profile = await prisma.employerProfile.update({
-        where: { userId },
-        data: { roleAtCompany },
-        include: { company: true },
+      // Update existing company + profile atomically
+      profile = await prisma.$transaction(async (tx) => {
+        await tx.company.update({
+          where: { id: existing.companyId },
+          data: { name: companyName, industry, size, websiteUrl: websiteUrl || undefined, regionId: region.id },
+        });
+        return tx.employerProfile.update({
+          where: { userId },
+          data: { roleAtCompany },
+          include: { company: true },
+        });
       });
     } else {
       // Create company + profile atomically

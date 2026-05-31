@@ -67,11 +67,6 @@ export async function POST(
     const parsed = sendMessageSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const sender = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
-
     const message = await prisma.message.create({
       data: {
         roomId,
@@ -92,7 +87,7 @@ export async function POST(
     await createNotification(otherUserId, "MESSAGE", {
       roomId,
       messageId: message.id,
-      senderName: sender?.name ?? "",
+      senderName: message.sender.name ?? "",
       preview: parsed.data.body.slice(0, 100),
     });
 

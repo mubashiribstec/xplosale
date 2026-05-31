@@ -9,30 +9,26 @@ export async function GET(_req: NextRequest) {
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
 
-    const myProfile = await prisma.networkProfile.findUnique({ where: { userId }, select: { id: true } });
+    const [myProfile, acceptedConnections] = await Promise.all([
+      prisma.networkProfile.findUnique({ where: { userId }, select: { id: true } }),
+      prisma.connection.findMany({
+        where: {
+          OR: [{ requesterId: userId }, { recipientId: userId }],
+          status: "ACCEPTED",
+        },
+        select: { requesterId: true, recipientId: true },
+      }),
+    ]);
     if (!myProfile) return ok({ posts: [] });
-
-    const acceptedConnections = await prisma.connection.findMany({
-      where: {
-        OR: [{ requesterId: userId }, { recipientId: userId }],
-        status: "ACCEPTED",
-      },
-      select: { requesterId: true, recipientId: true },
-    });
 
     const connectedUserIds = acceptedConnections.map((c) =>
       c.requesterId === userId ? c.recipientId : c.requesterId
     );
 
-    const connectedProfiles = await prisma.networkProfile.findMany({
-      where: { userId: { in: connectedUserIds } },
-      select: { id: true },
-    });
-
-    const profileIds = [myProfile.id, ...connectedProfiles.map((p) => p.id)];
+    const feedUserIds = [userId, ...connectedUserIds];
 
     const posts = await prisma.post.findMany({
-      where: { authorProfileId: { in: profileIds } },
+      where: { authorProfile: { userId: { in: feedUserIds } } },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
