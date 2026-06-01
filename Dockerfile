@@ -24,6 +24,7 @@ ENV NEXTAUTH_URL="http://localhost:3000"
 ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ENV CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
 ENV STORAGE_MODE="local"
+ENV NEXT_PUBLIC_STORAGE_MODE="local"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate prisma client now that schema.prisma is available, then build
@@ -47,6 +48,8 @@ RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# messages/*.json use a runtime dynamic import — Next.js file tracer misses them
+COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
 
 USER nextjs
 EXPOSE 3000
