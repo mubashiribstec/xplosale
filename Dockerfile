@@ -14,14 +14,17 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Prisma generate needs a valid DATABASE_URL format (value unused at build time)
+# Build-time env: real values come from .env at runtime.
+# These satisfy validation (min-length, URL format) without being real secrets.
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXTAUTH_SECRET="build-time-placeholder"
+ENV UPSTASH_REDIS_URL="redis://localhost:6379"
+ENV NEXTAUTH_SECRET="build-time-placeholder-secret-xxxxxxxxxxxxxxxx"
 ENV NEXTAUTH_URL="http://localhost:3000"
 ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
-ENV CNIC_HASH_SALT="build-time-placeholder"
+ENV CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
+ENV STORAGE_MODE="local"
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate prisma client now that schema.prisma is available
 RUN npx prisma generate
