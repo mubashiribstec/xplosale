@@ -6,8 +6,8 @@ import Link from "next/link";
 
 interface AdminUser {
   id: string;
-  phone: string;
-  name: string;
+  phone: string | null;
+  name: string | null;
   role: string;
   verificationStatus: string;
   createdAt: string;
@@ -143,14 +143,14 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
               users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">
-                    {user.name}
+                    {user.name ?? "—"}
                     {user.networkProfile && (
                       <span className="ml-1 text-xs text-gray-400">
                         @{user.networkProfile.handle}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 font-mono text-xs">{user.phone}</td>
+                  <td className="px-4 py-3 text-gray-600 font-mono text-xs">{user.phone ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${roleBadge[user.role] ?? roleBadge.USER}`}

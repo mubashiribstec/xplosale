@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import { TierCard } from "@/components/shared/TierCard";
+import { getUserTier } from "@/lib/tier";
 
 export default async function MePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const user = session.user as { id: string; phone: string; name: string; role: string };
+  const user = session.user as { id: string; phone?: string | null; name?: string | null; role: string };
 
   const [sellerProfile, jobSeekerProfile, employerProfile, networkProfile, dbUser] = await Promise.all([
     prisma.sellerProfile.findUnique({ where: { userId: user.id } }),
@@ -17,12 +18,17 @@ export default async function MePage() {
     prisma.networkProfile.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { verificationStatus: true, name: true, phone: true, role: true },
+      select: { verificationStatus: true, name: true, phone: true, email: true, role: true, isPartner: true },
     }),
   ]);
 
-  const isVerified = dbUser?.verificationStatus === "VERIFIED";
-  const isPending = dbUser?.verificationStatus === "PENDING";
+  const tier = getUserTier({
+    isPartner: dbUser?.isPartner ?? false,
+    verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED",
+  });
+
+  const displayName = dbUser?.name ?? user.name ?? dbUser?.email ?? user.phone ?? "User";
+  const displayContact = dbUser?.phone ?? user.phone ?? dbUser?.email ?? "";
 
   const facets = [
     {
@@ -70,29 +76,18 @@ export default async function MePage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{dbUser?.name ?? user.name}</h1>
-              <p className="text-sm text-gray-500 mt-0.5">{dbUser?.phone ?? user.phone}</p>
-              <p className="text-xs text-gray-400 mt-0.5 capitalize">{dbUser?.role?.toLowerCase() ?? user.role?.toLowerCase()}</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              {isVerified && <VerifiedBadge />}
-              {isPending && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                  Verification pending
-                </span>
-              )}
+              <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
+              <p className="text-sm text-gray-500 mt-0.5">{displayContact}</p>
+              <p className="text-xs text-gray-400 mt-0.5 capitalize">{(dbUser?.role ?? user.role)?.toLowerCase()}</p>
             </div>
           </div>
-
-          {!isVerified && !isPending && (
-            <Link
-              href="/me/verify-cnic"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
-            >
-              Get verified → upload CNIC
-            </Link>
-          )}
         </div>
+
+        {/* Tier progress card */}
+        <TierCard
+          tier={tier}
+          verificationStatus={dbUser?.verificationStatus ?? "UNVERIFIED"}
+        />
 
         {/* Profile facets */}
         <div>
@@ -121,8 +116,12 @@ export default async function MePage() {
 
         {/* Quick links */}
         <div className="flex flex-wrap gap-2 text-sm">
-          <Link href="/me/verify-cnic" className="text-gray-500 hover:text-gray-700 hover:underline">
+          <Link href="/me/verify-identity" className="text-gray-500 hover:text-gray-700 hover:underline">
             Identity Verification
+          </Link>
+          <span className="text-gray-300">·</span>
+          <Link href="/me/partner-application" className="text-gray-500 hover:text-gray-700 hover:underline">
+            Partner Application
           </Link>
           <span className="text-gray-300">·</span>
           <Link href="/admin" className="text-gray-500 hover:text-gray-700 hover:underline">

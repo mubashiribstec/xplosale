@@ -5,8 +5,8 @@ import type { ChatRoom, Message } from "@prisma/client";
 
 type RoomWithParticipants = ChatRoom & {
   messages: Message[];
-  participantA: { id: string; name: string };
-  participantB: { id: string; name: string };
+  participantA: { id: string; name: string | null };
+  participantB: { id: string; name: string | null };
 };
 
 interface ChatInboxProps {
@@ -35,7 +35,7 @@ export function ChatInbox({ rooms, userId }: ChatInboxProps) {
               className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 truncate">{other.name}</p>
+                <p className="font-medium text-gray-900 truncate">{other.name ?? "User"}</p>
                 {lastMessage && (
                   <p className="text-sm text-gray-500 truncate">{lastMessage.body}</p>
                 )}

@@ -4,6 +4,9 @@ import { Prisma } from "@prisma/client";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { getUserTier } from "@/lib/tier";
+
+const LISTING_LIMITS: Record<string, number> = { BASIC: 5, VERIFIED: 20, PARTNER: Infinity };
 
 const createSchema = z.object({
   title: z.string().min(5).max(200),
@@ -77,11 +80,15 @@ export async function GET(req: NextRequest) {
             select: {
               id: true,
               agentTier: true,
-              user: { select: { id: true, name: true } },
+              user: { select: { id: true, name: true, verificationStatus: true, isPartner: true } },
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { sellerProfile: { user: { isPartner: "desc" } } },
+          { featured: "desc" },
+          { createdAt: "desc" },
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -104,8 +111,18 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const sellerProfile = await prisma.sellerProfile.findUnique({ where: { userId } });
+    const [sellerProfile, dbUser] = await Promise.all([
+      prisma.sellerProfile.findUnique({ where: { userId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true } }),
+    ]);
     if (!sellerProfile) return err("SellerProfile not found", 404);
+
+    const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
+    const limit = LISTING_LIMITS[tier] ?? 5;
+    if (limit !== Infinity) {
+      const activeCount = await prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } });
+      if (activeCount >= limit) return err(`Active listing limit (${limit}) reached for ${tier} accounts. Verify your identity to post more.`, 403);
+    }
 
     const { price, ...rest } = parsed.data;
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);

@@ -11,7 +11,7 @@ type PostWithMeta = {
     handle: string;
     headline: string | null;
     profilePhotoUrl: string | null;
-    user: { name: string };
+    user: { name: string | null };
   };
   _count: { likes: number; comments: number };
   likedByMe: boolean;

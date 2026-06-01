@@ -32,7 +32,7 @@ interface ProfileResult {
   handle: string;
   headline: string | null;
   profilePhotoUrl: string | null;
-  name: string;
+  name: string | null;
   location: string | null;
   type: 'profile';
 }
@@ -183,17 +183,17 @@ export default function SearchResults({ q, listings, jobs, profiles }: SearchRes
                   {photoUrl ? (
                     <img
                       src={photoUrl}
-                      alt={profile.name}
+                      alt={profile.name ?? profile.handle}
                       className="w-11 h-11 rounded-full object-cover shrink-0"
                     />
                   ) : (
                     <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-base shrink-0">
-                      {profile.name[0]?.toUpperCase() ?? "?"}
+                      {(profile.name ?? profile.handle)[0]?.toUpperCase() ?? "?"}
                     </div>
                   )}
                   <div className="min-w-0">
                     <p className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                      {profile.name}
+                      {profile.name ?? profile.handle}
                     </p>
                     <p className="text-xs text-gray-500 truncate">@{profile.handle}</p>
                     {profile.headline && (

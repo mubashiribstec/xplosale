@@ -10,7 +10,7 @@ export async function GET() {
 
     const pending = await prisma.user.findMany({
       where: { verificationStatus: "PENDING" },
-      select: { id: true, name: true, phone: true, createdAt: true, verificationStatus: true },
+      select: { id: true, name: true, phone: true, email: true, createdAt: true, verificationStatus: true, docType: true },
       orderBy: { createdAt: "asc" },
     });
 

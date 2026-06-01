@@ -3,6 +3,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPresignedGet } from "@/core/adapters/storage";
+import { canAccessJobApplications } from "@/verticals/jobs/ats/permissions";
 
 export async function GET(
   _req: NextRequest,
@@ -17,7 +18,10 @@ export async function GET(
 
     const job = await prisma.jobPosting.findUnique({ where: { id: jobId } });
     if (!job) return err("Job not found", 404);
-    if (job.postedByUserId !== userId) return err("Forbidden", 403);
+
+    const userRole = (session.user as { role: string }).role;
+    const allowed = await canAccessJobApplications(userId, jobId, userRole);
+    if (!allowed) return err("Forbidden", 403);
 
     const applications = await prisma.application.findMany({
       where: { jobPostingId: jobId },
@@ -29,6 +33,7 @@ export async function GET(
             user: { select: { id: true, name: true } },
           },
         },
+        currentStage: { select: { id: true, name: true, color: true, isHired: true, isRejected: true } },
       },
       orderBy: { createdAt: "desc" },
     });

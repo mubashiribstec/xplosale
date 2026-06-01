@@ -12,6 +12,9 @@ enum Role {
   USER
   EMPLOYER
   ADMIN
+  EMPLOYER_RECRUITER
+  EMPLOYER_HIRING_MANAGER
+  EMPLOYER_INTERVIEWER
 }
 
 enum VerificationStatus {
@@ -79,6 +82,23 @@ enum ConnectionStatus {
   BLOCKED
 }
 
+enum IdentityDocType {
+  CNIC
+  PASSPORT
+}
+
+enum PartnerType {
+  INDIVIDUAL
+  BUSINESS
+  AGENCY
+}
+
+enum PartnerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ProfileVisibility {
   PUBLIC
   CONNECTIONS
@@ -88,6 +108,7 @@ enum ChatContext {
   LISTING
   JOB_APPLICATION
   NETWORK_DM
+  ADMIN_DM
 }
 
 enum MessageKind {
@@ -106,42 +127,87 @@ enum NotificationKind {
   CONNECTION_REQ
   ENDORSEMENT
   ADMIN
+  MENTION
+  TEST_ASSIGNED
+  INTERVIEW_SCHEDULED
+  INTERVIEW_REMINDER
+  SCORECARD_REQUESTED
+  ADMIN_BROADCAST
+  ADMIN_DM
+  BAN_NOTICE
+  DATA_EXPORT_READY
+}
+
+enum HiringTeamRole {
+  RECRUITER
+  HIRING_MANAGER
+  INTERVIEWER
+  OBSERVER
+}
+
+enum EmailTemplateKind {
+  INTERVIEW_INVITE
+  REJECT
+  OFFER
+  ASSESSMENT_INVITE
+  CUSTOM
+}
+
+enum EmailSendStatus {
+  SENT
+  FAILED
+  MOCKED
+}
+
+enum EmailSendProvider {
+  RESEND
+  CONSOLE
 }
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
 model User {
   id                 String             @id @default(cuid())
-  phone              String             @unique
-  name               String
+  phone              String?            @unique
+  email              String?            @unique
+  emailVerified      DateTime?
+  name               String?
   cnHash             String?            @unique
   role               Role               @default(USER)
   isPhoneVerified    Boolean            @default(false)
   verificationStatus VerificationStatus @default(UNVERIFIED)
+  docType            IdentityDocType?
+  isPartner          Boolean            @default(false)
+  partnerType        PartnerType?
   defaultRegionId    String?
   languagePref       String             @default("en")
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  defaultRegion    Region?          @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
-  sellerProfile    SellerProfile?
-  employerProfile  EmployerProfile?
-  jobSeekerProfile JobSeekerProfile?
-  networkProfile   NetworkProfile?
-  sentMessages     Message[]           @relation("SentMessages")
-  notifications    Notification[]
-  adminActions     AdminActionLog[]    @relation("AdminActions")
-  escrowAsBuyer    EscrowTransaction[] @relation("EscrowBuyer")
-  escrowAsSeller   EscrowTransaction[] @relation("EscrowSeller")
-  listingReviews   ListingReview[]     @relation("ReviewAuthor")
-  ownedCompanies   Company[]           @relation("CompanyOwner")
-  postedJobPostings JobPosting[]       @relation("JobPostingPoster")
-  postLikes        PostLike[]
-  postComments     PostComment[]
-  connectionsAsRequester Connection[] @relation("ConnectionRequester")
-  connectionsAsRecipient Connection[] @relation("ConnectionRecipient")
-  chatRoomsAsA     ChatRoom[]          @relation("ChatParticipantA")
-  chatRoomsAsB     ChatRoom[]          @relation("ChatParticipantB")
+  defaultRegion       Region?             @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
+  sellerProfile       SellerProfile?
+  employerProfile     EmployerProfile?
+  jobSeekerProfile    JobSeekerProfile?
+  networkProfile      NetworkProfile?
+  sentMessages        Message[]           @relation("SentMessages")
+  notifications       Notification[]
+  adminActions        AdminActionLog[]    @relation("AdminActions")
+  escrowAsBuyer       EscrowTransaction[] @relation("EscrowBuyer")
+  escrowAsSeller      EscrowTransaction[] @relation("EscrowSeller")
+  listingReviews      ListingReview[]     @relation("ReviewAuthor")
+  ownedCompanies      Company[]           @relation("CompanyOwner")
+  postedJobPostings   JobPosting[]        @relation("JobPostingPoster")
+  postLikes           PostLike[]
+  postComments        PostComment[]
+  connectionsAsRequester Connection[]    @relation("ConnectionRequester")
+  connectionsAsRecipient Connection[]    @relation("ConnectionRecipient")
+  chatRoomsAsA        ChatRoom[]          @relation("ChatParticipantA")
+  chatRoomsAsB        ChatRoom[]          @relation("ChatParticipantB")
+  accounts                Account[]
+  sessions                Session[]
+  partnerApplication      PartnerApplication?
+  hiringTeamMemberships   HiringTeam[]
+  candidateNotes          CandidateNote[]     @relation("NoteAuthor")
 }
 
 model Region {
@@ -341,6 +407,9 @@ model Company {
   region           Region            @relation(fields: [regionId], references: [id])
   employerProfiles EmployerProfile[]
   jobPostings      JobPosting[]
+  pipelineStages   PipelineStage[]
+  candidateTags    CandidateTag[]
+  emailTemplates   EmailTemplate[]
 }
 
 model EmployerProfile {
@@ -390,22 +459,29 @@ model JobPosting {
   postedBy     User          @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
   region       Region        @relation(fields: [regionId], references: [id])
   applications Application[]
+  hiringTeam   HiringTeam[]
 
   @@index([status, regionId, createdAt])
   @@index([companyId, status])
 }
 
 model Application {
-  id           String            @id @default(cuid())
-  jobPostingId String
-  jobSeekerId  String
-  resumeUrl    String
-  coverLetter  String?
-  status       ApplicationStatus @default(APPLIED)
-  createdAt    DateTime          @default(now())
+  id              String            @id @default(cuid())
+  jobPostingId    String
+  jobSeekerId     String
+  applicantUserId String?
+  resumeUrl       String
+  coverLetter     String?
+  status          ApplicationStatus @default(APPLIED)
+  currentStageId  String?
+  createdAt       DateTime          @default(now())
 
-  jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id])
-  jobSeeker  JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  jobPosting       JobPosting       @relation(fields: [jobPostingId], references: [id])
+  jobSeeker        JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  currentStage     PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
+  notes            CandidateNote[]
+  applicationTags  ApplicationTag[]
+  emailsSent       EmailSendLog[]
 
   @@unique([jobPostingId, jobSeekerId])
 }
@@ -418,6 +494,107 @@ model JobAlert {
   createdAt   DateTime @default(now())
 
   jobSeeker JobSeekerProfile @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+}
+
+model PipelineStage {
+  id         String   @id @default(cuid())
+  companyId  String
+  name       String
+  order      Int
+  color      String   @default("#6B7280")
+  isInitial  Boolean  @default(false)
+  isHired    Boolean  @default(false)
+  isRejected Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications Application[] @relation("ApplicationStage")
+
+  @@unique([companyId, order])
+  @@index([companyId])
+}
+
+model HiringTeam {
+  id           String         @id @default(cuid())
+  jobPostingId String
+  userId       String
+  role         HiringTeamRole
+  addedAt      DateTime       @default(now())
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobPostingId, userId])
+  @@index([jobPostingId])
+}
+
+model CandidateNote {
+  id            String   @id @default(cuid())
+  applicationId String
+  authorId      String
+  body          String
+  mentions      Json?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author      User        @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  @@index([applicationId, createdAt])
+}
+
+model CandidateTag {
+  id        String @id @default(cuid())
+  companyId String
+  name      String
+  color     String @default("#6B7280")
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applicationTags ApplicationTag[]
+
+  @@unique([companyId, name])
+}
+
+model ApplicationTag {
+  id            String @id @default(cuid())
+  applicationId String
+  tagId         String
+
+  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  tag         CandidateTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, tagId])
+}
+
+model EmailTemplate {
+  id        String            @id @default(cuid())
+  companyId String
+  name      String
+  subject   String
+  body      String
+  kind      EmailTemplateKind @default(CUSTOM)
+  createdAt DateTime          @default(now())
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sendLogs EmailSendLog[]
+}
+
+model EmailSendLog {
+  id            String            @id @default(cuid())
+  applicationId String?
+  templateId    String?
+  sentByUserId  String
+  toEmail       String
+  subject       String
+  body          String
+  status        EmailSendStatus
+  provider      EmailSendProvider
+  sentAt        DateTime          @default(now())
+
+  application Application?   @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  template    EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([sentAt])
 }
 
 // ─── Network ─────────────────────────────────────────────────────────────────
@@ -554,4 +731,60 @@ model PostComment {
 
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   author User @relation(fields: [authorId], references: [id])
+}
+
+// ─── NextAuth Adapter ─────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Partner ──────────────────────────────────────────────────────────────────
+
+model PartnerApplication {
+  id           String                   @id @default(cuid())
+  userId       String                   @unique
+  partnerType  PartnerType
+  businessName String?
+  website      String?
+  description  String
+  status       PartnerApplicationStatus @default(PENDING)
+  reviewedAt   DateTime?
+  reviewedById String?
+  reason       String?
+  createdAt    DateTime                 @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

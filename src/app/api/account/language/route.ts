@@ -4,7 +4,7 @@ import { requireSession, getUserId } from '@/core/auth/session';
 import { prisma } from '@/lib/prisma';
 
 const LanguageSchema = z.object({
-  locale: z.enum(['en', 'ur']),
+  locale: z.enum(['en', 'ur', 'ar', 'hi', 'fr', 'es', 'zh']),
 });
 
 export async function PATCH(request: Request) {

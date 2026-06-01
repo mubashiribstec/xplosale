@@ -3,6 +3,7 @@ import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { type NextRequest } from "next/server";
+import { seedDefaultStages } from "@/verticals/jobs/ats/seed-stages";
 
 const schema = z.object({
   companyName: z.string().min(1).max(200),
@@ -62,11 +63,12 @@ export async function POST(req: NextRequest) {
         });
       });
     } else {
-      // Create company + profile atomically
+      // Create company + profile atomically, then seed default pipeline stages
       const result = await prisma.$transaction(async (tx) => {
         const company = await tx.company.create({
           data: { ownerId: userId, name: companyName, industry, size, websiteUrl: websiteUrl || undefined, regionId: region.id },
         });
+        await seedDefaultStages(company.id, tx);
         return tx.employerProfile.create({
           data: { userId, companyId: company.id, roleAtCompany },
           include: { company: true },
