@@ -138,6 +138,24 @@ enum NotificationKind {
   DATA_EXPORT_READY
 }
 
+enum TestKind {
+  MCQ
+  CODING
+  FREE_TEXT
+  VIDEO
+  FILE_UPLOAD
+  MIXED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  PENDING_GRADE
+  EXPIRED
+  GRADED
+}
+
 enum HiringTeamRole {
   RECRUITER
   HIRING_MANAGER
@@ -208,6 +226,7 @@ model User {
   partnerApplication      PartnerApplication?
   hiringTeamMemberships   HiringTeam[]
   candidateNotes          CandidateNote[]     @relation("NoteAuthor")
+  testAssignmentsGiven    TestAssignment[]    @relation("TestAssignedBy")
 }
 
 model Region {
@@ -410,6 +429,7 @@ model Company {
   pipelineStages   PipelineStage[]
   candidateTags    CandidateTag[]
   emailTemplates   EmailTemplate[]
+  testTemplates    TestTemplate[]
 }
 
 model EmployerProfile {
@@ -499,6 +519,7 @@ model Application {
   applicationTags  ApplicationTag[]
   emailsSent       EmailSendLog[]
   candidateMatch   CandidateMatch?
+  testAssignments  TestAssignment[]
 
   @@unique([jobPostingId, jobSeekerId])
 }
@@ -826,4 +847,92 @@ model PartnerApplication {
   createdAt    DateTime                 @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Assessments ─────────────────────────────────────────────────────────────
+
+model TestTemplate {
+  id                  String   @id @default(cuid())
+  companyId           String
+  name                String
+  description         String?
+  kind                TestKind @default(MCQ)
+  durationMin         Int
+  passingScorePercent Int?
+  isPublished         Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  questions   TestQuestion[]
+  assignments TestAssignment[]
+
+  @@index([companyId, isPublished])
+}
+
+model TestQuestion {
+  id         String   @id @default(cuid())
+  templateId String
+  order      Int
+  kind       TestKind @default(MCQ)
+  body       String
+  points     Int      @default(1)
+  metadata   Json
+
+  template    TestTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  submissions TestSubmission[]
+
+  @@index([templateId, order])
+}
+
+model TestAssignment {
+  id               String           @id @default(cuid())
+  applicationId    String
+  templateId       String
+  assignedByUserId String
+  dueAt            DateTime
+  status           AssignmentStatus @default(ASSIGNED)
+  startedAt        DateTime?
+  submittedAt      DateTime?
+  scorePercent     Float?
+  autoGraded       Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  application Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  template    TestTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  assignedBy  User              @relation("TestAssignedBy", fields: [assignedByUserId], references: [id])
+  submissions TestSubmission[]
+  session     TestSession?
+
+  @@index([applicationId, status])
+}
+
+model TestSubmission {
+  id             String    @id @default(cuid())
+  assignmentId   String
+  questionId     String
+  answer         Json
+  autoScore      Float?
+  manualScore    Float?
+  graderNotes    String?
+  gradedByUserId String?
+  gradedAt       DateTime?
+
+  assignment TestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question   TestQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, questionId])
+}
+
+model TestSession {
+  id              String   @id @default(cuid())
+  assignmentId    String   @unique
+  startedAt       DateTime @default(now())
+  endsAt          DateTime
+  focusLossCount  Int      @default(0)
+  fullscreenExits Int      @default(0)
+  ipAddress       String?
+  userAgent       String?
+
+  assignment TestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 }
