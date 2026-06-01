@@ -20,7 +20,7 @@ export async function POST(
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
-      select: { jobPostingId: true },
+      select: { jobPostingId: true, jobPosting: { select: { companyId: true } } },
     });
     if (!application) return err("Application not found", 404);
 
@@ -30,6 +30,10 @@ export async function POST(
     const body = await req.json() as unknown;
     const parsed = applySchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
+
+    // Tag must belong to the same company as the application
+    const tag = await prisma.candidateTag.findUnique({ where: { id: parsed.data.tagId } });
+    if (!tag || tag.companyId !== application.jobPosting.companyId) return err("Tag not found", 404);
 
     const appTag = await prisma.applicationTag.upsert({
       where: { applicationId_tagId: { applicationId, tagId: parsed.data.tagId } },

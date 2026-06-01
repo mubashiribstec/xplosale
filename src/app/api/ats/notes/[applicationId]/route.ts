@@ -81,18 +81,25 @@ export async function POST(
       },
     });
 
-    // Send MENTION notifications to mentioned users (deduplicated, skip self)
-    const mentioned = [...new Set(parsed.data.mentions)].filter((id) => id !== userId);
-    await Promise.all(
-      mentioned.map((mentionedUserId) =>
-        createNotification(mentionedUserId, "MENTION", {
-          noteId: note.id,
-          applicationId,
-          jobTitle: application.jobPosting.title,
-          authorId: userId,
-        })
-      )
-    );
+    // Only notify users who are actually on this job's hiring team (prevents notification spam to arbitrary IDs)
+    const dedupedMentions = [...new Set(parsed.data.mentions)].filter((id) => id !== userId);
+    if (dedupedMentions.length > 0) {
+      const teamMembers = await prisma.hiringTeam.findMany({
+        where: { jobPostingId: application.jobPostingId, userId: { in: dedupedMentions } },
+        select: { userId: true },
+      });
+      const validMentioned = teamMembers.map((m) => m.userId);
+      await Promise.all(
+        validMentioned.map((mentionedUserId) =>
+          createNotification(mentionedUserId, "MENTION", {
+            noteId: note.id,
+            applicationId,
+            jobTitle: application.jobPosting.title,
+            authorId: userId,
+          })
+        )
+      );
+    }
 
     return ok(note, 201);
   } catch (e) {

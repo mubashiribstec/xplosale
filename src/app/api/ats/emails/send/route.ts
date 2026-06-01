@@ -5,7 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { canAccessJobApplications } from "@/verticals/jobs/ats/permissions";
 import { getEmailClient } from "@/core/adapters/email";
-import { renderTemplate } from "@/verticals/jobs/ats/template-vars";
+import { renderTemplate, renderTemplateHtml } from "@/verticals/jobs/ats/template-vars";
 
 const sendSchema = z.object({
   applicationId: z.string(),
@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
 
     const renderedSubject = renderTemplate(subject, vars);
     const renderedBody = renderTemplate(body, vars);
-    const html = `<div style="font-family:sans-serif;max-width:600px">${renderedBody.replace(/\n/g, "<br>")}</div>`;
+    const htmlBody = renderTemplateHtml(body, vars);
+    const html = `<div style="font-family:sans-serif;max-width:600px">${htmlBody.replace(/\n/g, "<br>")}</div>`;
 
     const emailClient = getEmailClient();
     const result = await emailClient.send({ to: toEmail, subject: renderedSubject, html });

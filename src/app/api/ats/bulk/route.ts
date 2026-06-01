@@ -5,7 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { canAccessJobApplications, canManagePipelineStages } from "@/verticals/jobs/ats/permissions";
 import { getEmailClient } from "@/core/adapters/email";
-import { renderTemplate } from "@/verticals/jobs/ats/template-vars";
+import { renderTemplate, renderTemplateHtml } from "@/verticals/jobs/ats/template-vars";
 import { logAdminAction } from "@/core/audit";
 import { ApplicationStatus } from "@prisma/client";
 
@@ -137,7 +137,8 @@ export async function POST(req: NextRequest) {
 
         const subject = renderTemplate(template.subject, vars);
         const body = renderTemplate(template.body, vars);
-        const html = `<div style="font-family:sans-serif;max-width:600px">${body.replace(/\n/g, "<br>")}</div>`;
+        const htmlBody = renderTemplateHtml(template.body, vars);
+        const html = `<div style="font-family:sans-serif;max-width:600px">${htmlBody.replace(/\n/g, "<br>")}</div>`;
 
         const result = await emailClient.send({ to: toEmail, subject, html });
 

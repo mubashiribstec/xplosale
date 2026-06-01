@@ -30,7 +30,7 @@ export async function PATCH(
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },
-      select: { id: true, jobPostingId: true, currentStageId: true },
+      select: { id: true, jobPostingId: true, currentStageId: true, jobPosting: { select: { companyId: true } } },
     });
     if (!application) return err("Application not found", 404);
 
@@ -41,7 +41,10 @@ export async function PATCH(
     const parsed = moveSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const stage = await prisma.pipelineStage.findUnique({ where: { id: parsed.data.stageId } });
+    // Stage must belong to the same company as the application
+    const stage = await prisma.pipelineStage.findFirst({
+      where: { id: parsed.data.stageId, companyId: application.jobPosting.companyId },
+    });
     if (!stage) return err("Stage not found", 404);
 
     const legacyStatus = statusFromStage(stage);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NoteThread from "./NoteThread";
 
 type Tag = { id: string; name: string; color: string };
@@ -48,28 +48,36 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
   const [emailMsg, setEmailMsg] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [showEmailPanel, setShowEmailPanel] = useState(false);
+  // Track current applicationId to discard stale async responses
+  const currentAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!applicationId) { setApp(null); return; }
+    currentAppIdRef.current = applicationId;
     setLoading(true);
     setTab("profile");
     setShowEmailPanel(false);
+    setTeam([]);
 
     Promise.all([
       fetch(`/api/ats/applications/${applicationId}`).then((r) => r.json()),
       fetch(`/api/ats/templates?companyId=${companyId}`).then((r) => r.json()),
     ]).then(([appRes, tmplRes]: [{ ok: boolean; data?: Application }, { ok: boolean; data?: EmailTemplate[] }]) => {
+      if (currentAppIdRef.current !== applicationId) return; // stale response
       if (appRes.ok && appRes.data) {
         setApp(appRes.data);
-        // Fetch team for this job
-        fetch(`/api/ats/team/${appRes.data.jobPosting.id}`)
+        const jobId = appRes.data.jobPosting.id;
+        fetch(`/api/ats/team/${jobId}`)
           .then((r) => r.json())
           .then((d: { ok: boolean; data?: TeamMember[] }) => {
+            if (currentAppIdRef.current !== applicationId) return; // stale response
             if (d.ok && d.data) setTeam(d.data);
           });
       }
       if (tmplRes.ok && tmplRes.data) setTemplates(tmplRes.data);
-    }).finally(() => setLoading(false));
+    }).finally(() => {
+      if (currentAppIdRef.current === applicationId) setLoading(false);
+    });
 
     fetch(`/api/ats/tags?companyId=${companyId}`)
       .then((r) => r.json())
