@@ -145,6 +145,25 @@ enum HiringTeamRole {
   OBSERVER
 }
 
+enum EmailTemplateKind {
+  INTERVIEW_INVITE
+  REJECT
+  OFFER
+  ASSESSMENT_INVITE
+  CUSTOM
+}
+
+enum EmailSendStatus {
+  SENT
+  FAILED
+  MOCKED
+}
+
+enum EmailSendProvider {
+  RESEND
+  CONSOLE
+}
+
 // ─── Core ────────────────────────────────────────────────────────────────────
 
 model User {
@@ -188,6 +207,7 @@ model User {
   sessions                Session[]
   partnerApplication      PartnerApplication?
   hiringTeamMemberships   HiringTeam[]
+  candidateNotes          CandidateNote[]     @relation("NoteAuthor")
 }
 
 model Region {
@@ -388,6 +408,8 @@ model Company {
   employerProfiles EmployerProfile[]
   jobPostings      JobPosting[]
   pipelineStages   PipelineStage[]
+  candidateTags    CandidateTag[]
+  emailTemplates   EmailTemplate[]
 }
 
 model EmployerProfile {
@@ -454,9 +476,12 @@ model Application {
   currentStageId  String?
   createdAt       DateTime          @default(now())
 
-  jobPosting    JobPosting       @relation(fields: [jobPostingId], references: [id])
-  jobSeeker     JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
-  currentStage  PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
+  jobPosting       JobPosting       @relation(fields: [jobPostingId], references: [id])
+  jobSeeker        JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  currentStage     PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
+  notes            CandidateNote[]
+  applicationTags  ApplicationTag[]
+  emailsSent       EmailSendLog[]
 
   @@unique([jobPostingId, jobSeekerId])
 }
@@ -501,6 +526,75 @@ model HiringTeam {
 
   @@unique([jobPostingId, userId])
   @@index([jobPostingId])
+}
+
+model CandidateNote {
+  id            String   @id @default(cuid())
+  applicationId String
+  authorId      String
+  body          String
+  mentions      Json?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author      User        @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  @@index([applicationId, createdAt])
+}
+
+model CandidateTag {
+  id        String @id @default(cuid())
+  companyId String
+  name      String
+  color     String @default("#6B7280")
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applicationTags ApplicationTag[]
+
+  @@unique([companyId, name])
+}
+
+model ApplicationTag {
+  id            String @id @default(cuid())
+  applicationId String
+  tagId         String
+
+  application Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  tag         CandidateTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, tagId])
+}
+
+model EmailTemplate {
+  id        String            @id @default(cuid())
+  companyId String
+  name      String
+  subject   String
+  body      String
+  kind      EmailTemplateKind @default(CUSTOM)
+  createdAt DateTime          @default(now())
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sendLogs EmailSendLog[]
+}
+
+model EmailSendLog {
+  id            String            @id @default(cuid())
+  applicationId String?
+  templateId    String?
+  sentByUserId  String
+  toEmail       String
+  subject       String
+  body          String
+  status        EmailSendStatus
+  provider      EmailSendProvider
+  sentAt        DateTime          @default(now())
+
+  application Application?   @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  template    EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId])
+  @@index([sentAt])
 }
 
 // ─── Network ─────────────────────────────────────────────────────────────────

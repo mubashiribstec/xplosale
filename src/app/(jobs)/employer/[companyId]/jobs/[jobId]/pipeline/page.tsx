@@ -22,7 +22,7 @@ export default async function PipelinePage({
   const allowed = await canAccessJobApplications(userId, jobId, userRole);
   if (!allowed) redirect("/");
 
-  const [job, stages, applications] = await Promise.all([
+  const [job, stages, applications, tags] = await Promise.all([
     prisma.jobPosting.findUnique({
       where: { id: jobId },
       select: { id: true, title: true, companyId: true, company: { select: { ownerId: true } } },
@@ -44,8 +44,13 @@ export default async function PipelinePage({
         currentStage: {
           select: { id: true, name: true, color: true, isHired: true, isRejected: true, isInitial: true, order: true },
         },
+        applicationTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
       },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.candidateTag.findMany({
+      where: { companyId },
+      orderBy: { name: "asc" },
     }),
   ]);
 
@@ -101,6 +106,7 @@ export default async function PipelinePage({
         <div className="max-w-7xl mx-auto">
           <PipelineBoard
             jobId={jobId}
+            companyId={companyId}
             jobTitle={job.title}
             stages={resolvedStages.map((s) => ({
               id: s.id,
@@ -118,11 +124,11 @@ export default async function PipelinePage({
               createdAt: a.createdAt.toISOString(),
               coverLetter: a.coverLetter,
               jobSeeker: a.jobSeeker,
-              currentStage: a.currentStage
-                ? { ...a.currentStage }
-                : null,
+              currentStage: a.currentStage ? { ...a.currentStage } : null,
+              applicationTags: a.applicationTags,
             }))}
             fallbackStageMap={fallbackStageMap}
+            tags={tags.map((t) => ({ id: t.id, name: t.name, color: t.color }))}
           />
         </div>
       </div>
