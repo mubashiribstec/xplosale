@@ -340,12 +340,179 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
             />
           )}
 
-          {!loading && (tab === "tests" || tab === "interviews") && (
+          {!loading && tab === "tests" && app && (
+            <TestsTab applicationId={app.id} companyId={companyId} />
+          )}
+
+          {!loading && tab === "interviews" && (
             <div className="py-12 text-center text-sm text-gray-400">
-              Coming in {tab === "tests" ? "Phase 19" : "Phase 21"}.
+              Coming in Phase 21.
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tests Tab ────────────────────────────────────────────────────────────────
+
+interface TestAssignment {
+  id: string;
+  status: string;
+  dueAt: string;
+  scorePercent: number | null;
+  autoGraded: boolean;
+  template: { id: string; name: string; durationMin: number };
+}
+
+interface TestTemplate {
+  id: string;
+  name: string;
+  durationMin: number;
+  isPublished: boolean;
+}
+
+function TestsTab({ applicationId, companyId }: { applicationId: string; companyId: string }) {
+  const [assignments, setAssignments] = useState<TestAssignment[]>([]);
+  const [templates, setTemplates] = useState<TestTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAssign, setShowAssign] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [dueAt, setDueAt] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/ats/assignments?applicationId=${applicationId}`).then((r) => r.json()),
+      fetch(`/api/ats/tests?companyId=${companyId}`).then((r) => r.json()),
+    ]).then(([aRes, tRes]) => {
+      if ((aRes as { ok: boolean; data?: TestAssignment[] }).ok) setAssignments((aRes as { ok: boolean; data: TestAssignment[] }).data);
+      if ((tRes as { ok: boolean; data?: TestTemplate[] }).ok) {
+        setTemplates(((tRes as { ok: boolean; data: TestTemplate[] }).data).filter((t) => t.isPublished));
+      }
+      setLoading(false);
+    });
+  }, [applicationId, companyId]);
+
+  async function assign() {
+    if (!selectedTemplate || !dueAt) return;
+    setAssigning(true);
+    setError(null);
+    const res = await fetch("/api/ats/assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicationId, templateId: selectedTemplate, dueAt }),
+    });
+    const j = await res.json() as { ok: boolean; data?: TestAssignment; error?: string };
+    setAssigning(false);
+    if (!j.ok) { setError(j.error ?? "Failed"); return; }
+    if (j.data) setAssignments((p) => [...p, j.data!]);
+    setShowAssign(false);
+    setSelectedTemplate("");
+    setDueAt("");
+  }
+
+  const STATUS_COLORS: Record<string, string> = {
+    ASSIGNED: "bg-blue-50 text-blue-600",
+    IN_PROGRESS: "bg-yellow-50 text-yellow-700",
+    SUBMITTED: "bg-purple-50 text-purple-700",
+    PENDING_GRADE: "bg-orange-50 text-orange-600",
+    GRADED: "bg-green-100 text-green-700",
+    EXPIRED: "bg-gray-100 text-gray-500",
+  };
+
+  if (loading) return <p className="py-8 text-center text-sm text-gray-400">Loading…</p>;
+
+  const defaultDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-gray-700">Assessment Tests</p>
+        {!showAssign && templates.length > 0 && (
+          <button
+            onClick={() => { setShowAssign(true); setDueAt(defaultDue); }}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            + Assign Test
+          </button>
+        )}
+      </div>
+
+      {showAssign && (
+        <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 space-y-3">
+          <p className="text-sm font-medium text-gray-800">Assign a test</p>
+          <select
+            value={selectedTemplate}
+            onChange={(e) => setSelectedTemplate(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Select a published test…</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>{t.name} ({t.durationMin} min)</option>
+            ))}
+          </select>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Due date</label>
+            <input
+              type="datetime-local"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => void assign()}
+              disabled={assigning || !selectedTemplate || !dueAt}
+              className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {assigning ? "Assigning…" : "Assign"}
+            </button>
+            <button
+              onClick={() => { setShowAssign(false); setError(null); }}
+              className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {templates.length === 0 && !loading && (
+        <p className="text-sm text-gray-400">
+          No published tests yet.{" "}
+          <a href={`/employer/${companyId}/tests`} className="text-blue-600 hover:underline">
+            Create one →
+          </a>
+        </p>
+      )}
+
+      {assignments.length === 0 && templates.length > 0 && !showAssign && (
+        <p className="text-sm text-gray-400">No tests assigned yet.</p>
+      )}
+
+      <div className="space-y-2">
+        {assignments.map((a) => (
+          <div key={a.id} className="border border-gray-100 rounded-lg p-3 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium text-gray-800">{a.template.name}</p>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-500"}`}>
+                {a.status.replace(/_/g, " ")}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">
+              Due: {new Date(a.dueAt).toLocaleDateString()}
+              {a.scorePercent != null && (
+                <> · Score: <strong className={a.scorePercent >= 70 ? "text-green-600" : "text-red-500"}>{a.scorePercent.toFixed(0)}%</strong></>
+              )}
+              {a.autoGraded && " · Auto-graded"}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

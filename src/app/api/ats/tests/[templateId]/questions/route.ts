@@ -9,7 +9,7 @@ const createQuestionSchema = z.object({
   body: z.string().min(1).max(2000),
   points: z.number().int().min(1).max(100).default(1),
   order: z.number().int().min(1).optional(),
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 async function checkOwnerAccess(
@@ -102,7 +102,7 @@ export async function POST(
         body: questionBody,
         points,
         order: questionOrder,
-        metadata,
+        metadata: metadata as object,
       },
     });
 
