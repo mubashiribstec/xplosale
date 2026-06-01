@@ -17,4 +17,7 @@ function createPrismaClient(): PrismaClient {
 export const prisma: PrismaClient =
   globalThis.__prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") globalThis.__prisma = prisma;
+// Cache the client across module re-evaluations in every environment.
+// Without this, repeated module loads construct new PrismaClient/pg pools
+// that are never reused, exhausting Postgres connections under load.
+globalThis.__prisma = prisma;

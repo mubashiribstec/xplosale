@@ -50,6 +50,14 @@ export async function POST(
     const parsed = applySchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
+    // Place the new application in the company's initial pipeline stage so it
+    // shows up on the Kanban board immediately (keeps dual-write in sync).
+    const initialStage = await prisma.pipelineStage.findFirst({
+      where: { companyId: jobPosting.companyId, isInitial: true },
+      select: { id: true },
+      orderBy: { order: "asc" },
+    });
+
     const application = await prisma.application.upsert({
       where: {
         jobPostingId_jobSeekerId: {
@@ -68,6 +76,7 @@ export async function POST(
         resumeUrl: jobSeekerId_profile.resumeUrl,
         coverLetter: parsed.data.coverLetter,
         status: "APPLIED",
+        currentStageId: initialStage?.id ?? null,
       },
     });
 

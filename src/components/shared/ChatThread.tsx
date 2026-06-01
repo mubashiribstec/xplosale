@@ -26,19 +26,39 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
   }, [messages]);
 
   useEffect(() => {
-    const es = new EventSource(`/api/chat/sse?roomId=${roomId}`);
-    es.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data as string) as MessageWithSender;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
-      } catch {
-        // ignore malformed events
-      }
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let closed = false;
+
+    const connect = () => {
+      if (closed) return;
+      es = new EventSource(`/api/chat/sse?roomId=${roomId}`);
+      es.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data as string) as MessageWithSender;
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        } catch {
+          // ignore malformed events
+        }
+      };
+      // On error the browser stops delivering events; tear down and reconnect
+      // with a small backoff so the thread keeps receiving messages.
+      es.onerror = () => {
+        es?.close();
+        if (closed) return;
+        reconnectTimer = setTimeout(connect, 3000);
+      };
     };
-    return () => es.close();
+
+    connect();
+    return () => {
+      closed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      es?.close();
+    };
   }, [roomId]);
 
   async function handleSend() {

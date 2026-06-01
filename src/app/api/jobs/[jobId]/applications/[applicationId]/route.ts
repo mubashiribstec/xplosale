@@ -32,6 +32,14 @@ export async function PATCH(
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
+    // Scope by jobPostingId so an application cannot be mutated through a job
+    // the caller is authorized on but that the application does not belong to.
+    const target = await prisma.application.findFirst({
+      where: { id: applicationId, jobPostingId: jobId },
+      select: { id: true },
+    });
+    if (!target) return err("Application not found", 404);
+
     const application = await prisma.application.update({
       where: { id: applicationId },
       data: { status: parsed.data.status },

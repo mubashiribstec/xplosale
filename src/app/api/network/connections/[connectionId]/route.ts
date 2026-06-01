@@ -27,11 +27,20 @@ export async function PATCH(
     const { action } = parsed.data;
     const statusMap = { accept: "ACCEPTED", reject: "REJECTED", block: "BLOCKED" } as const;
 
+    // State machine: only a PENDING request can be accepted/rejected; a BLOCKED
+    // connection must not be silently un-blocked via accept.
+    if (action === "accept" || action === "reject") {
+      if (connection.status !== "PENDING") {
+        return err(`Cannot ${action} a connection that is ${connection.status.toLowerCase()}`, 409);
+      }
+    }
+
     const updated = await prisma.connection.update({
       where: { id: connectionId },
       data: {
         status: statusMap[action],
-        acceptedAt: action === "accept" ? new Date() : undefined,
+        // Set on accept; clear when moving away from an accepted state.
+        acceptedAt: action === "accept" ? new Date() : null,
       },
     });
 

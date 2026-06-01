@@ -81,7 +81,11 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
 
     fetch(`/api/ats/tags?companyId=${companyId}`)
       .then((r) => r.json())
-      .then((d: { ok: boolean; data?: Tag[] }) => { if (d.ok && d.data) setTags(d.data); });
+      .then((d: { ok: boolean; data?: Tag[] }) => {
+        if (currentAppIdRef.current !== applicationId) return; // stale / drawer changed
+        if (d.ok && d.data) setTags(d.data);
+      })
+      .catch(() => {});
   }, [applicationId, companyId]);
 
   async function sendEmail() {

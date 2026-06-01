@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { join, normalize, sep } from "path";
 
 export async function GET(
   _req: NextRequest,
@@ -8,8 +8,16 @@ export async function GET(
 ) {
   const { path } = await params;
   const key = path.join("/");
+
+  // Containment: resolve the path and ensure it stays inside uploads/public.
+  // Prevents traversal (e.g. ../../private/cnic/<user>/front.jpg or ../../../etc/passwd).
+  const baseDir = join(process.cwd(), "uploads", "public");
+  const filePath = normalize(join(baseDir, key));
+  if (filePath !== baseDir && !filePath.startsWith(baseDir + sep)) {
+    return NextResponse.json({ ok: false, error: "Invalid path" }, { status: 400 });
+  }
+
   try {
-    const filePath = join(process.cwd(), "uploads", "public", key);
     const data = await readFile(filePath);
     const ext = key.split(".").pop()?.toLowerCase();
     const contentType = ext === "webp" ? "image/webp" : ext === "png" ? "image/png" : "image/jpeg";

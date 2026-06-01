@@ -79,7 +79,8 @@ export default function PipelineBoard({
   async function handleDrop(stageId: string) {
     if (!dragging) return;
     const appId = dragging;
-    if (getStageId(apps.find((a) => a.id === appId)!) === stageId) {
+    const draggedApp = apps.find((a) => a.id === appId);
+    if (!draggedApp || getStageId(draggedApp) === stageId) {
       setDragging(null);
       return;
     }

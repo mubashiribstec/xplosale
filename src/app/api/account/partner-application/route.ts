@@ -33,13 +33,18 @@ export async function POST(req: NextRequest) {
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { verificationStatus: true },
-    });
+    const [user, existing] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true } }),
+      prisma.partnerApplication.findUnique({ where: { userId }, select: { status: true } }),
+    ]);
     if (!user) return err("User not found", 404);
     if (user.verificationStatus !== "VERIFIED") {
       return err("Identity verification required before applying for partner status", 403);
+    }
+    // Block re-submission while already a partner or while a decision stands.
+    if (user.isPartner) return err("You are already a verified partner", 409);
+    if (existing && existing.status === "PENDING") {
+      return err("Your application is already pending review", 409);
     }
 
     const body = await req.json() as unknown;

@@ -4,6 +4,9 @@ import { useState, useRef } from "react";
 
 type Stage = {
   id?: string;
+  // Stable client-side key for rows that have no DB id yet (newly added).
+  // Keeps React from reattaching input/color state to the wrong row on reorder.
+  _uid?: string;
   name: string;
   order: number;
   color: string;
@@ -11,6 +14,9 @@ type Stage = {
   isHired: boolean;
   isRejected: boolean;
 };
+
+const uid = () => Math.random().toString(36).slice(2);
+const rowKey = (s: Stage) => s.id ?? s._uid ?? "";
 
 const PRESET_COLORS = [
   "#6B7280", "#3B82F6", "#8B5CF6", "#F59E0B",
@@ -24,7 +30,9 @@ export default function PipelineSettings({
   companyId: string;
   initialStages: Stage[];
 }) {
-  const [stages, setStages] = useState<Stage[]>(initialStages);
+  const [stages, setStages] = useState<Stage[]>(
+    () => initialStages.map((s) => (s.id ? s : { ...s, _uid: uid() }))
+  );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const dragIdx = useRef<number | null>(null);
@@ -32,7 +40,7 @@ export default function PipelineSettings({
   function add() {
     setStages((prev) => [
       ...prev,
-      { name: "New Stage", order: prev.length, color: "#6B7280", isInitial: false, isHired: false, isRejected: false },
+      { _uid: uid(), name: "New Stage", order: prev.length, color: "#6B7280", isInitial: false, isHired: false, isRejected: false },
     ]);
   }
 
@@ -80,7 +88,7 @@ export default function PipelineSettings({
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         {stages.map((stage, idx) => (
           <div
-            key={idx}
+            key={rowKey(stage)}
             draggable
             onDragStart={() => { dragIdx.current = idx; }}
             onDragOver={(e) => e.preventDefault()}

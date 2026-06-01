@@ -39,11 +39,15 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
-    const status = statusParam && isAdmin ? statusParam : "ACTIVE";
+    const LISTING_STATUSES = ["DRAFT", "PENDING_REVIEW", "ACTIVE", "REJECTED", "EXPIRED", "SOLD"] as const;
+    type ListingStatus = (typeof LISTING_STATUSES)[number];
+    const isValidStatus = (s: string): s is ListingStatus =>
+      (LISTING_STATUSES as readonly string[]).includes(s);
+    // Non-admins are always pinned to ACTIVE; admins may filter by a valid status only.
+    const status: ListingStatus =
+      isAdmin && statusParam && isValidStatus(statusParam) ? statusParam : "ACTIVE";
 
-    const where: Prisma.ListingWhereInput = {
-      status: status as Prisma.EnumListingStatusFilter,
-    };
+    const where: Prisma.ListingWhereInput = { status };
 
     if (keyword) {
       where.OR = [
@@ -120,8 +124,15 @@ export async function POST(req: NextRequest) {
     const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
     const limit = LISTING_LIMITS[tier] ?? 5;
     if (limit !== Infinity) {
-      const activeCount = await prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } });
-      if (activeCount >= limit) return err(`Active listing limit (${limit}) reached for ${tier} accounts. Verify your identity to post more.`, 403);
+      // Count every slot the user occupies — a draft/pending listing still
+      // counts, otherwise the cap is trivially bypassed by never publishing.
+      const usedCount = await prisma.listing.count({
+        where: {
+          sellerProfileId: sellerProfile.id,
+          status: { in: ["DRAFT", "PENDING_REVIEW", "ACTIVE"] },
+        },
+      });
+      if (usedCount >= limit) return err(`Listing limit (${limit}) reached for ${tier} accounts. Verify your identity to post more.`, 403);
     }
 
     const { price, ...rest } = parsed.data;

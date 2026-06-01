@@ -28,6 +28,14 @@ export async function PATCH(
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return err("User not found", 404);
 
+    // Guard against self-lockout: an admin cannot demote themselves, and the
+    // last remaining admin cannot be demoted (would brick admin access).
+    if (body.role !== undefined && body.role !== "ADMIN" && user.role === "ADMIN") {
+      if (userId === adminId) return err("You cannot remove your own admin role", 409);
+      const otherAdmins = await prisma.user.count({ where: { role: "ADMIN", id: { not: userId } } });
+      if (otherAdmins === 0) return err("Cannot demote the last remaining admin", 409);
+    }
+
     const data: { role?: "USER" | "EMPLOYER" | "ADMIN"; verificationStatus?: "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" } = {};
     if (body.role !== undefined) data.role = body.role;
     if (body.verificationStatus !== undefined) data.verificationStatus = body.verificationStatus;

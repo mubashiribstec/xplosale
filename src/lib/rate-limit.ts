@@ -32,12 +32,14 @@ export async function rateLimit(
   pipeline.expire(redisKey, windowSeconds + 1);
   const results = await pipeline.exec();
 
+  // zcard count INCLUDES the entry we just zadded (the current request),
+  // so the current request is allowed when the running total is within limit.
   const count = (results?.[2]?.[1] as number) ?? 0;
   const resetAt = Math.floor((now + windowMs) / 1000);
 
   return {
-    allowed: count < limit,
-    remaining: Math.max(0, limit - count - 1),
+    allowed: count <= limit,
+    remaining: Math.max(0, limit - count),
     resetAt,
   };
 }

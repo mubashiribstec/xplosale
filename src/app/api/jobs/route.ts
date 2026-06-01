@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
 
     const session = await getSession();
     const isAdmin = session ? (session.user as unknown as { role: string }).role === "ADMIN" : false;
-    const status = (isAdmin && statusParam) ? statusParam : "ACTIVE";
+    const JOB_STATUSES = ["DRAFT", "ACTIVE", "CLOSED", "EXPIRED"];
+    // Non-admins are pinned to ACTIVE; admins may filter by a valid status only.
+    const status = isAdmin && statusParam && JOB_STATUSES.includes(statusParam) ? statusParam : "ACTIVE";
 
     const where: Record<string, unknown> = { status };
 

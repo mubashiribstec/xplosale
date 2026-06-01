@@ -59,6 +59,11 @@ export async function PATCH(
           where: { userId },
           data: { status: "REJECTED", reviewedAt: new Date(), reviewedById: adminId, reason },
         }),
+        // Revoke partner privileges so a reject can't leave isPartner stuck true
+        prisma.user.update({
+          where: { id: userId },
+          data: { isPartner: false, partnerType: null },
+        }),
         prisma.adminActionLog.create({
           data: {
             adminId,

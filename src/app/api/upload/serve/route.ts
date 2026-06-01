@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { verifyLocalToken } from "@/core/adapters/storage";
 import { requireSession } from "@/core/auth/session";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { join, normalize, sep } from "path";
 import { env } from "@/lib/env";
 
 export async function GET(req: NextRequest) {
@@ -33,8 +33,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Containment: keep the resolved path inside the target bucket directory
+  const baseDir = join(process.cwd(), "uploads", bucket);
+  const filePath = normalize(join(baseDir, key));
+  if (filePath !== baseDir && !filePath.startsWith(baseDir + sep)) {
+    return NextResponse.json({ ok: false, error: "Invalid path" }, { status: 400 });
+  }
+
   try {
-    const filePath = join(process.cwd(), "uploads", bucket, key);
     const data = await readFile(filePath);
     const ext = key.split(".").pop()?.toLowerCase();
     const contentType = ext === "pdf" ? "application/pdf" : ext === "webp" ? "image/webp" : "image/jpeg";
