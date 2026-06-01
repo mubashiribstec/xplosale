@@ -136,6 +136,9 @@ enum NotificationKind {
   ADMIN_DM
   BAN_NOTICE
   DATA_EXPORT_READY
+  JOB_RECOMMENDED
+  INVITE_TO_APPLY
+  SAVED_SEARCH_DIGEST
 }
 
 enum TestKind {
@@ -355,6 +358,7 @@ model Listing {
   videoUrl          String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  searchVector      Unsupported("tsvector")?
 
   sellerProfile      SellerProfile       @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
   region             Region              @relation(fields: [regionId], references: [id])
@@ -421,6 +425,7 @@ model Company {
   regionId         String
   verifiedEmployer Boolean  @default(false)
   createdAt        DateTime @default(now())
+  searchVector     Unsupported("tsvector")?
 
   owner            User              @relation("CompanyOwner", fields: [ownerId], references: [id])
   region           Region            @relation(fields: [regionId], references: [id])
@@ -489,6 +494,7 @@ model JobPosting {
   requiredKeywords  Json       @default("[]")
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+  searchVector      Unsupported("tsvector")?
 
   company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   postedBy        User             @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
@@ -673,6 +679,7 @@ model NetworkProfile {
   verifiedProfessional Boolean           @default(false)
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+  searchVector         Unsupported("tsvector")?
 
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   experiences          Experience[]
