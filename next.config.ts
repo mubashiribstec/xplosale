@@ -5,6 +5,11 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Type-checking and linting run separately (tsc --noEmit). Skipping them
+  // during the production build avoids the memory-heavy in-build TS pass that
+  // stalls/OOMs on small (512MB) hosts.
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   images: {
     formats: ["image/webp"],
     remotePatterns: [
