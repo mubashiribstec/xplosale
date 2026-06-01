@@ -159,6 +159,19 @@ enum AssignmentStatus {
   GRADED
 }
 
+enum SavedSearchFrequency {
+  DAILY
+  WEEKLY
+  OFF
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
 enum HiringTeamRole {
   RECRUITER
   HIRING_MANAGER
@@ -230,6 +243,11 @@ model User {
   hiringTeamMemberships   HiringTeam[]
   candidateNotes          CandidateNote[]     @relation("NoteAuthor")
   testAssignmentsGiven    TestAssignment[]    @relation("TestAssignedBy")
+  savedSearches           SavedSearch[]
+  searchClicks            SearchClickLog[]
+  sentInvites             InviteToApply[]     @relation("InviteSender")
+  receivedInvites         InviteToApply[]     @relation("InviteCandidate")
+  doNotContact            CandidateDoNotContact?
 }
 
 model Region {
@@ -435,6 +453,7 @@ model Company {
   candidateTags    CandidateTag[]
   emailTemplates   EmailTemplate[]
   testTemplates    TestTemplate[]
+  invitesSent      InviteToApply[]
 }
 
 model EmployerProfile {
@@ -459,10 +478,16 @@ model JobSeekerProfile {
   expectedSalaryMax  Int?
   currency           String?
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications  Application[] @relation("JobSeekerApplications")
-  jobAlerts     JobAlert[]
-  resumeParsed  ResumeParsed?
+  recruiterDiscoverable    Boolean    @default(false)
+  preferredRemoteType      RemoteType?
+  preferredRegionIds       Json       @default("[]")
+  doNotRecommendCompanyIds Json       @default("[]")
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications    Application[]       @relation("JobSeekerApplications")
+  jobAlerts       JobAlert[]
+  resumeParsed    ResumeParsed?
+  recommendations JobRecommendation[]
 }
 
 model ResumeParsed {
@@ -496,12 +521,14 @@ model JobPosting {
   updatedAt         DateTime   @updatedAt
   searchVector      Unsupported("tsvector")?
 
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  postedBy        User             @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
-  region          Region           @relation(fields: [regionId], references: [id])
-  applications    Application[]
-  hiringTeam      HiringTeam[]
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  postedBy         User              @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
+  region           Region            @relation(fields: [regionId], references: [id])
+  applications     Application[]
+  hiringTeam       HiringTeam[]
   candidateMatches CandidateMatch[]
+  recommendations  JobRecommendation[]
+  invites          InviteToApply[]
 
   @@index([status, regionId, createdAt])
   @@index([companyId, status])
@@ -942,4 +969,88 @@ model TestSession {
   userAgent       String?
 
   assignment TestAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+}
+
+// ─── Phase 26: Saved Searches + Click Logging ─────────────────────────────────
+
+model SavedSearch {
+  id         String               @id @default(cuid())
+  userId     String
+  vertical   String
+  name       String
+  queryJson  Json
+  frequency  SavedSearchFrequency @default(OFF)
+  lastSentAt DateTime?
+  createdAt  DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([frequency, lastSentAt])
+}
+
+model SearchClickLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  query       String
+  vertical    String
+  clickedId   String
+  clickedType String
+  position    Int
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([clickedId, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ─── Phase 27: Job Recommendations ───────────────────────────────────────────
+
+model JobRecommendation {
+  id           String    @id @default(cuid())
+  jobSeekerId  String
+  jobPostingId String
+  score        Float
+  reasons      Json
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  jobSeeker  JobSeekerProfile @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  jobPosting JobPosting       @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSeekerId, jobPostingId])
+  @@index([jobSeekerId])
+}
+
+// ─── Phase 28: Invite to Apply ───────────────────────────────────────────────
+
+model InviteToApply {
+  id              String       @id @default(cuid())
+  companyId       String
+  jobPostingId    String
+  senderUserId    String
+  candidateUserId String
+  message         String?
+  status          InviteStatus @default(PENDING)
+  sentAt          DateTime     @default(now())
+  respondedAt     DateTime?
+  expiresAt       DateTime
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  sender     User       @relation("InviteSender", fields: [senderUserId], references: [id])
+  candidate  User       @relation("InviteCandidate", fields: [candidateUserId], references: [id])
+
+  @@unique([jobPostingId, candidateUserId])
+  @@index([candidateUserId, status, sentAt])
+  @@index([companyId, sentAt])
+}
+
+model CandidateDoNotContact {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
