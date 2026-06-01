@@ -1,13 +1,12 @@
 services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: xplosale
-      POSTGRES_PASSWORD: xplosale
+      POSTGRES_PASSWORD: xplosale2024
       POSTGRES_DB: xplosale
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,28 +15,50 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # ── DB migration (runs once, then exits) ────────────────────────────────────
+  migrate:
+    build: .
+    command: >
+      sh -c "
+        npx prisma db push --accept-data-loss &&
+        echo 'Migration complete'
+      "
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ── Next.js app ─────────────────────────────────────────────────────────────
   app:
     build: .
     restart: unless-stopped
     ports:
       - "3000:3000"
     env_file: .env
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
+  redis_data:
+  uploads_data:
