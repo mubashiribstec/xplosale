@@ -14,8 +14,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env: real values come from .env at runtime.
-# These satisfy validation (min-length, URL format) without being real secrets.
+# Build-time env: satisfy validation (min-length, URL format).
+# Real values come from .env at runtime via docker-compose env_file.
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV UPSTASH_REDIS_URL="redis://localhost:6379"
@@ -26,11 +26,11 @@ ENV CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
 ENV STORAGE_MODE="local"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Generate prisma client now that schema.prisma is available
+# Generate prisma client now that schema.prisma is available, then build
 RUN npx prisma generate
 RUN pnpm build
 
-# ── Stage 3: production runner ────────────────────────────────────────────────
+# ── Stage 3: production runner (lean — standalone output only) ────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -43,16 +43,10 @@ RUN addgroup --system --gid 1001 nodejs \
 # Uploads directory for local file storage
 RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
+# Next.js standalone output includes all traced node_modules (incl. prisma)
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Prisma runtime files needed for db push + queries
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 
 USER nextjs
 EXPOSE 3000

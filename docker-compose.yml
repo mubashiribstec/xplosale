@@ -27,14 +27,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── DB migration (runs once, then exits) ────────────────────────────────────
+  # ── DB migration (uses builder stage which has full prisma CLI) ─────────────
   migrate:
-    build: .
-    command: >
-      sh -c "
-        npx prisma db push --accept-data-loss &&
-        echo 'Migration complete'
-      "
+    build:
+      context: .
+      target: builder         # full node_modules + prisma CLI available here
+    command: npx prisma db push --accept-data-loss
     env_file: .env
     depends_on:
       postgres:
@@ -43,7 +41,9 @@ services:
 
   # ── Next.js app ─────────────────────────────────────────────────────────────
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     restart: unless-stopped
     ports:
       - "3000:3000"
