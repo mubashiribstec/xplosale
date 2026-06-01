@@ -4,6 +4,8 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
+const skillsArray = z.array(z.string().max(60)).max(30).default([]);
+
 const createSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(20).max(10000),
@@ -12,6 +14,9 @@ const createSchema = z.object({
   salaryMin: z.number().int().positive().optional(),
   salaryMax: z.number().int().positive().optional(),
   currency: z.string().default("PKR"),
+  requiredSkills: skillsArray,
+  niceToHaveSkills: skillsArray,
+  requiredKeywords: skillsArray,
 });
 
 export async function GET(req: NextRequest) {

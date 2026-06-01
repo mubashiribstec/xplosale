@@ -25,7 +25,15 @@ export default async function PipelinePage({
   const [job, stages, applications, tags] = await Promise.all([
     prisma.jobPosting.findUnique({
       where: { id: jobId },
-      select: { id: true, title: true, companyId: true, company: { select: { ownerId: true } } },
+      select: {
+        id: true,
+        title: true,
+        companyId: true,
+        requiredSkills: true,
+        niceToHaveSkills: true,
+        requiredKeywords: true,
+        company: { select: { ownerId: true } },
+      },
     }),
     prisma.pipelineStage.findMany({
       where: { companyId },
@@ -45,6 +53,15 @@ export default async function PipelinePage({
           select: { id: true, name: true, color: true, isHired: true, isRejected: true, isInitial: true, order: true },
         },
         applicationTags: { include: { tag: { select: { id: true, name: true, color: true } } } },
+        candidateMatch: {
+          select: {
+            score: true,
+            requiredMatched: true,
+            requiredTotal: true,
+            matchedTerms: true,
+            missedTerms: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -77,6 +94,10 @@ export default async function PipelinePage({
 
   const isOwner = job.company.ownerId === userId;
   const isAdmin = userRole === "ADMIN";
+  const hasSkills =
+    (job.requiredSkills as string[]).length > 0 ||
+    (job.niceToHaveSkills as string[]).length > 0 ||
+    (job.requiredKeywords as string[]).length > 0;
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -85,22 +106,29 @@ export default async function PipelinePage({
           <Link href="/me/employer/jobs" className="text-sm text-gray-400 hover:text-gray-600">
             ← All jobs
           </Link>
-          {(isOwner || isAdmin) && (
-            <div className="flex gap-2">
-              <Link
-                href={`/employer/${companyId}/jobs/${jobId}/team`}
-                className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
-              >
-                Manage team
-              </Link>
-              <Link
-                href={`/employer/${companyId}/pipeline-settings`}
-                className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
-              >
-                Pipeline settings
-              </Link>
-            </div>
-          )}
+          <div className="flex gap-2 flex-wrap">
+            {!hasSkills && (
+              <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                Add required skills to the job to enable match scoring
+              </span>
+            )}
+            {(isOwner || isAdmin) && (
+              <>
+                <Link
+                  href={`/employer/${companyId}/jobs/${jobId}/team`}
+                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
+                >
+                  Manage team
+                </Link>
+                <Link
+                  href={`/employer/${companyId}/pipeline-settings`}
+                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
+                >
+                  Pipeline settings
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="max-w-7xl mx-auto">
@@ -126,6 +154,15 @@ export default async function PipelinePage({
               jobSeeker: a.jobSeeker,
               currentStage: a.currentStage ? { ...a.currentStage } : null,
               applicationTags: a.applicationTags,
+              match: a.candidateMatch
+                ? {
+                    score: a.candidateMatch.score,
+                    requiredMatched: a.candidateMatch.requiredMatched,
+                    requiredTotal: a.candidateMatch.requiredTotal,
+                    matchedTerms: a.candidateMatch.matchedTerms as string[],
+                    missedTerms: a.candidateMatch.missedTerms as string[],
+                  }
+                : null,
             }))}
             fallbackStageMap={fallbackStageMap}
             tags={tags.map((t) => ({ id: t.id, name: t.name, color: t.color }))}

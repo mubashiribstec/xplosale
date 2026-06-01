@@ -16,6 +16,14 @@ type Stage = {
 
 type Tag = { id: string; name: string; color: string };
 
+type MatchInfo = {
+  score: number;
+  requiredMatched: number;
+  requiredTotal: number;
+  matchedTerms: string[];
+  missedTerms: string[];
+};
+
 type Application = {
   id: string;
   currentStageId: string | null;
@@ -29,6 +37,7 @@ type Application = {
   };
   currentStage: Stage | null;
   applicationTags: { tag: Tag }[];
+  match: MatchInfo | null;
 };
 
 type EmailTemplate = { id: string; name: string; subject: string; body: string; kind: string };
@@ -58,6 +67,8 @@ export default function PipelineBoard({
   const [error, setError] = useState<string | null>(null);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
+  const [sortByMatch, setSortByMatch] = useState(false);
+  const [hoverMatchId, setHoverMatchId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState("");
   const [bulkStageId, setBulkStageId] = useState("");
@@ -72,9 +83,17 @@ export default function PipelineBoard({
     [fallbackStageMap, stages]
   );
 
-  const filteredApps = filterTagId
-    ? apps.filter((a) => a.applicationTags.some((t) => t.tag.id === filterTagId))
-    : apps;
+  const hasAnyMatch = apps.some((a) => a.match !== null);
+
+  const filteredApps = (() => {
+    let list = filterTagId
+      ? apps.filter((a) => a.applicationTags.some((t) => t.tag.id === filterTagId))
+      : apps;
+    if (sortByMatch) {
+      list = [...list].sort((a, b) => (b.match?.score ?? -1) - (a.match?.score ?? -1));
+    }
+    return list;
+  })();
 
   async function handleDrop(stageId: string) {
     if (!dragging) return;
@@ -184,7 +203,20 @@ export default function PipelineBoard({
             <h1 className="text-xl font-bold text-gray-900">{jobTitle}</h1>
             <p className="text-sm text-gray-500 mt-0.5">{apps.length} total applicants</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            {hasAnyMatch && (
+              <button
+                type="button"
+                onClick={() => setSortByMatch((v) => !v)}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
+                  sortByMatch
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "border-gray-200 text-gray-500 hover:border-gray-400"
+                }`}
+              >
+                {sortByMatch ? "✓ Sort: Match" : "Sort by Match"}
+              </button>
+            )}
             <Link
               href={`/employer/${companyId}/jobs/${jobId}/team`}
               className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1"
@@ -368,6 +400,55 @@ export default function PipelineBoard({
                                 {tag.name}
                               </span>
                             ))}
+                          </div>
+                        )}
+
+                        {/* Match chip */}
+                        {app.match && (
+                          <div className="relative mt-1.5">
+                            <button
+                              type="button"
+                              onMouseEnter={() => setHoverMatchId(app.id)}
+                              onMouseLeave={() => setHoverMatchId(null)}
+                              className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+                                app.match.score >= 75
+                                  ? "bg-green-100 text-green-700"
+                                  : app.match.score >= 50
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-gray-100 text-gray-500"
+                              }`}
+                            >
+                              {app.match.score}% match
+                              {app.match.requiredTotal > 0 && (
+                                <span className="ml-1 font-normal opacity-70">
+                                  ({app.match.requiredMatched}/{app.match.requiredTotal} req)
+                                </span>
+                              )}
+                            </button>
+                            {hoverMatchId === app.id && (app.match.matchedTerms.length > 0 || app.match.missedTerms.length > 0) && (
+                              <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 text-xs">
+                                {app.match.matchedTerms.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="font-semibold text-green-700 mb-1">Matched</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {app.match.matchedTerms.map((t) => (
+                                        <span key={t} className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">{t}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {app.match.missedTerms.length > 0 && (
+                                  <div>
+                                    <p className="font-semibold text-red-600 mb-1">Missing</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {app.match.missedTerms.map((t) => (
+                                        <span key={t} className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded">{t}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
 

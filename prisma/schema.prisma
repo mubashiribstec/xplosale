@@ -435,31 +435,47 @@ model JobSeekerProfile {
   currency           String?
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications Application[] @relation("JobSeekerApplications")
-  jobAlerts    JobAlert[]
+  applications  Application[] @relation("JobSeekerApplications")
+  jobAlerts     JobAlert[]
+  resumeParsed  ResumeParsed?
+}
+
+model ResumeParsed {
+  id                 String   @id @default(cuid())
+  jobSeekerProfileId String   @unique
+  source             String   @default("UPLOAD")
+  rawText            String
+  extracted          Json?
+  parsedAt           DateTime @default(now())
+
+  jobSeekerProfile JobSeekerProfile @relation(fields: [jobSeekerProfileId], references: [id], onDelete: Cascade)
 }
 
 model JobPosting {
-  id             String     @id @default(cuid())
-  companyId      String
-  postedByUserId String
-  title          String
-  description    String
-  regionId       String
-  remoteType     RemoteType @default(ONSITE)
-  salaryMin      Int?
-  salaryMax      Int?
-  currency       String     @default("PKR")
-  status         JobStatus  @default(DRAFT)
-  expiresAt      DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id                String     @id @default(cuid())
+  companyId         String
+  postedByUserId    String
+  title             String
+  description       String
+  regionId          String
+  remoteType        RemoteType @default(ONSITE)
+  salaryMin         Int?
+  salaryMax         Int?
+  currency          String     @default("PKR")
+  status            JobStatus  @default(DRAFT)
+  expiresAt         DateTime?
+  requiredSkills    Json       @default("[]")
+  niceToHaveSkills  Json       @default("[]")
+  requiredKeywords  Json       @default("[]")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  postedBy     User          @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
-  region       Region        @relation(fields: [regionId], references: [id])
-  applications Application[]
-  hiringTeam   HiringTeam[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  postedBy        User             @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
+  region          Region           @relation(fields: [regionId], references: [id])
+  applications    Application[]
+  hiringTeam      HiringTeam[]
+  candidateMatches CandidateMatch[]
 
   @@index([status, regionId, createdAt])
   @@index([companyId, status])
@@ -482,8 +498,31 @@ model Application {
   notes            CandidateNote[]
   applicationTags  ApplicationTag[]
   emailsSent       EmailSendLog[]
+  candidateMatch   CandidateMatch?
 
   @@unique([jobPostingId, jobSeekerId])
+}
+
+model CandidateMatch {
+  id                 String   @id @default(cuid())
+  jobPostingId       String
+  applicationId      String   @unique
+  score              Int
+  requiredMatched    Int
+  requiredTotal      Int
+  niceToHaveMatched  Int
+  niceToHaveTotal    Int
+  keywordMatched     Int
+  keywordTotal       Int
+  matchedTerms       Json
+  missedTerms        Json
+  computedAt         DateTime @default(now())
+
+  jobPosting  JobPosting  @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([jobPostingId, applicationId])
+  @@index([jobPostingId, score])
 }
 
 model JobAlert {

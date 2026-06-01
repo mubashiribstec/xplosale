@@ -3,6 +3,9 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { recomputeMatchesForJob } from "@/verticals/jobs/ats/recompute-match";
+
+const skillsArray = z.array(z.string().max(60)).max(30).optional();
 
 const patchSchema = z.object({
   title: z.string().min(5).max(200).optional(),
@@ -12,6 +15,9 @@ const patchSchema = z.object({
   salaryMax: z.number().int().positive().optional(),
   regionId: z.string().cuid().optional(),
   status: z.enum(["DRAFT", "ACTIVE", "CLOSED", "EXPIRED"]).optional(),
+  requiredSkills: skillsArray,
+  niceToHaveSkills: skillsArray,
+  requiredKeywords: skillsArray,
 });
 
 export async function GET(
@@ -66,13 +72,26 @@ export async function PATCH(
       }
     }
 
+    const { requiredSkills, niceToHaveSkills, requiredKeywords, ...restFields } = rest;
+    const skillsChanged = requiredSkills !== undefined || niceToHaveSkills !== undefined || requiredKeywords !== undefined;
+
     const updated = await prisma.jobPosting.update({
       where: { id: jobId },
       data: {
-        ...rest,
+        ...restFields,
         ...(status !== undefined ? { status } : {}),
+        ...(requiredSkills !== undefined ? { requiredSkills } : {}),
+        ...(niceToHaveSkills !== undefined ? { niceToHaveSkills } : {}),
+        ...(requiredKeywords !== undefined ? { requiredKeywords } : {}),
       },
     });
+
+    // Recompute match scores when skills/keywords change (fire-and-forget)
+    if (skillsChanged) {
+      recomputeMatchesForJob(jobId).catch((e: unknown) =>
+        console.error("[match] Recompute failed:", e)
+      );
+    }
 
     return ok(updated);
   } catch (e) {

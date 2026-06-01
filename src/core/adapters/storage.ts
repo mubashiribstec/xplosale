@@ -17,6 +17,12 @@ async function localPut(bucket: StorageBucket, key: string, body: Buffer | Uint8
   await writeFile(join(base, key), body);
 }
 
+async function localGet(bucket: StorageBucket, key: string): Promise<Buffer> {
+  const { readFile } = await import("fs/promises");
+  const { join } = await import("path");
+  return readFile(join(process.cwd(), "uploads", bucket, key));
+}
+
 async function localDelete(bucket: StorageBucket, key: string): Promise<void> {
   const { unlink } = await import("fs/promises");
   const { join } = await import("path");
@@ -97,7 +103,21 @@ async function s3Delete(bucket: StorageBucket, key: string): Promise<void> {
   await getS3().send(new DeleteObjectCommand({ Bucket: bucketName(bucket), Key: key }));
 }
 
+async function s3Get(bucket: StorageBucket, key: string): Promise<Buffer> {
+  const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+  const resp = await getS3().send(new GetObjectCommand({ Bucket: bucketName(bucket), Key: key }));
+  const chunks: Uint8Array[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for await (const chunk of resp.Body as AsyncIterable<any>) chunks.push(chunk as Uint8Array);
+  return Buffer.concat(chunks);
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
+
+export async function getObject(bucket: StorageBucket, key: string): Promise<Buffer> {
+  if (env.STORAGE_MODE === "local") return localGet(bucket, key);
+  return s3Get(bucket, key);
+}
 
 export async function putObject(
   bucket: StorageBucket,

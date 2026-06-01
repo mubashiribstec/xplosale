@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import SkillsChipInput from "@/components/shared/SkillsChipInput";
 
 interface Region {
   id: string;
@@ -32,6 +33,10 @@ export default function NewJobPage() {
     currency: "PKR",
   });
 
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>([]);
+  const [requiredKeywords, setRequiredKeywords] = useState<string[]>([]);
+
   useEffect(() => {
     fetch("/api/regions")
       .then((r) => r.json())
@@ -53,6 +58,9 @@ export default function NewJobPage() {
       regionId: form.regionId,
       remoteType: form.remoteType,
       currency: form.currency,
+      requiredSkills,
+      niceToHaveSkills,
+      requiredKeywords,
     };
     if (form.salaryMin) body.salaryMin = parseInt(form.salaryMin, 10);
     if (form.salaryMax) body.salaryMax = parseInt(form.salaryMax, 10);
@@ -149,6 +157,29 @@ export default function NewJobPage() {
                 ))}
               </select>
             </div>
+          </section>
+
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Matching Criteria</h2>
+            <p className="text-xs text-gray-400">Used to automatically score and rank candidates. Leave blank to skip scoring.</p>
+            <SkillsChipInput
+              label="Required skills"
+              value={requiredSkills}
+              onChange={setRequiredSkills}
+              placeholder="e.g. React, TypeScript…"
+            />
+            <SkillsChipInput
+              label="Nice-to-have skills"
+              value={niceToHaveSkills}
+              onChange={setNiceToHaveSkills}
+              placeholder="e.g. GraphQL, Docker…"
+            />
+            <SkillsChipInput
+              label="Keywords"
+              value={requiredKeywords}
+              onChange={setRequiredKeywords}
+              placeholder="e.g. leadership, agile…"
+            />
           </section>
 
           <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">

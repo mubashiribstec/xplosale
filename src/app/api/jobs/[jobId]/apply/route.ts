@@ -5,6 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateRoom, createNotification } from "@/core/messaging/rooms";
 import { getUserTier } from "@/lib/tier";
+import { recomputeMatchForApplication } from "@/verticals/jobs/ats/recompute-match";
 
 const applySchema = z.object({
   coverLetter: z.string().max(2000).optional(),
@@ -100,6 +101,11 @@ export async function POST(
       applicantName: (session.user as { name?: string | null }).name ?? "",
       roomId: room.id,
     });
+
+    // Compute initial match score (fire-and-forget)
+    recomputeMatchForApplication(application.id).catch((e: unknown) =>
+      console.error("[match] Initial compute failed:", e)
+    );
 
     return ok({ applicationId: application.id, roomId: room.id });
   } catch (e) {

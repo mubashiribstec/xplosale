@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import SkillsChipInput from "@/components/shared/SkillsChipInput";
 
 interface Region {
   id: string;
@@ -20,6 +21,9 @@ interface JobData {
   salaryMax: number | null;
   currency: string;
   status: string;
+  requiredSkills?: string[];
+  niceToHaveSkills?: string[];
+  requiredKeywords?: string[];
 }
 
 interface Applicant {
@@ -71,6 +75,10 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
     currency: "PKR",
   });
 
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>([]);
+  const [requiredKeywords, setRequiredKeywords] = useState<string[]>([]);
+
   useEffect(() => {
     Promise.all([
       fetch(`/api/jobs/${jobId}`).then((r) => r.json()),
@@ -89,6 +97,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           salaryMax: d.salaryMax != null ? String(d.salaryMax) : "",
           currency: d.currency,
         });
+        setRequiredSkills(d.requiredSkills ?? []);
+        setNiceToHaveSkills(d.niceToHaveSkills ?? []);
+        setRequiredKeywords(d.requiredKeywords ?? []);
       }
       if (regionsRes.data) setRegions(regionsRes.data as Region[]);
       if (appsRes.data) setApplicants(appsRes.data as Applicant[]);
@@ -111,6 +122,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
       regionId: form.regionId,
       remoteType: form.remoteType,
       currency: form.currency,
+      requiredSkills,
+      niceToHaveSkills,
+      requiredKeywords,
     };
     if (form.salaryMin) body.salaryMin = parseInt(form.salaryMin, 10);
     if (form.salaryMax) body.salaryMax = parseInt(form.salaryMax, 10);
@@ -251,6 +265,33 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               </select>
             </div>
 
+          </section>
+
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Matching Criteria</h2>
+            <p className="text-xs text-gray-400">Used to automatically score and rank candidates. Leave blank to skip scoring.</p>
+            <SkillsChipInput
+              label="Required skills"
+              value={requiredSkills}
+              onChange={setRequiredSkills}
+              placeholder="e.g. React, TypeScript…"
+            />
+            <SkillsChipInput
+              label="Nice-to-have skills"
+              value={niceToHaveSkills}
+              onChange={setNiceToHaveSkills}
+              placeholder="e.g. GraphQL, Docker…"
+            />
+            <SkillsChipInput
+              label="Keywords"
+              value={requiredKeywords}
+              onChange={setRequiredKeywords}
+              placeholder="e.g. leadership, agile…"
+            />
+          </section>
+
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Compensation</h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
