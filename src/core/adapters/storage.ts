@@ -44,7 +44,7 @@ function localPresignedPut(bucket: StorageBucket, key: string): string {
 function hmacToken(data: string): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require("crypto") as typeof import("crypto");
-  return crypto.createHmac("sha256", env.NEXTAUTH_SECRET).update(data).digest("hex").slice(0, 16);
+  return crypto.createHmac("sha256", env.NEXTAUTH_SECRET).update(data).digest("hex");
 }
 
 // ─── S3 implementation ────────────────────────────────────────────────────────
@@ -147,5 +147,11 @@ export function verifyLocalToken(action: "serve" | "put", bucket: StorageBucket,
   if (Math.floor(Date.now() / 1000) > exp) return false;
   const prefix = action === "put" ? "put" : "serve";
   const expected = hmacToken(`${prefix}:${bucket}:${key}:${exp}`);
-  return expected === sig;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const crypto = require("crypto") as typeof import("crypto");
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(sig, "hex"));
+  } catch {
+    return false;
+  }
 }

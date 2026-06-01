@@ -5,7 +5,7 @@ import { ChatInbox } from "@/components/shared/ChatInbox";
 
 export default async function ChatPage() {
   const session = await getSession();
-  if (!session) redirect("/auth/login");
+  if (!session) redirect("/login");
   const userId = getUserId(session);
 
   const rooms = await prisma.chatRoom.findMany({

@@ -97,6 +97,22 @@ export const authConfig: NextAuthConfig = {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.phone = dbUser.phone ?? null;
+          token.roleRefreshedAt = Math.floor(Date.now() / 1000);
+        }
+      }
+      // Re-fetch role every 5 minutes so admin demotions take effect promptly
+      if (!user && token.id) {
+        const now = Math.floor(Date.now() / 1000);
+        const lastRefresh = (token.roleRefreshedAt as number | undefined) ?? 0;
+        if (now - lastRefresh > 300) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.roleRefreshedAt = now;
+          }
         }
       }
       return token;

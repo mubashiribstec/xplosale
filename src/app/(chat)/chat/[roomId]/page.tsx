@@ -9,7 +9,7 @@ export default async function ChatRoomPage({
   params: Promise<{ roomId: string }>;
 }) {
   const session = await getSession();
-  if (!session) redirect("/auth/login");
+  if (!session) redirect("/login");
   const userId = getUserId(session);
 
   const { roomId } = await params;

@@ -166,7 +166,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
               {!userId && listing.status === "ACTIVE" && (
                 <a
-                  href="/auth/login"
+                  href="/login"
                   className="block w-full text-center py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   Sign in to make an offer

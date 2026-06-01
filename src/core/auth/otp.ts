@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { kv, kvSet, kvDel, kvIncr } from "@/core/adapters/kv";
+import { kv, kvSet } from "@/core/adapters/kv";
 import { rateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
@@ -72,23 +72,24 @@ export async function sendOtp(
     };
   }
 
-  // Per-IP rate limit: 5/hour — skipped when IP is unavailable to avoid shared bucket DoS
-  if (ip) {
-    const ipLimit = await rateLimit(`otp:send:ip:${ip}`, 5, 3600);
-    if (!ipLimit.allowed) {
-      return {
-        ok: false,
-        error: "Too many OTP requests from this IP. Try again later.",
-        retryAfter: ipLimit.resetAt,
-      };
-    }
+  // Per-IP rate limit: 5/hour. Fall back to a shared "no-ip" bucket when the
+  // header is absent so an attacker cannot bypass by stripping x-forwarded-for.
+  const effectiveIp = ip ?? "no-ip";
+  const ipLimit = await rateLimit(`otp:send:ip:${effectiveIp}`, ip ? 5 : 20, 3600);
+  if (!ipLimit.allowed) {
+    return {
+      ok: false,
+      error: "Too many OTP requests from this IP. Try again later.",
+      retryAfter: ipLimit.resetAt,
+    };
   }
 
   const otp = generateOtp();
   const hash = hashOtp(otp, phone);
 
   await kvSet(`otp:hash:${phone}`, hash, OTP_TTL);
-  await kvDel(`otp:attempts:${phone}`);
+  // Intentionally do NOT reset otp:attempts — resetting on new OTP issuance
+  // lets an attacker bypass the verify lockout by repeatedly sending new codes.
 
   // Audit row — fire-and-forget but log failures so infrastructure issues surface
   prisma.otpCode

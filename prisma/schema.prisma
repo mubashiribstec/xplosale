@@ -337,7 +337,7 @@ model Listing {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  sellerProfile      SellerProfile       @relation(fields: [sellerProfileId], references: [id])
+  sellerProfile      SellerProfile       @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
   region             Region              @relation(fields: [regionId], references: [id])
   images             ListingImage[]
   escrowTransactions EscrowTransaction[]
@@ -370,7 +370,7 @@ model EscrowTransaction {
   releasedAt  DateTime?
   refundedAt  DateTime?
 
-  listing Listing @relation(fields: [listingId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyer   User    @relation("EscrowBuyer", fields: [buyerId], references: [id])
   seller  User    @relation("EscrowSeller", fields: [sellerId], references: [id])
 }
@@ -383,7 +383,7 @@ model ListingReview {
   body      String?
   createdAt DateTime @default(now())
 
-  listing Listing @relation(fields: [listingId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   author  User    @relation("ReviewAuthor", fields: [authorId], references: [id])
 
   @@unique([listingId, authorId])
@@ -419,7 +419,7 @@ model EmployerProfile {
   roleAtCompany String?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model JobSeekerProfile {
@@ -455,7 +455,7 @@ model JobPosting {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  company      Company       @relation(fields: [companyId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   postedBy     User          @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
   region       Region        @relation(fields: [regionId], references: [id])
   applications Application[]
@@ -476,8 +476,8 @@ model Application {
   currentStageId  String?
   createdAt       DateTime          @default(now())
 
-  jobPosting       JobPosting       @relation(fields: [jobPostingId], references: [id])
-  jobSeeker        JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id])
+  jobPosting       JobPosting       @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobSeeker        JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id], onDelete: Cascade)
   currentStage     PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
   notes            CandidateNote[]
   applicationTags  ApplicationTag[]
@@ -687,8 +687,8 @@ model Connection {
   createdAt   DateTime         @default(now())
   acceptedAt  DateTime?
 
-  requester User @relation("ConnectionRequester", fields: [requesterId], references: [id])
-  recipient User @relation("ConnectionRecipient", fields: [recipientId], references: [id])
+  requester User @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient User @relation("ConnectionRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   // INVARIANT: before inserting, check both (A,B) and (B,A) directions don't exist.
   // Use src/core/network/connectionGuard.ts — DB-level bidirectional uniqueness
@@ -717,7 +717,7 @@ model PostLike {
   createdAt DateTime @default(now())
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
@@ -730,7 +730,7 @@ model PostComment {
   createdAt DateTime @default(now())
 
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id])
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // ─── NextAuth Adapter ─────────────────────────────────────────────────────────

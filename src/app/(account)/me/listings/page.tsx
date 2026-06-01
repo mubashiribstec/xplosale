@@ -14,7 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default async function MyListingsPage() {
   const session = await getSession();
-  if (!session) redirect("/auth/login");
+  if (!session) redirect("/login");
   const userId = getUserId(session);
 
   const sellerProfile = await prisma.sellerProfile.findUnique({
