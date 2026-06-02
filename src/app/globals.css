@@ -1,19 +1,121 @@
 @import "tailwindcss";
 
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #1A1613;
+  --ink-soft: #3D362F;
+  --ink-faint: #7A7167;
+  --paper: #F4F2EC;
+  --paper-2: #ECE8DF;
+  --paper-3: #E2DCD0;
+  --line: #DBD5C8;
+  --clay: #A04E37;
+  --clay-deep: #7E3A27;
+  --green: #0E9E6E;
+  --green-bright: #16C588;
+  --green-deep: #0A6B4C;
+  --blue: #327AD6;
+  --blue-deep: #1F56B0;
+  --purple: #9025B3;
+  --purple-deep: #6E1A8A;
+  --brand-grad: linear-gradient(120deg, #327AD6, #9025B3);
+  --white: #FBFAF5;
+  --shadow: 0 1px 2px rgba(28,24,21,.04), 0 8px 30px rgba(28,24,21,.06);
+  --shadow-lg: 0 2px 6px rgba(28,24,21,.06), 0 24px 60px rgba(28,24,21,.12);
+  --r: 14px;
+  --maxw: 1280px;
+
+  /* Font stacks — populated by layout.tsx CSS vars */
+  --display: var(--font-zodiak, "Iowan Old Style", Georgia, serif);
+  --body: var(--font-jakarta, "Helvetica Neue", Arial, sans-serif);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Tailwind v4 theme extensions ──────────────────────────────────────── */
+@theme {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-line: var(--line);
+  --color-clay: var(--clay);
+  --color-green-brand: var(--green);
+  --color-green-bright: var(--green-bright);
+  --color-green-deep: var(--green-deep);
+  --color-blue-brand: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-purple-brand: var(--purple);
+  --color-white-warm: var(--white);
+  --font-display: var(--display);
+  --font-body: var(--body);
 }
 
-/* Script-specific font overrides — applied when the corresponding CSS var is present on <html> */
-:root:has([class*="--font-noto-arabic"]) body,
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--green);
+  color: var(--ink);
+}
+
+/* ─── Typography helpers ─────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.reveal {
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+
+/* ─── Script-specific font overrides ────────────────────────────────────── */
 html[lang="ar"] body,
 html[lang="ur"] body {
   font-family: var(--font-noto-arabic), Arial, sans-serif;
@@ -27,15 +129,21 @@ html[lang="zh"] body {
   font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
 }
 
+/* ─── Dark mode ──────────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #1A1613;
+    --paper-2: #221E1A;
+    --paper-3: #2A2521;
+    --line: #3D362F;
+    --ink: #F4F2EC;
+    --ink-soft: #D6D0C6;
+    --ink-faint: #8C8378;
+    --white: #ECE8DF;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background: var(--paper);
+    color: var(--ink);
+  }
 }
