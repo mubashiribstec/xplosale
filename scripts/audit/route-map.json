@@ -1,0 +1,1189 @@
+{
+  "generatedAt": "2026-06-02T19:35:15.950Z",
+  "counts": {
+    "routes": 104,
+    "callSites": 98,
+    "orphans": 25
+  },
+  "routes": [
+    {
+      "file": "app/api/account/applications/route.ts",
+      "url": "/api/account/applications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/account/language/route.ts",
+      "url": "/api/account/language",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/account/partner-application/route.ts",
+      "url": "/api/account/partner-application",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/profile/employer/route.ts",
+      "url": "/api/account/profile/employer",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/profile/job-seeker/route.ts",
+      "url": "/api/account/profile/job-seeker",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/profile/network/check-handle/route.ts",
+      "url": "/api/account/profile/network/check-handle",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/account/profile/network/route.ts",
+      "url": "/api/account/profile/network",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/profile/seller/route.ts",
+      "url": "/api/account/profile/seller",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/recommendations/[recommendationId]/dismiss/route.ts",
+      "url": "/api/account/recommendations/[recommendationId]/dismiss",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/account/recommendations/route.ts",
+      "url": "/api/account/recommendations",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/account/request-verification/route.ts",
+      "url": "/api/account/request-verification",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/admin/audit/route.ts",
+      "url": "/api/admin/audit",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/admin/listings/[listingId]/approve/route.ts",
+      "url": "/api/admin/listings/[listingId]/approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/admin/listings/[listingId]/reject/route.ts",
+      "url": "/api/admin/listings/[listingId]/reject",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/admin/partners/[userId]/route.ts",
+      "url": "/api/admin/partners/[userId]",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/admin/partners/route.ts",
+      "url": "/api/admin/partners",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/admin/tests/[templateId]/route.ts",
+      "url": "/api/admin/tests/[templateId]",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/admin/tests/route.ts",
+      "url": "/api/admin/tests",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/admin/users/[userId]/route.ts",
+      "url": "/api/admin/users/[userId]",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/admin/users/route.ts",
+      "url": "/api/admin/users",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/admin/verifications/[userId]/files/route.ts",
+      "url": "/api/admin/verifications/[userId]/files",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/admin/verifications/[userId]/route.ts",
+      "url": "/api/admin/verifications/[userId]",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/admin/verifications/route.ts",
+      "url": "/api/admin/verifications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/ats/applications/[applicationId]/move/route.ts",
+      "url": "/api/ats/applications/[applicationId]/move",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/ats/applications/[applicationId]/route.ts",
+      "url": "/api/ats/applications/[applicationId]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/ats/applications/[applicationId]/tags/[tagId]/route.ts",
+      "url": "/api/ats/applications/[applicationId]/tags/[tagId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/applications/[applicationId]/tags/route.ts",
+      "url": "/api/ats/applications/[applicationId]/tags",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/[assignmentId]/autosave/route.ts",
+      "url": "/api/ats/assignments/[assignmentId]/autosave",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/[assignmentId]/route.ts",
+      "url": "/api/ats/assignments/[assignmentId]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/[assignmentId]/session-event/route.ts",
+      "url": "/api/ats/assignments/[assignmentId]/session-event",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/[assignmentId]/start/route.ts",
+      "url": "/api/ats/assignments/[assignmentId]/start",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/[assignmentId]/submit/route.ts",
+      "url": "/api/ats/assignments/[assignmentId]/submit",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/assignments/route.ts",
+      "url": "/api/ats/assignments",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/bulk/route.ts",
+      "url": "/api/ats/bulk",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/emails/send/route.ts",
+      "url": "/api/ats/emails/send",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/match/route.ts",
+      "url": "/api/ats/match",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/notes/[applicationId]/route.ts",
+      "url": "/api/ats/notes/[applicationId]",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/stages/route.ts",
+      "url": "/api/ats/stages",
+      "methods": [
+        "GET",
+        "PUT"
+      ]
+    },
+    {
+      "file": "app/api/ats/tags/[tagId]/route.ts",
+      "url": "/api/ats/tags/[tagId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/tags/route.ts",
+      "url": "/api/ats/tags",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/team/[jobId]/[memberId]/route.ts",
+      "url": "/api/ats/team/[jobId]/[memberId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/team/[jobId]/route.ts",
+      "url": "/api/ats/team/[jobId]",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/templates/[templateId]/route.ts",
+      "url": "/api/ats/templates/[templateId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/templates/route.ts",
+      "url": "/api/ats/templates",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/tests/[templateId]/questions/[questionId]/route.ts",
+      "url": "/api/ats/tests/[templateId]/questions/[questionId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/tests/[templateId]/questions/route.ts",
+      "url": "/api/ats/tests/[templateId]/questions",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/ats/tests/[templateId]/route.ts",
+      "url": "/api/ats/tests/[templateId]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/ats/tests/route.ts",
+      "url": "/api/ats/tests",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/auth/[...nextauth]/route.ts",
+      "url": "/api/auth/[...nextauth]",
+      "methods": []
+    },
+    {
+      "file": "app/api/auth/phone/send-otp/route.ts",
+      "url": "/api/auth/phone/send-otp",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/chat/rooms/[roomId]/messages/route.ts",
+      "url": "/api/chat/rooms/[roomId]/messages",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/chat/rooms/route.ts",
+      "url": "/api/chat/rooms",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/chat/sse/route.ts",
+      "url": "/api/chat/sse",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/companies/[companyId]/route.ts",
+      "url": "/api/companies/[companyId]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/cron/expire-invites/route.ts",
+      "url": "/api/cron/expire-invites",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/cron/job-recommendations/route.ts",
+      "url": "/api/cron/job-recommendations",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/cron/search-digest/route.ts",
+      "url": "/api/cron/search-digest",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/healthcheck/route.ts",
+      "url": "/api/healthcheck",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/invites/[inviteId]/route.ts",
+      "url": "/api/invites/[inviteId]",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/invites/do-not-contact/route.ts",
+      "url": "/api/invites/do-not-contact",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/invites/received/route.ts",
+      "url": "/api/invites/received",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/invites/route.ts",
+      "url": "/api/invites",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/invites/sent/route.ts",
+      "url": "/api/invites/sent",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/jobs/[jobId]/applications/[applicationId]/route.ts",
+      "url": "/api/jobs/[jobId]/applications/[applicationId]",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "file": "app/api/jobs/[jobId]/applications/route.ts",
+      "url": "/api/jobs/[jobId]/applications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/jobs/[jobId]/apply/route.ts",
+      "url": "/api/jobs/[jobId]/apply",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/jobs/[jobId]/route.ts",
+      "url": "/api/jobs/[jobId]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/jobs/route.ts",
+      "url": "/api/jobs",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/listings/[listingId]/images/[imageId]/route.ts",
+      "url": "/api/listings/[listingId]/images/[imageId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/listings/[listingId]/images/route.ts",
+      "url": "/api/listings/[listingId]/images",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/listings/[listingId]/offer/route.ts",
+      "url": "/api/listings/[listingId]/offer",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/listings/[listingId]/reviews/route.ts",
+      "url": "/api/listings/[listingId]/reviews",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/listings/[listingId]/route.ts",
+      "url": "/api/listings/[listingId]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/listings/route.ts",
+      "url": "/api/listings",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/connections/[connectionId]/route.ts",
+      "url": "/api/network/connections/[connectionId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/network/connections/route.ts",
+      "url": "/api/network/connections",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/feed/route.ts",
+      "url": "/api/network/feed",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/network/people/route.ts",
+      "url": "/api/network/people",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/network/posts/[postId]/comments/route.ts",
+      "url": "/api/network/posts/[postId]/comments",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/posts/[postId]/like/route.ts",
+      "url": "/api/network/posts/[postId]/like",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/posts/[postId]/route.ts",
+      "url": "/api/network/posts/[postId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/network/posts/route.ts",
+      "url": "/api/network/posts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/profiles/[handle]/endorse/route.ts",
+      "url": "/api/network/profiles/[handle]/endorse",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/network/profiles/[handle]/route.ts",
+      "url": "/api/network/profiles/[handle]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/notifications/[id]/read/route.ts",
+      "url": "/api/notifications/[id]/read",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/notifications/read-all/route.ts",
+      "url": "/api/notifications/read-all",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/notifications/route.ts",
+      "url": "/api/notifications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/regions/route.ts",
+      "url": "/api/regions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/click/route.ts",
+      "url": "/api/search/click",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/search/companies/route.ts",
+      "url": "/api/search/companies",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/jobs/route.ts",
+      "url": "/api/search/jobs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/marketplace/route.ts",
+      "url": "/api/search/marketplace",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/network/route.ts",
+      "url": "/api/search/network",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/route.ts",
+      "url": "/api/search",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/saved/[searchId]/route.ts",
+      "url": "/api/search/saved/[searchId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "file": "app/api/search/saved/route.ts",
+      "url": "/api/search/saved",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/search/suggest/route.ts",
+      "url": "/api/search/suggest",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/search/universal/route.ts",
+      "url": "/api/search/universal",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/upload/image/route.ts",
+      "url": "/api/upload/image",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/upload/presigned/route.ts",
+      "url": "/api/upload/presigned",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/upload/presigned-put/route.ts",
+      "url": "/api/upload/presigned-put",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "file": "app/api/upload/resume/route.ts",
+      "url": "/api/upload/resume",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "file": "app/api/upload/serve/route.ts",
+      "url": "/api/upload/serve",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "file": "app/api/upload/serve-public/[...path]/route.ts",
+      "url": "/api/upload/serve-public/[...path]",
+      "methods": [
+        "GET"
+      ]
+    }
+  ],
+  "callSites": [
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/jobs/${jobId}"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/regions"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/jobs/${jobId}/applications"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/jobs/${jobId}"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/jobs/${jobId}"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/[jobId]/edit/page.tsx",
+      "url": "/api/jobs/${jobId}/applications/${applicationId}"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/new/page.tsx",
+      "url": "/api/regions"
+    },
+    {
+      "file": "app/(account)/me/employer/jobs/new/page.tsx",
+      "url": "/api/jobs"
+    },
+    {
+      "file": "app/(account)/me/employer/page.tsx",
+      "url": "/api/account/profile/employer"
+    },
+    {
+      "file": "app/(account)/me/employer/page.tsx",
+      "url": "/api/account/profile/employer"
+    },
+    {
+      "file": "app/(account)/me/invites/page.tsx",
+      "url": "/api/invites/received"
+    },
+    {
+      "file": "app/(account)/me/invites/page.tsx",
+      "url": "/api/invites/do-not-contact"
+    },
+    {
+      "file": "app/(account)/me/invites/page.tsx",
+      "url": "/api/invites/${id}"
+    },
+    {
+      "file": "app/(account)/me/invites/page.tsx",
+      "url": "/api/invites/do-not-contact"
+    },
+    {
+      "file": "app/(account)/me/invites/page.tsx",
+      "url": "/api/invites/do-not-contact"
+    },
+    {
+      "file": "app/(account)/me/job-seeker/page.tsx",
+      "url": "/api/account/profile/job-seeker"
+    },
+    {
+      "file": "app/(account)/me/job-seeker/page.tsx",
+      "url": "/api/account/profile/job-seeker"
+    },
+    {
+      "file": "app/(account)/me/job-seeker/recommendations/page.tsx",
+      "url": "/api/account/recommendations"
+    },
+    {
+      "file": "app/(account)/me/job-seeker/recommendations/page.tsx",
+      "url": "/api/account/recommendations/${id}/dismiss"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/listings/${listingId}"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/regions"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/listings/${listingId}"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/listings/${listingId}"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/listings/${listingId}/images/${imageId}"
+    },
+    {
+      "file": "app/(account)/me/listings/[listingId]/edit/page.tsx",
+      "url": "/api/listings/${listingId}/images"
+    },
+    {
+      "file": "app/(account)/me/listings/new/page.tsx",
+      "url": "/api/regions"
+    },
+    {
+      "file": "app/(account)/me/listings/new/page.tsx",
+      "url": "/api/listings"
+    },
+    {
+      "file": "app/(account)/me/network/page.tsx",
+      "url": "/api/account/profile/network"
+    },
+    {
+      "file": "app/(account)/me/network/page.tsx",
+      "url": "/api/account/profile/network"
+    },
+    {
+      "file": "app/(account)/me/partner-application/page.tsx",
+      "url": "/api/account/partner-application"
+    },
+    {
+      "file": "app/(account)/me/partner-application/page.tsx",
+      "url": "/api/account/partner-application"
+    },
+    {
+      "file": "app/(account)/me/saved-searches/SavedSearchesClient.tsx",
+      "url": "/api/search/saved/${id}"
+    },
+    {
+      "file": "app/(account)/me/saved-searches/SavedSearchesClient.tsx",
+      "url": "/api/search/saved/${id}"
+    },
+    {
+      "file": "app/(account)/me/seller/page.tsx",
+      "url": "/api/account/profile/seller"
+    },
+    {
+      "file": "app/(account)/me/seller/page.tsx",
+      "url": "/api/account/profile/seller"
+    },
+    {
+      "file": "app/(account)/me/verify-identity/page.tsx",
+      "url": "/api/upload/presigned"
+    },
+    {
+      "file": "app/(account)/me/verify-identity/page.tsx",
+      "url": "/api/account/request-verification"
+    },
+    {
+      "file": "app/(admin)/admin/tests/page.tsx",
+      "url": "/api/admin/tests/${t.id}"
+    },
+    {
+      "file": "app/(auth)/login/page.tsx",
+      "url": "/api/auth/phone/send-otp"
+    },
+    {
+      "file": "app/(auth)/verify/page.tsx",
+      "url": "/api/auth/phone/send-otp"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}/autosave"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}/session-event"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}/start"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}"
+    },
+    {
+      "file": "app/(jobs)/candidate/tests/[assignmentId]/page.tsx",
+      "url": "/api/ats/assignments/${assignmentId}/submit"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}/questions"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/[templateId]/page.tsx",
+      "url": "/api/ats/tests/${templateId}/questions/${qId}"
+    },
+    {
+      "file": "app/(jobs)/employer/[companyId]/tests/new/page.tsx",
+      "url": "/api/ats/tests"
+    },
+    {
+      "file": "components/shared/AdminListingsQueue.tsx",
+      "url": "/api/admin/listings/${id}/approve"
+    },
+    {
+      "file": "components/shared/AdminListingsQueue.tsx",
+      "url": "/api/admin/listings/${id}/reject"
+    },
+    {
+      "file": "components/shared/AdminUsersTable.tsx",
+      "url": "/api/admin/users/${userId}"
+    },
+    {
+      "file": "components/shared/ApplyButton.tsx",
+      "url": "/api/jobs/${jobId}/apply"
+    },
+    {
+      "file": "components/shared/ChatThread.tsx",
+      "url": "/api/chat/rooms/${roomId}/messages"
+    },
+    {
+      "file": "components/shared/ConnectButton.tsx",
+      "url": "/api/network/connections"
+    },
+    {
+      "file": "components/shared/ConnectButton.tsx",
+      "url": "/api/network/connections/${connectionId}"
+    },
+    {
+      "file": "components/shared/ConnectButton.tsx",
+      "url": "/api/network/connections/${connectionId}"
+    },
+    {
+      "file": "components/shared/ConnectionManager.tsx",
+      "url": "/api/network/connections/${id}"
+    },
+    {
+      "file": "components/shared/ConnectionManager.tsx",
+      "url": "/api/network/connections/${id}"
+    },
+    {
+      "file": "components/shared/CreatePostForm.tsx",
+      "url": "/api/network/posts"
+    },
+    {
+      "file": "components/shared/InviteButton.tsx",
+      "url": "/api/invites"
+    },
+    {
+      "file": "components/shared/NotificationBell.tsx",
+      "url": "/api/notifications"
+    },
+    {
+      "file": "components/shared/NotificationBell.tsx",
+      "url": "/api/notifications/read-all"
+    },
+    {
+      "file": "components/shared/NotificationBell.tsx",
+      "url": "/api/notifications/${id}/read"
+    },
+    {
+      "file": "components/shared/OfferButton.tsx",
+      "url": "/api/listings/${listingId}/offer"
+    },
+    {
+      "file": "components/shared/PartnerQueue.tsx",
+      "url": "/api/admin/partners"
+    },
+    {
+      "file": "components/shared/PartnerQueue.tsx",
+      "url": "/api/admin/partners/${selected.userId}"
+    },
+    {
+      "file": "components/shared/PostCard.tsx",
+      "url": "/api/network/posts/${post.id}/like"
+    },
+    {
+      "file": "components/shared/ResumeUploader.tsx",
+      "url": "/api/upload/resume"
+    },
+    {
+      "file": "components/shared/SaveSearchButton.tsx",
+      "url": "/api/search/saved"
+    },
+    {
+      "file": "components/shared/VerificationQueue.tsx",
+      "url": "/api/admin/verifications"
+    },
+    {
+      "file": "components/shared/VerificationQueue.tsx",
+      "url": "/api/admin/verifications/${user.id}/files"
+    },
+    {
+      "file": "components/shared/VerificationQueue.tsx",
+      "url": "/api/admin/verifications/${selected.id}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/applications/${applicationId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/templates?companyId=${companyId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/team/${jobId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/tags?companyId=${companyId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/emails/send"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/applications/${app.id}/tags/${tagId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/applications/${app.id}/tags"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/assignments?applicationId=${applicationId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/tests?companyId=${companyId}"
+    },
+    {
+      "file": "components/shared/ats/CandidateDrawer.tsx",
+      "url": "/api/ats/assignments"
+    },
+    {
+      "file": "components/shared/ats/HiringTeamManager.tsx",
+      "url": "/api/ats/team/${jobId}"
+    },
+    {
+      "file": "components/shared/ats/HiringTeamManager.tsx",
+      "url": "/api/ats/team/${jobId}/${memberId}"
+    },
+    {
+      "file": "components/shared/ats/NoteThread.tsx",
+      "url": "/api/ats/notes/${applicationId}"
+    },
+    {
+      "file": "components/shared/ats/NoteThread.tsx",
+      "url": "/api/ats/notes/${applicationId}"
+    },
+    {
+      "file": "components/shared/ats/PipelineBoard.tsx",
+      "url": "/api/ats/applications/${appId}/move"
+    },
+    {
+      "file": "components/shared/ats/PipelineBoard.tsx",
+      "url": "/api/ats/templates?companyId=${companyId}"
+    },
+    {
+      "file": "components/shared/ats/PipelineBoard.tsx",
+      "url": "/api/ats/bulk"
+    },
+    {
+      "file": "components/shared/ats/PipelineSettings.tsx",
+      "url": "/api/ats/stages"
+    },
+    {
+      "file": "components/shared/ats/TemplateManager.tsx",
+      "url": "/api/ats/templates/${editing.id}"
+    },
+    {
+      "file": "components/shared/ats/TemplateManager.tsx",
+      "url": "/api/ats/templates"
+    },
+    {
+      "file": "components/shared/ats/TemplateManager.tsx",
+      "url": "/api/ats/templates/${id}"
+    }
+  ],
+  "orphans": [
+    "/api/account/applications",
+    "/api/account/language",
+    "/api/admin/audit",
+    "/api/ats/match",
+    "/api/auth/[...nextauth]",
+    "/api/chat/sse",
+    "/api/companies/[companyId]",
+    "/api/cron/expire-invites",
+    "/api/cron/job-recommendations",
+    "/api/cron/search-digest",
+    "/api/healthcheck",
+    "/api/network/feed",
+    "/api/network/people",
+    "/api/network/profiles/[handle]/endorse",
+    "/api/network/profiles/[handle]",
+    "/api/search/click",
+    "/api/search/companies",
+    "/api/search/jobs",
+    "/api/search/marketplace",
+    "/api/search/network",
+    "/api/search/suggest",
+    "/api/search/universal",
+    "/api/upload/image",
+    "/api/upload/serve",
+    "/api/upload/serve-public/[...path]"
+  ]
+}
