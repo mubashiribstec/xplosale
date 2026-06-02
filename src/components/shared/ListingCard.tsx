@@ -117,10 +117,10 @@ export default function ListingCard({ listing }: ListingCardProps) {
           borderRadius: 16,
           border: "1px solid var(--line)",
           overflow: "hidden",
-          transition: "transform 0.2s ease, box-shadow 0.2s ease",
+          transition: "transform 0.22s ease, box-shadow 0.22s ease",
           cursor: "pointer",
         }}
-        className="listing-card"
+        className="lc-card"
       >
         {/* Image section */}
         <div style={{ position: "relative", width: "100%", height: 192, overflow: "hidden" }}>
@@ -284,8 +284,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
         </div>
       </div>
 
-      <style jsx>{`
-        .listing-card:hover {
+      <style>{`
+        .lc-card:hover {
           transform: translateY(-4px);
           box-shadow: var(--shadow-lg);
         }

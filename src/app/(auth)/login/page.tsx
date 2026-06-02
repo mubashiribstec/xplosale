@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 type Tab = "phone" | "google" | "email";
 
@@ -74,32 +75,111 @@ export default function LoginPage() {
   ];
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome to Xplosale</h1>
-        <p className="text-sm text-gray-500 mb-6">Sell. Hire. Connect. Verified.</p>
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--paper)",
+        padding: "24px 16px",
+        fontFamily: "var(--body)",
+      }}
+    >
+      {/* Card */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 440,
+          background: "var(--white)",
+          border: "1px solid var(--line)",
+          borderRadius: 22,
+          boxShadow: "var(--shadow-lg)",
+          padding: "clamp(32px, 5vw, 48px) clamp(28px, 5vw, 44px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 28,
+        }}
+      >
+        {/* Logo */}
+        <div style={{ textAlign: "center" }}>
+          <Link
+            href="/"
+            style={{
+              fontFamily: "var(--display)",
+              fontWeight: 800,
+              fontSize: 22,
+              letterSpacing: "-0.03em",
+              color: "var(--ink)",
+              textDecoration: "none",
+            }}
+          >
+            Xplosale
+          </Link>
+        </div>
+
+        {/* Heading */}
+        <div style={{ textAlign: "center" }}>
+          <h1
+            style={{
+              fontFamily: "var(--display)",
+              fontWeight: 800,
+              fontSize: 28,
+              letterSpacing: "-0.03em",
+              color: "var(--ink)",
+              margin: "0 0 6px",
+              lineHeight: 1.15,
+            }}
+          >
+            Sign in to Xplosale
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: 0 }}>
+            Sell. Hire. Connect. Verified.
+          </p>
+        </div>
 
         {/* Tab bar */}
-        <div className="flex rounded-lg bg-gray-100 p-1 mb-6 gap-1">
+        <div
+          style={{
+            display: "flex",
+            background: "var(--paper-2)",
+            borderRadius: 12,
+            padding: 4,
+            gap: 4,
+          }}
+        >
           {tabs.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                tab === key
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              style={{
+                flex: 1,
+                padding: "8px 0",
+                fontSize: 14,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                borderRadius: 9,
+                fontFamily: "var(--body)",
+                transition: "background 0.15s, color 0.15s, box-shadow 0.15s",
+                background: tab === key ? "var(--white)" : "transparent",
+                color: tab === key ? "var(--ink)" : "var(--ink-faint)",
+                boxShadow: tab === key ? "var(--shadow)" : "none",
+              }}
             >
               {label}
             </button>
           ))}
         </div>
 
+        {/* Phone tab */}
         {tab === "phone" && (
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+          <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label
+                htmlFor="phone"
+                style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}
+              >
                 Phone Number
               </label>
               <input
@@ -109,30 +189,78 @@ export default function LoginPage() {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+92 300 0000000"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  width: "100%",
+                  padding: "11px 14px",
+                  border: "1.5px solid var(--line)",
+                  borderRadius: 11,
+                  fontSize: 15,
+                  fontFamily: "var(--body)",
+                  color: "var(--ink)",
+                  background: "var(--paper)",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "border-color 0.15s",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--green)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
               />
             </div>
-            {phoneError && <p className="text-sm text-red-600">{phoneError}</p>}
+            {phoneError && (
+              <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>{phoneError}</p>
+            )}
             <button
               type="submit"
               disabled={phoneLoading || phone.length < 10}
-              className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{
+                width: "100%",
+                padding: "13px 0",
+                background: "var(--green)",
+                color: "var(--white)",
+                border: "none",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 700,
+                fontFamily: "var(--body)",
+                cursor: phoneLoading || phone.length < 10 ? "not-allowed" : "pointer",
+                opacity: phoneLoading || phone.length < 10 ? 0.55 : 1,
+                transition: "opacity 0.15s",
+              }}
             >
               {phoneLoading ? "Sending…" : "Send OTP"}
             </button>
           </form>
         )}
 
+        {/* Google tab */}
         {tab === "google" && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500 text-center">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <p style={{ fontSize: 14, color: "var(--ink-faint)", textAlign: "center", margin: 0 }}>
               Sign in instantly with your Google account.
             </p>
             <button
               onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 12,
+                padding: "13px 0",
+                background: "var(--white)",
+                border: "1.5px solid var(--line)",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 600,
+                fontFamily: "var(--body)",
+                color: "var(--ink)",
+                cursor: "pointer",
+                transition: "border-color 0.15s, background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--paper)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--white)")}
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -143,23 +271,37 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Email tab */}
         {tab === "email" && (
           emailSent ? (
-            <div className="text-center space-y-3">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  background: "rgba(14,158,110,.12)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg width="22" height="22" fill="none" stroke="var(--green)" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
               </div>
-              <p className="text-sm font-medium text-gray-900">Check your inbox</p>
-              <p className="text-sm text-gray-500">
-                We sent a magic link to <strong>{email}</strong>. Click it to sign in.
+              <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Check your inbox</p>
+              <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: 0 }}>
+                We sent a magic link to <strong style={{ color: "var(--ink)" }}>{email}</strong>. Click it to sign in.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleEmailSignIn} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <form onSubmit={handleEmailSignIn} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label
+                  htmlFor="email"
+                  style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}
+                >
                   Email Address
                 </label>
                 <input
@@ -169,14 +311,43 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    border: "1.5px solid var(--line)",
+                    borderRadius: 11,
+                    fontSize: 15,
+                    fontFamily: "var(--body)",
+                    color: "var(--ink)",
+                    background: "var(--paper)",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.15s",
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--blue)")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
                 />
               </div>
-              {emailError && <p className="text-sm text-red-600">{emailError}</p>}
+              {emailError && (
+                <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>{emailError}</p>
+              )}
               <button
                 type="submit"
                 disabled={emailLoading || !email.includes("@")}
-                className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{
+                  width: "100%",
+                  padding: "13px 0",
+                  background: "var(--blue)",
+                  color: "var(--white)",
+                  border: "none",
+                  borderRadius: 12,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  fontFamily: "var(--body)",
+                  cursor: emailLoading || !email.includes("@") ? "not-allowed" : "pointer",
+                  opacity: emailLoading || !email.includes("@") ? 0.55 : 1,
+                  transition: "opacity 0.15s",
+                }}
               >
                 {emailLoading ? "Sending…" : "Send Magic Link"}
               </button>
@@ -184,9 +355,21 @@ export default function LoginPage() {
           )
         )}
 
-        <p className="mt-6 text-xs text-gray-400 text-center">
-          By continuing you agree to our Terms and Privacy Policy.
-        </p>
+        {/* Divider + new-user link */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+          <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
+            New to Xplosale?{" "}
+            <Link
+              href="/me/verify-identity"
+              style={{ color: "var(--green)", fontWeight: 600, textDecoration: "none" }}
+            >
+              Verify your identity →
+            </Link>
+          </p>
+          <p style={{ fontSize: 11, color: "var(--line)", margin: 0 }}>
+            By continuing you agree to our Terms and Privacy Policy.
+          </p>
+        </div>
       </div>
     </main>
   );

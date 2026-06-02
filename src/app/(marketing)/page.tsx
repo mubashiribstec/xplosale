@@ -265,7 +265,7 @@ export default function MarketingHome() {
 
             {/* Label */}
             <div style={{ textAlign: "center" }}>
-              <VerificationSeal label="CNIC + Biometric" size="lg" />
+              <VerificationSeal size={110} />
               <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", marginTop: 10, margin: "10px 0 0" }}>
                 Identity verification powered by NADRA
               </p>
@@ -656,7 +656,7 @@ export default function MarketingHome() {
                     />
                   </svg>
                 </div>
-                <VerificationSeal label="Identity Verified" size="lg" />
+                <VerificationSeal size={80} />
                 <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", margin: 0, maxWidth: 200 }}>
                   Your badge appears on every listing, application, and connection request.
                 </p>

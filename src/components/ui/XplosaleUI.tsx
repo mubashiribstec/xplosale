@@ -109,110 +109,121 @@ export function TrustGauge({
   );
 }
 
-/* ─── XBtn ───────────────────────────────────────────────────────────────── */
-interface XBtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "clay" | "green" | "ghost" | "line";
-  size?: "sm" | "md" | "lg";
-}
-
-export function XBtn({ variant = "clay", size = "md", children, style, ...rest }: XBtnProps) {
-  const bg: Record<string, string> = {
-    clay: "var(--clay)",
-    green: "var(--green)",
-    ghost: "transparent",
-    line: "transparent",
-  };
-  const fg: Record<string, string> = {
-    clay: "var(--white)",
-    green: "var(--white)",
-    ghost: "var(--ink-soft)",
-    line: "var(--ink-soft)",
-  };
-  const border: Record<string, string> = {
-    clay: "1px solid transparent",
-    green: "1px solid transparent",
-    ghost: "none",
-    line: "1px solid var(--line)",
-  };
-  const fs: Record<string, string> = { sm: "12px", md: "14px", lg: "15px" };
-  const px: Record<string, string> = { sm: "12px 10px", md: "10px 18px", lg: "13px 24px" };
-
+/* ─── VerificationSeal ───────────────────────────────────────────────────── */
+export function VerificationSeal({ size = 132 }: { size?: number }) {
+  const ticks = Array.from({ length: 48 });
   return (
-    <button
-      style={{
-        background: bg[variant],
-        color: fg[variant],
-        border: border[variant],
-        borderRadius: 10,
-        fontSize: fs[size],
-        fontFamily: "var(--body)",
-        fontWeight: 600,
-        padding: px[size],
-        cursor: rest.disabled ? "not-allowed" : "pointer",
-        opacity: rest.disabled ? 0.5 : 1,
-        transition: "opacity .15s, filter .15s",
-        lineHeight: 1.4,
-        ...style,
-      }}
-      {...rest}
-    >
-      {children}
-    </button>
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Verified seal">
+      <defs>
+        <linearGradient id="sealG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--green-bright)" />
+          <stop offset="1" stopColor="var(--green-deep)" />
+        </linearGradient>
+      </defs>
+      <g>
+        {ticks.map((_, i) => {
+          const a = (i / 48) * Math.PI * 2;
+          const long = i % 4 === 0;
+          const r1 = long ? 50 : 53;
+          return (
+            <line
+              key={i}
+              x1={60 + Math.cos(a) * r1}
+              y1={60 + Math.sin(a) * r1}
+              x2={60 + Math.cos(a) * 57}
+              y2={60 + Math.sin(a) * 57}
+              stroke="var(--ink)"
+              strokeWidth={long ? 1.4 : 0.8}
+              opacity={long ? 0.85 : 0.35}
+            />
+          );
+        })}
+      </g>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ink)" strokeWidth="1" opacity="0.25" />
+      <path
+        d="M60 22l26 10v17c0 16-11 27-26 33-15-6-26-17-26-33V32l26-10Z"
+        fill="url(#sealG)"
+        stroke="var(--ink)"
+        strokeWidth="2"
+      />
+      <path
+        d="M60 30l19 7.4v13.6c0 12-8 20.4-19 25-11-4.6-19-13-19-25V37.4L60 30Z"
+        fill="none"
+        stroke="rgba(28,24,21,.28)"
+        strokeWidth="1"
+      />
+      <path
+        d="M50 60.5l7 7 14-15"
+        fill="none"
+        stroke="var(--white)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
-/* ─── VerificationSeal ──────────────────────────────────────────────────── */
-interface VerificationSealProps {
-  label?: string;
-  size?: "sm" | "lg";
-}
-
-export function VerificationSeal({ label = "Verified", size = "sm" }: VerificationSealProps) {
-  const fs = size === "sm" ? 11.5 : 13.5;
-  const pad = size === "sm" ? "4px 9px 4px 6px" : "7px 13px 7px 9px";
-  const iconSize = size === "sm" ? 12 : 15;
-
+/* ─── XBtn ───────────────────────────────────────────────────────────────── */
+export function XBtn({
+  children,
+  variant = "solid",
+  size = "md",
+  icon,
+  onClick,
+  href,
+  className,
+}: {
+  children: React.ReactNode;
+  variant?: "solid" | "green" | "outline" | "ghost";
+  size?: "lg" | "md" | "sm";
+  icon?: React.ReactNode;
+  onClick?: () => void;
+  href?: string;
+  className?: string;
+}) {
+  const pad =
+    size === "lg" ? "15px 26px" : size === "sm" ? "8px 15px" : "12px 21px";
+  const fs = size === "lg" ? 16 : size === "sm" ? 13.5 : 15;
+  const base: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 9,
+    padding: pad,
+    fontSize: fs,
+    fontWeight: 600,
+    borderRadius: 999,
+    transition: "all .35s cubic-bezier(.16,1,.3,1)",
+    letterSpacing: ".005em",
+    lineHeight: 1,
+  };
+  const variants: Record<string, React.CSSProperties> = {
+    solid: { background: "var(--ink)", color: "var(--paper)" },
+    green: { background: "var(--green)", color: "#06281c" },
+    outline: {
+      background: "transparent",
+      color: "var(--ink)",
+      border: "1.5px solid var(--ink)",
+    },
+    ghost: { background: "transparent", color: "var(--ink)" },
+  };
+  const style = { ...base, ...variants[variant] };
+  if (href) {
+    return (
+      <a href={href} style={style} className={className}>
+        {children}
+        {icon && <span>{icon}</span>}
+      </a>
+    );
+  }
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: size === "sm" ? 4 : 5,
-        background: "rgba(15,184,126,.12)",
-        border: "1px solid rgba(15,184,126,.32)",
-        color: "var(--green-deep)",
-        borderRadius: 999,
-        fontSize: fs,
-        fontWeight: 600,
-        padding: pad,
-        fontFamily: "var(--body)",
-        lineHeight: 1,
-      }}
+    <button
+      onClick={onClick}
+      style={style}
+      className={`hover:-translate-y-px hover:shadow-lg transition-all ${className ?? ""}`}
     >
-      <svg
-        width={iconSize}
-        height={iconSize}
-        viewBox="0 0 16 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M8 1L10.1 5.3L15 5.9L11.5 9.3L12.4 14.2L8 11.9L3.6 14.2L4.5 9.3L1 5.9L5.9 5.3L8 1Z"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M5.5 8L7 9.5L10.5 6"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      {label}
-    </span>
+      {children}
+      {icon && <span>{icon}</span>}
+    </button>
   );
 }

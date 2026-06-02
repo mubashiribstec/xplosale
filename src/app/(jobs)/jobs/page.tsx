@@ -1,6 +1,5 @@
 import Link from "next/link";
 import JobCard from "@/components/shared/JobCard";
-import JobFilters from "@/components/shared/JobFilters";
 import { prisma } from "@/lib/prisma";
 
 interface SearchParams {
@@ -9,8 +8,19 @@ interface SearchParams {
   minSalary?: string;
   maxSalary?: string;
   keyword?: string;
+  sort?: string;
   page?: string;
+  verified?: string;
 }
+
+const JOB_TYPES = ["All", "Engineering", "Product", "Design", "Operations", "Growth"];
+const REMOTE_TYPES = ["All", "Onsite", "Hybrid", "Remote"] as const;
+const SORT_OPTIONS = [
+  { key: "newest", label: "Newest" },
+  { key: "relevance", label: "Relevance" },
+  { key: "salary_asc", label: "Salary ↑" },
+  { key: "salary_desc", label: "Salary ↓" },
+];
 
 export default async function JobsPage({
   searchParams,
@@ -24,14 +34,19 @@ export default async function JobsPage({
   const where: Record<string, unknown> = { status: "ACTIVE" };
 
   if (sp.regionSlug) where.region = { slug: sp.regionSlug };
-  if (sp.remoteType) where.remoteType = sp.remoteType;
+  if (sp.remoteType && sp.remoteType !== "All") where.remoteType = sp.remoteType.toUpperCase();
   if (sp.keyword) where.title = { contains: sp.keyword, mode: "insensitive" };
+  if (sp.verified === "true") where.company = { verifiedEmployer: true };
   if (sp.minSalary || sp.maxSalary) {
     const salaryFilter: Record<string, number> = {};
     if (sp.minSalary) salaryFilter.gte = parseInt(sp.minSalary, 10);
     if (sp.maxSalary) salaryFilter.lte = parseInt(sp.maxSalary, 10);
     where.salaryMin = salaryFilter;
   }
+
+  let orderBy: Record<string, string> | Record<string, string>[] = { createdAt: "desc" };
+  if (sp.sort === "salary_asc") orderBy = { salaryMin: "asc" };
+  else if (sp.sort === "salary_desc") orderBy = { salaryMin: "desc" };
 
   const [regions, jobs, total] = await Promise.all([
     prisma.region.findMany({
@@ -45,7 +60,7 @@ export default async function JobsPage({
         region: { select: { id: true, name: true, slug: true, city: true } },
         _count: { select: { applications: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -60,27 +75,405 @@ export default async function JobsPage({
   if (sp.minSalary) spRecord.minSalary = sp.minSalary;
   if (sp.maxSalary) spRecord.maxSalary = sp.maxSalary;
   if (sp.keyword) spRecord.keyword = sp.keyword;
+  if (sp.sort) spRecord.sort = sp.sort;
+  if (sp.verified) spRecord.verified = sp.verified;
+
+  const activeRemote = sp.remoteType ?? "All";
+  const activeSort = sp.sort ?? "newest";
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Jobs</h1>
-          <p className="text-gray-500 mt-1">{total} position{total !== 1 ? "s" : ""} found</p>
-        </div>
+    <main style={{ minHeight: "100vh", background: "var(--paper)" }}>
+      {/* Hero header */}
+      <div
+        style={{
+          background: "var(--white)",
+          borderBottom: "1px solid var(--line)",
+          padding: "40px 0 28px",
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          <p
+            style={{
+              fontFamily: "var(--body)",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              color: "var(--clay)",
+              marginBottom: 8,
+            }}
+          >
+            Jobs · Verified employers
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--display)",
+              fontWeight: 800,
+              fontSize: 36,
+              color: "var(--ink)",
+              lineHeight: 1.1,
+              margin: 0,
+            }}
+          >
+            Hire. Get hired. Verified.
+          </h1>
+          <p style={{ fontFamily: "var(--body)", fontSize: 15, color: "var(--ink-soft)", marginTop: 8 }}>
+            {total.toLocaleString()} position{total !== 1 ? "s" : ""} from verified employers
+          </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <aside>
-            <JobFilters regions={regions} searchParams={spRecord} />
+          {/* Search + filter bar */}
+          <form
+            method="GET"
+            action="/jobs"
+            style={{
+              marginTop: 20,
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ position: "relative", flex: "1 1 240px", minWidth: 180 }}>
+              <svg
+                style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                name="keyword"
+                defaultValue={sp.keyword ?? ""}
+                placeholder="Search job title..."
+                style={{
+                  width: "100%",
+                  paddingLeft: 38,
+                  paddingRight: 14,
+                  paddingTop: 10,
+                  paddingBottom: 10,
+                  border: "1.5px solid var(--line)",
+                  borderRadius: 10,
+                  fontFamily: "var(--body)",
+                  fontSize: 14,
+                  color: "var(--ink)",
+                  background: "var(--paper)",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            <select
+              name="regionSlug"
+              defaultValue={sp.regionSlug ?? ""}
+              style={{
+                padding: "10px 14px",
+                border: "1.5px solid var(--line)",
+                borderRadius: 10,
+                fontFamily: "var(--body)",
+                fontSize: 14,
+                color: sp.regionSlug ? "var(--ink)" : "var(--ink-faint)",
+                background: "var(--paper)",
+                outline: "none",
+                flex: "0 0 auto",
+              }}
+            >
+              <option value="">All regions</option>
+              {regions.map((r) => (
+                <option key={r.id} value={r.slug}>{r.name}</option>
+              ))}
+            </select>
+            {/* Remote type chips in search bar */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["All", "ONSITE", "HYBRID", "REMOTE"] as const).map((rt) => {
+                const labels: Record<string, string> = { All: "All", ONSITE: "Onsite", HYBRID: "Hybrid", REMOTE: "Remote" };
+                const isActive = (sp.remoteType ?? "All").toUpperCase() === rt;
+                return (
+                  <Link
+                    key={rt}
+                    href={`/jobs?${new URLSearchParams({ ...spRecord, remoteType: rt === "All" ? "" : rt, page: "1" }).toString()}`}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 99,
+                      fontFamily: "var(--body)",
+                      fontSize: 13,
+                      fontWeight: isActive ? 600 : 500,
+                      border: `1.5px solid ${isActive ? "var(--clay)" : "var(--line)"}`,
+                      background: isActive ? "var(--clay)" : "var(--white)",
+                      color: isActive ? "var(--white)" : "var(--ink-soft)",
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {labels[rt]}
+                  </Link>
+                );
+              })}
+            </div>
+            <button
+              type="submit"
+              style={{
+                padding: "10px 20px",
+                background: "var(--clay)",
+                color: "var(--white)",
+                border: "none",
+                borderRadius: 10,
+                fontFamily: "var(--body)",
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              Search
+            </button>
+          </form>
+
+          {/* Job type chips */}
+          <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+            {JOB_TYPES.map((type) => (
+              <span
+                key={type}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: 99,
+                  fontFamily: "var(--body)",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  border: "1px solid var(--line)",
+                  background: "var(--paper-2)",
+                  color: "var(--ink-soft)",
+                  cursor: "pointer",
+                }}
+              >
+                {type}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main layout: sidebar + feed */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "256px 1fr", gap: 24, alignItems: "start" }}>
+          {/* Sidebar */}
+          <aside style={{ position: "sticky", top: 24 }}>
+            <div
+              style={{
+                background: "var(--white)",
+                border: "1.5px solid var(--line)",
+                borderRadius: 18,
+                padding: "20px 18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+              }}
+            >
+              <p style={{ fontFamily: "var(--body)", fontWeight: 700, fontSize: 13, color: "var(--ink)", margin: 0 }}>
+                Filters
+              </p>
+
+              {/* Salary range */}
+              <div>
+                <p style={{ fontFamily: "var(--body)", fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Salary Range (PKR)
+                </p>
+                <form method="GET" action="/jobs" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {Object.entries(spRecord).filter(([k]) => k !== "minSalary" && k !== "maxSalary").map(([k, v]) => (
+                    <input key={k} type="hidden" name={k} value={v} />
+                  ))}
+                  <input
+                    type="number"
+                    name="minSalary"
+                    defaultValue={sp.minSalary ?? ""}
+                    placeholder="Min salary"
+                    style={{
+                      padding: "8px 10px",
+                      border: "1.5px solid var(--line)",
+                      borderRadius: 8,
+                      fontFamily: "var(--body)",
+                      fontSize: 13,
+                      color: "var(--ink)",
+                      background: "var(--paper)",
+                      outline: "none",
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <input
+                    type="number"
+                    name="maxSalary"
+                    defaultValue={sp.maxSalary ?? ""}
+                    placeholder="Max salary"
+                    style={{
+                      padding: "8px 10px",
+                      border: "1.5px solid var(--line)",
+                      borderRadius: 8,
+                      fontFamily: "var(--body)",
+                      fontSize: 13,
+                      color: "var(--ink)",
+                      background: "var(--paper)",
+                      outline: "none",
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "7px 0",
+                      background: "var(--paper-3)",
+                      border: "1px solid var(--line)",
+                      borderRadius: 8,
+                      fontFamily: "var(--body)",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "var(--ink-soft)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Apply
+                  </button>
+                </form>
+              </div>
+
+              {/* Remote type */}
+              <div>
+                <p style={{ fontFamily: "var(--body)", fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Work Type
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {REMOTE_TYPES.map((rt) => {
+                    const val = rt === "All" ? "" : rt.toUpperCase();
+                    const isActive = (sp.remoteType ?? "") === val;
+                    return (
+                      <Link
+                        key={rt}
+                        href={`/jobs?${new URLSearchParams({ ...spRecord, remoteType: val, page: "1" }).toString()}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          background: isActive ? "rgba(160,78,55,.08)" : "transparent",
+                          border: `1px solid ${isActive ? "rgba(160,78,55,.3)" : "transparent"}`,
+                          fontFamily: "var(--body)",
+                          fontSize: 13,
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? "var(--clay)" : "var(--ink-soft)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {rt}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Verified employers only */}
+              <div>
+                <p style={{ fontFamily: "var(--body)", fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Employer
+                </p>
+                <Link
+                  href={`/jobs?${new URLSearchParams({ ...spRecord, verified: sp.verified === "true" ? "" : "true", page: "1" }).toString()}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 10px",
+                    borderRadius: 8,
+                    background: sp.verified === "true" ? "rgba(14,158,110,.08)" : "transparent",
+                    border: `1px solid ${sp.verified === "true" ? "rgba(14,158,110,.3)" : "transparent"}`,
+                    fontFamily: "var(--body)",
+                    fontSize: 13,
+                    fontWeight: sp.verified === "true" ? 600 : 400,
+                    color: sp.verified === "true" ? "var(--green-deep)" : "var(--ink-soft)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 1L14 3.5V9C14 12.3 11.4 15.3 8 17C4.6 15.3 2 12.3 2 9V3.5L8 1Z" strokeLinejoin="round" />
+                    <path d="M5.5 9L7 10.5L10.5 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Verified only
+                </Link>
+              </div>
+
+              {/* Reset */}
+              <Link
+                href="/jobs"
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  padding: "7px 0",
+                  border: "1px solid var(--line)",
+                  borderRadius: 8,
+                  fontFamily: "var(--body)",
+                  fontSize: 12,
+                  color: "var(--ink-faint)",
+                  textDecoration: "none",
+                }}
+              >
+                Reset filters
+              </Link>
+            </div>
           </aside>
 
-          <section className="lg:col-span-3 space-y-4">
+          {/* Main feed */}
+          <section>
+            {/* Sort chips */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <span style={{ fontFamily: "var(--body)", fontSize: 13, color: "var(--ink-faint)", marginRight: 4 }}>
+                Sort:
+              </span>
+              {SORT_OPTIONS.map((opt) => (
+                <Link
+                  key={opt.key}
+                  href={`/jobs?${new URLSearchParams({ ...spRecord, sort: opt.key, page: "1" }).toString()}`}
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: 99,
+                    fontFamily: "var(--body)",
+                    fontSize: 12,
+                    fontWeight: activeSort === opt.key ? 600 : 500,
+                    border: `1.5px solid ${activeSort === opt.key ? "var(--ink)" : "var(--line)"}`,
+                    background: activeSort === opt.key ? "var(--ink)" : "var(--white)",
+                    color: activeSort === opt.key ? "var(--white)" : "var(--ink-soft)",
+                    textDecoration: "none",
+                  }}
+                >
+                  {opt.label}
+                </Link>
+              ))}
+            </div>
+
             {jobs.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
-                <p>No jobs found matching your filters.</p>
+              <div
+                style={{
+                  background: "var(--white)",
+                  border: "1.5px solid var(--line)",
+                  borderRadius: 18,
+                  padding: "60px 24px",
+                  textAlign: "center",
+                }}
+              >
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--paper-3)" strokeWidth="1.5" style={{ margin: "0 auto 16px" }}>
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                </svg>
+                <p style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 18, color: "var(--ink)", marginBottom: 8 }}>
+                  No jobs found
+                </p>
+                <p style={{ fontFamily: "var(--body)", fontSize: 14, color: "var(--ink-faint)" }}>
+                  Try adjusting your filters or{" "}
+                  <Link href="/jobs" style={{ color: "var(--clay)", textDecoration: "none", fontWeight: 600 }}>
+                    clear all
+                  </Link>
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {jobs.map((job) => (
                   <JobCard key={job.id} job={job} />
                 ))}
@@ -88,22 +481,42 @@ export default async function JobsPage({
             )}
 
             {pages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, paddingTop: 24 }}>
                 {page > 1 && (
                   <Link
                     href={`/jobs?${new URLSearchParams({ ...spRecord, page: String(page - 1) }).toString()}`}
-                    className="px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    style={{
+                      padding: "8px 16px",
+                      fontFamily: "var(--body)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      background: "var(--white)",
+                      border: "1.5px solid var(--line)",
+                      borderRadius: 8,
+                      color: "var(--ink-soft)",
+                      textDecoration: "none",
+                    }}
                   >
                     Previous
                   </Link>
                 )}
-                <span className="text-sm text-gray-500">
+                <span style={{ fontFamily: "var(--body)", fontSize: 13, color: "var(--ink-faint)" }}>
                   Page {page} of {pages}
                 </span>
                 {page < pages && (
                   <Link
                     href={`/jobs?${new URLSearchParams({ ...spRecord, page: String(page + 1) }).toString()}`}
-                    className="px-4 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    style={{
+                      padding: "8px 16px",
+                      fontFamily: "var(--body)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      background: "var(--white)",
+                      border: "1.5px solid var(--line)",
+                      borderRadius: 8,
+                      color: "var(--ink-soft)",
+                      textDecoration: "none",
+                    }}
                   >
                     Next
                   </Link>
