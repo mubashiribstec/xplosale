@@ -13,6 +13,10 @@ const schema = z.object({
   expectedSalaryMin: z.number().int().min(0).optional(),
   expectedSalaryMax: z.number().int().min(0).optional(),
   currency: z.string().max(5).optional(),
+  recruiterDiscoverable: z.boolean().optional(),
+  preferredRemoteType: z.enum(["ONSITE", "HYBRID", "REMOTE"]).optional().nullable(),
+  preferredRegionIds: z.array(z.string().cuid()).optional(),
+  doNotRecommendCompanyIds: z.array(z.string().cuid()).optional(),
 });
 
 export async function GET() {
