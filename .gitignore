@@ -30,13 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (allow .env for Docker deploy — contains non-secret defaults)
+# env files — never commit real secrets
+.env
 .env.local
 .env.*.local
 .env.development
 .env.production
 .env.test
-# Keep .env and .env.example tracked
 
 
 # vercel
