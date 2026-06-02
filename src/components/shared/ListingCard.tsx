@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Clock, Home, Car, Smartphone, Monitor, Sofa, Shirt, Gamepad, Tag, Zap } from "lucide-react";
-import { getPublicUrl } from "@/core/adapters/storage";
 import { KhatamPattern } from "@/components/ui/XplosaleUI";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 
@@ -126,7 +125,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
         <div style={{ position: "relative", width: "100%", height: 192, overflow: "hidden" }}>
           {firstImage ? (
             <Image
-              src={getPublicUrl(firstImage.url)}
+              src={firstImage.url}
               alt={listing.title}
               fill
               className="object-cover"

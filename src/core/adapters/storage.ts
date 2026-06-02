@@ -2,6 +2,7 @@
  * Storage adapter — local filesystem (STORAGE_MODE=local) or Supabase S3 (STORAGE_MODE=s3).
  * All feature code calls this module; never the underlying SDK directly.
  */
+import "server-only";
 
 import { env } from "@/lib/env";
 

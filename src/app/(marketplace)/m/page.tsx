@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getPublicUrl } from "@/core/adapters/storage";
 import ListingCard from "@/components/shared/ListingCard";
 import MarketplaceShell from "./_components/MarketplaceShell";
 
@@ -103,7 +104,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     fbrValuationMax: l.fbrValuationMax?.toString() ?? null,
     updatedAt: l.updatedAt.toISOString(),
     images: l.images.map((img) => ({
-      url: img.url,
+      url: getPublicUrl(img.url),
       width: img.width,
       height: img.height,
     })),
