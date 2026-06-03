@@ -4,6 +4,7 @@ import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import OfferButton from "@/components/shared/OfferButton";
+import EscrowWidget from "@/components/shared/EscrowWidget";
 
 interface PageProps {
   params: Promise<{ listingId: string }>;
@@ -31,6 +32,11 @@ export default async function ListingDetailPage({ params }: PageProps) {
         orderBy: { createdAt: "desc" },
         take: 5,
       },
+      escrowTransactions: {
+        where: { status: { in: ["HELD", "DISPUTED"] } },
+        take: 1,
+        select: { id: true, status: true, amount: true, buyerId: true, sellerId: true },
+      },
     },
   });
 
@@ -45,6 +51,16 @@ export default async function ListingDetailPage({ params }: PageProps) {
   }
 
   const price = Number(listing.price).toLocaleString("en-PK");
+  const activeEscrow = listing.escrowTransactions[0] ?? null;
+  const activeEscrowSerialized = activeEscrow
+    ? {
+        id: activeEscrow.id,
+        status: activeEscrow.status,
+        amount: activeEscrow.amount.toString(),
+        buyerId: activeEscrow.buyerId,
+        sellerId: activeEscrow.sellerId,
+      }
+    : null;
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -171,6 +187,17 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 >
                   Sign in to make an offer
                 </a>
+              )}
+
+              {listing.status === "ACTIVE" && (
+                <EscrowWidget
+                  listingId={listing.id}
+                  listingPrice={price}
+                  currency={listing.currency}
+                  sellerId={listing.sellerProfile.user.id}
+                  currentUserId={userId}
+                  existingEscrow={activeEscrowSerialized}
+                />
               )}
 
               {isOwner && (

@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/admin/verifications", label: "Verifications" },
   { href: "/admin/partners", label: "Partners" },
   { href: "/admin/listings", label: "Listings" },
+  { href: "/admin/escrow", label: "Escrow" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/audit", label: "Audit Log" },
   { href: "/admin/companies", label: "Companies" },
