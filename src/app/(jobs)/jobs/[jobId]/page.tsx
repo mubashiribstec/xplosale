@@ -1,9 +1,38 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import ApplyButton from "@/components/shared/ApplyButton";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ jobId: string }> }
+): Promise<Metadata> {
+  const { jobId } = await params;
+  const job = await prisma.jobPosting.findUnique({
+    where: { id: jobId },
+    select: {
+      title: true, description: true,
+      salaryMin: true, salaryMax: true, currency: true, remoteType: true,
+      company: { select: { name: true } },
+      region: { select: { name: true, city: true } },
+    },
+  });
+  if (!job) return { title: "Job not found" };
+
+  const salaryText = job.salaryMin && job.salaryMax
+    ? ` · ${job.currency} ${job.salaryMin.toLocaleString()}–${job.salaryMax.toLocaleString()}`
+    : "";
+  const description = `${job.company.name} · ${job.region.city}, ${job.region.name}${salaryText} · ${job.description?.slice(0, 120) ?? ""}`;
+
+  return {
+    title: `${job.title} at ${job.company.name} | Xplosale Jobs`,
+    description,
+    openGraph: { title: `${job.title} at ${job.company.name}`, description, type: "website" },
+    twitter: { card: "summary", title: `${job.title} at ${job.company.name}`, description },
+  };
+}
 
 const LOGO_COLORS = [
   "#327AD6", "#9025B3", "#A04E37", "#0E9E6E", "#1F56B0", "#6E1A8A",
@@ -157,6 +186,44 @@ export default async function JobDetailPage({
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "JobPosting",
+            title: job.title,
+            description: job.description,
+            datePosted: job.createdAt.toISOString(),
+            validThrough: job.expiresAt?.toISOString(),
+            employmentType: job.remoteType === "REMOTE" ? "TELECOMMUTE" : "FULL_TIME",
+            hiringOrganization: {
+              "@type": "Organization",
+              name: job.company.name,
+            },
+            jobLocation: {
+              "@type": "Place",
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: job.region.city,
+                addressCountry: "PK",
+              },
+            },
+            ...(job.salaryMin && job.salaryMax ? {
+              baseSalary: {
+                "@type": "MonetaryAmount",
+                currency: job.currency,
+                value: {
+                  "@type": "QuantitativeValue",
+                  minValue: job.salaryMin,
+                  maxValue: job.salaryMax,
+                  unitText: "MONTH",
+                },
+              },
+            } : {}),
+          }),
+        }}
+      />
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px" }}>
         {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 20, fontFamily: "var(--body)", fontSize: 13, color: "var(--ink-faint)" }}>
