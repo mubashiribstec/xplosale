@@ -7,7 +7,7 @@ import { getOrCreateRoom } from "@/core/messaging/rooms";
 import { rateLimit } from "@/lib/rate-limit";
 
 const createRoomSchema = z.object({
-  contextType: z.enum(["LISTING", "JOB_APPLICATION", "NETWORK_DM"]),
+  contextType: z.enum(["LISTING", "JOB_APPLICATION", "NETWORK_DM", "ADMIN_DM"]),
   contextId: z.string().min(1),
   otherUserId: z.string().min(1),
 });

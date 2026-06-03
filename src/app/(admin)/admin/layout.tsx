@@ -7,6 +7,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const navLinks = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/support", label: "Support" },
   { href: "/admin/verifications", label: "Verifications" },
   { href: "/admin/partners", label: "Partners" },
   { href: "/admin/listings", label: "Listings" },
