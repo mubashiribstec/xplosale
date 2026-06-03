@@ -1,9 +1,13 @@
 import { type NextRequest } from "next/server";
-import { ok, parseError } from "@/lib/http";
+import { ok, err, parseError } from "@/lib/http";
+import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) return err("Unauthorized", 401);
+
     const { searchParams } = req.nextUrl;
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = 20;
@@ -11,7 +15,7 @@ export async function GET(req: NextRequest) {
     const [people, total] = await Promise.all([
       prisma.user.findMany({
         where: {
-          jobSeekerProfile: { openToWork: true },
+          jobSeekerProfile: { openToWork: true, recruiterDiscoverable: true },
           networkProfile: { visibility: "PUBLIC" },
         },
         select: {
@@ -39,7 +43,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.user.count({
         where: {
-          jobSeekerProfile: { openToWork: true },
+          jobSeekerProfile: { openToWork: true, recruiterDiscoverable: true },
           networkProfile: { visibility: "PUBLIC" },
         },
       }),

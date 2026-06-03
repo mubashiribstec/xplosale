@@ -4,6 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateRoom, publishMessage, createNotification } from "@/core/messaging/rooms";
+import { rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   amount: z.number().positive(),
@@ -18,6 +19,9 @@ export async function POST(
     const session = await getSession();
     if (!session) return err("Unauthorized", 401);
     const buyerId = getUserId(session);
+
+    const limited = await rateLimit(`listings:offer:${buyerId}`, 20, 3600);
+    if (!limited.allowed) return err("Too many requests", 429);
 
     const { listingId } = await params;
 

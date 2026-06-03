@@ -4,6 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { publishMessage, createNotification } from "@/core/messaging/rooms";
+import { rateLimit } from "@/lib/rate-limit";
 
 async function getParticipantRoom(roomId: string, userId: string) {
   const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
@@ -58,6 +59,9 @@ export async function POST(
     const session = await requireSession().catch(() => null);
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+
+    const limited = await rateLimit(`chat:message:${userId}`, 60, 60);
+    if (!limited.allowed) return err("Too many requests", 429);
 
     const { roomId } = await params;
     const room = await getParticipantRoom(roomId, userId);

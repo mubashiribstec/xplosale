@@ -24,6 +24,29 @@ const envSchema = z.object({
   // App
   CNIC_HASH_SALT: z.string().min(32),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  // Cron secrets
+  RECOMMENDATION_CRON_SECRET: z.string().min(16).optional(),
+  SEARCH_DIGEST_CRON_SECRET: z.string().min(16).optional(),
+
+  // Recommendation engine config
+  RECOMMENDATION_BATCH_SIZE: z.coerce.number().int().positive().default(200),
+  INVITE_TO_APPLY_DAILY_CAP_PER_COMPANY: z.coerce.number().int().positive().default(20),
+  INVITE_TO_APPLY_MONTHLY_CAP_PER_CANDIDATE: z.coerce.number().int().positive().default(5),
+
+  // Search config
+  SEARCH_AUTOSUGGEST_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(300),
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
+  // Email
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().email().default("noreply@xplosale.com"),
+
+  // App URL
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

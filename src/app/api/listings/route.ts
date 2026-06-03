@@ -5,6 +5,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getUserTier } from "@/lib/tier";
+import { rateLimit } from "@/lib/rate-limit";
 
 const LISTING_LIMITS: Record<string, number> = { BASIC: 5, VERIFIED: 20, PARTNER: Infinity };
 
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
     const session = await getSession();
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+
+    const limited = await rateLimit(`listings:create:${userId}`, 10, 3600);
+    if (!limited.allowed) return err("Too many requests", 429);
 
     const body = await req.json() as unknown;
     const parsed = createSchema.safeParse(body);
