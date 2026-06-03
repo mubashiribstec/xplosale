@@ -3,6 +3,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import ConnectButton from "@/components/shared/ConnectButton";
+import InviteButton from "@/components/shared/InviteButton";
 
 interface SearchParams {
   page?: string;
@@ -19,6 +20,20 @@ export default async function PeoplePage({
 
   const session = await getSession();
   const callerId = session ? getUserId(session) : null;
+
+  const isEmployer = session && ["EMPLOYER_RECRUITER", "EMPLOYER_HIRING_MANAGER", "ADMIN"].includes(
+    (session.user as { role: string }).role
+  );
+
+  const employerJobs = isEmployer ? await prisma.jobPosting.findMany({
+    where: {
+      employerProfile: { userId: callerId! },
+      status: "ACTIVE",
+    },
+    select: { id: true, title: true, companyId: true },
+    take: 20,
+    orderBy: { createdAt: "desc" },
+  }) : [];
 
   const [people, total] = await Promise.all([
     prisma.user.findMany({
@@ -158,6 +173,13 @@ export default async function PeoplePage({
                     initialStatus={connState.status}
                     connectionId={connState.connectionId}
                   />
+                  {isEmployer && employerJobs.length > 0 && (
+                    <InviteButton
+                      jobPostingId={employerJobs[0].id}
+                      candidateId={person.id}
+                      companyId={employerJobs[0].companyId}
+                    />
+                  )}
                 </div>
               );
             })}

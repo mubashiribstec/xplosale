@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { searchClient } from "@/core/search/postgres";
 import { encodeCursor } from "@/core/search/query";
 import type { JobHit } from "@/core/search/postgres";
+import SaveSearchButton from "@/components/shared/SaveSearchButton";
 
 interface SearchParams {
   regionSlug?: string;
@@ -261,6 +262,18 @@ export default async function JobsPage({
             >
               Search
             </button>
+            <SaveSearchButton
+              vertical="jobs"
+              queryJson={{
+                keyword: sp.keyword,
+                regionSlug: sp.regionSlug,
+                remoteType: sp.remoteType,
+                minSalary: sp.minSalary,
+                maxSalary: sp.maxSalary,
+                sort: sp.sort,
+              }}
+              defaultName={sp.keyword ? sp.keyword : "Job search"}
+            />
           </form>
 
           {/* Job type chips */}

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import ListingCard from "@/components/shared/ListingCard";
+import SaveSearchButton from "@/components/shared/SaveSearchButton";
 
 interface ListingItem {
   id: string;
@@ -207,6 +208,13 @@ export default function MarketplaceShell({
               Search
             </button>
           </form>
+          <div style={{ marginTop: 12 }}>
+            <SaveSearchButton
+              vertical="marketplace"
+              queryJson={searchParams}
+              defaultName={searchParams.q ? searchParams.q : searchParams.category ? searchParams.category : "Marketplace search"}
+            />
+          </div>
         </div>
       </div>
 
