@@ -20,7 +20,10 @@ export async function PATCH(
 
     const { jobId, applicationId } = await params;
 
-    const job = await prisma.jobPosting.findUnique({ where: { id: jobId } });
+    const job = await prisma.jobPosting.findUnique({
+      where: { id: jobId },
+      select: { id: true, title: true, companyId: true },
+    });
     if (!job) return err("Job not found", 404);
 
     const { canAccessJobApplications } = await import("@/verticals/jobs/ats/permissions");
@@ -40,9 +43,31 @@ export async function PATCH(
     });
     if (!target) return err("Application not found", 404);
 
+    // Fetch the pipeline stages for this company to map status → stage
+    const stages = await prisma.pipelineStage.findMany({
+      where: { companyId: job.companyId },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, order: true },
+    });
+
+    // Map status → stage by name heuristic (case-insensitive contains)
+    const stageNameMap: Record<string, string[]> = {
+      SHORTLISTED: ["shortlist", "screen", "phone"],
+      REVIEWED:    ["review", "assess"],
+      HIRED:       ["hire", "offer", "accept"],
+      REJECTED:    ["reject", "decline"],
+    };
+    const targetKeywords = stageNameMap[parsed.data.status] ?? [];
+    const matchedStage = stages.find((s) =>
+      targetKeywords.some((kw) => s.name.toLowerCase().includes(kw))
+    ) ?? null;
+
     const application = await prisma.application.update({
       where: { id: applicationId },
-      data: { status: parsed.data.status },
+      data: {
+        status: parsed.data.status,
+        ...(matchedStage ? { currentStageId: matchedStage.id } : {}),
+      },
       include: {
         jobSeeker: { select: { userId: true } },
       },

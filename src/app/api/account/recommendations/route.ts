@@ -27,7 +27,7 @@ export async function GET(req: Request) {
 
     const recs = await prisma.jobRecommendation.findMany({
       where: { jobSeekerId: profile.id },
-      orderBy: { score: "desc" },
+      orderBy: [{ score: "desc" }, { id: "asc" }],
       take: limit + 1,
       skip: offset,
       include: {

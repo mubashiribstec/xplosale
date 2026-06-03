@@ -69,6 +69,7 @@ export async function POST(
       update: {
         coverLetter: parsed.data.coverLetter,
         status: "APPLIED",
+        currentStageId: null,  // reset to unassigned so ATS re-places them
       },
       create: {
         jobPostingId: jobId,
