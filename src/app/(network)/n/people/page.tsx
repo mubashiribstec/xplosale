@@ -27,7 +27,7 @@ export default async function PeoplePage({
 
   const employerJobs = isEmployer ? await prisma.jobPosting.findMany({
     where: {
-      employerProfile: { userId: callerId! },
+      postedByUserId: callerId!,
       status: "ACTIVE",
     },
     select: { id: true, title: true, companyId: true },
