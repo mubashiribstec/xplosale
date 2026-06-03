@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import JobCard from "@/components/shared/JobCard";
 import { prisma } from "@/lib/prisma";
+import { searchClient } from "@/core/search/postgres";
+import { encodeCursor } from "@/core/search/query";
+import type { JobHit } from "@/core/search/postgres";
 
 interface SearchParams {
   regionSlug?: string;
@@ -22,6 +26,12 @@ const SORT_OPTIONS = [
   { key: "salary_desc", label: "Salary ↓" },
 ];
 
+async function resolveRegionId(slug: string | undefined): Promise<string | undefined> {
+  if (!slug) return undefined;
+  const r = await prisma.region.findUnique({ where: { slug }, select: { id: true } });
+  return r?.id;
+}
+
 export default async function JobsPage({
   searchParams,
 }: {
@@ -31,43 +41,68 @@ export default async function JobsPage({
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
   const limit = 20;
 
-  const where: Record<string, unknown> = { status: "ACTIVE" };
+  const regionId = await resolveRegionId(sp.regionSlug);
 
-  if (sp.regionSlug) where.region = { slug: sp.regionSlug };
-  if (sp.remoteType && sp.remoteType !== "All") where.remoteType = sp.remoteType.toUpperCase();
-  if (sp.keyword) where.title = { contains: sp.keyword, mode: "insensitive" };
-  if (sp.verified === "true") where.company = { verifiedEmployer: true };
+  const filters: Record<string, unknown> = {};
+  if (regionId) filters.regionId = regionId;
+  if (sp.remoteType && sp.remoteType !== "All") filters.remoteType = sp.remoteType.toUpperCase();
+  if (sp.minSalary) filters.salaryMin = parseInt(sp.minSalary, 10);
+  if (sp.maxSalary) filters.salaryMax = parseInt(sp.maxSalary, 10);
+
+  const VALID_SORTS = ["relevance", "newest", "salary_asc", "salary_desc"] as const;
+  type JobSort = typeof VALID_SORTS[number];
+  const sort: JobSort = (VALID_SORTS as readonly string[]).includes(sp.sort ?? "") ? (sp.sort as JobSort) : "newest";
+  const cursor = page > 1 ? encodeCursor((page - 1) * limit) : undefined;
+
+  // Fetch search results
+  const result = await searchClient.search<JobHit>({
+    vertical: "jobs",
+    query: sp.keyword ?? "",
+    filters,
+    sort,
+    cursor,
+    limit,
+  });
+
+  // Keep a separate count query for pagination total
+  const countWhere: Record<string, unknown> = { status: "ACTIVE" };
+  if (regionId) countWhere.regionId = regionId;
+  if (sp.remoteType && sp.remoteType !== "All") countWhere.remoteType = sp.remoteType.toUpperCase();
+  if (sp.keyword) countWhere.title = { contains: sp.keyword, mode: "insensitive" };
+  if (sp.verified === "true") countWhere.company = { verifiedEmployer: true };
   if (sp.minSalary || sp.maxSalary) {
     const salaryFilter: Record<string, number> = {};
     if (sp.minSalary) salaryFilter.gte = parseInt(sp.minSalary, 10);
     if (sp.maxSalary) salaryFilter.lte = parseInt(sp.maxSalary, 10);
-    where.salaryMin = salaryFilter;
+    countWhere.salaryMin = salaryFilter;
   }
 
-  let orderBy: Record<string, string> | Record<string, string>[] = { createdAt: "desc" };
-  if (sp.sort === "salary_asc") orderBy = { salaryMin: "asc" };
-  else if (sp.sort === "salary_desc") orderBy = { salaryMin: "desc" };
-
-  const [regions, jobs, total] = await Promise.all([
+  const [regions, total] = await Promise.all([
     prisma.region.findMany({
       select: { id: true, name: true, slug: true },
       orderBy: [{ city: "asc" }, { name: "asc" }],
     }),
-    prisma.jobPosting.findMany({
-      where,
-      include: {
-        company: { select: { id: true, name: true, industry: true, verifiedEmployer: true, logoUrl: true } },
-        region: { select: { id: true, name: true, slug: true, city: true } },
-        _count: { select: { applications: true } },
-      },
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.jobPosting.count({ where }),
+    prisma.jobPosting.count({ where: countWhere as Prisma.JobPostingWhereInput }),
   ]);
 
   const pages = Math.ceil(total / limit);
+
+  // Map JobHit to the shape JobCard expects
+  const jobs = result.hits.map((hit) => ({
+    id: hit.id,
+    title: hit.title,
+    remoteType: hit.remoteType,
+    salaryMin: hit.salaryMin ?? null,
+    salaryMax: hit.salaryMax ?? null,
+    currency: hit.currency,
+    createdAt: hit.createdAt instanceof Date ? hit.createdAt.toISOString() : String(hit.createdAt),
+    company: {
+      id: hit.companyId,
+      name: hit.companyName,
+      verifiedEmployer: hit.verifiedEmployer,
+    },
+    region: { name: hit.regionName, city: hit.regionCity },
+  }));
 
   const spRecord: Record<string, string> = {};
   if (sp.regionSlug) spRecord.regionSlug = sp.regionSlug;

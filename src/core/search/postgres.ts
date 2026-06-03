@@ -18,6 +18,9 @@ export interface ListingHit {
   regionId: string; status: string; createdAt: Date;
   propertyType: string | null; beds: number | null;
   rank: number;
+  regionName: string; regionCity: string;
+  imageUrl: string | null; imageWidth: number | null; imageHeight: number | null;
+  sellerAgentTier: string | null;
 }
 
 export interface JobHit {
@@ -26,6 +29,8 @@ export interface JobHit {
   regionId: string; remoteType: string;
   salaryMin: number | null; salaryMax: number | null; currency: string;
   status: string; createdAt: Date; rank: number;
+  regionName: string; regionCity: string;
+  logoUrl: string | null; verifiedEmployer: boolean;
 }
 
 export interface NetworkHit {
@@ -131,8 +136,20 @@ export class PostgresSearchClient implements SearchClient {
           ts_headline('simple', l.title, ${q}, 'MaxWords=6,MinWords=1') AS title_hl,
           l.price, l.currency, l.category, l."regionId", l.status, l."createdAt",
           l."propertyType", l.beds,
-          ts_rank_cd(l."searchVector", ${q}) AS rank
+          ts_rank_cd(l."searchVector", ${q}) AS rank,
+          r.name AS "regionName", r.city AS "regionCity",
+          img.url AS "imageUrl", img.width AS "imageWidth", img.height AS "imageHeight",
+          sp."agentTier" AS "sellerAgentTier"
         FROM "Listing" l
+        JOIN "Region" r ON r.id = l."regionId"
+        LEFT JOIN LATERAL (
+          SELECT li.url, li.width, li.height
+          FROM "ListingImage" li
+          WHERE li."listingId" = l.id
+          ORDER BY li."order" ASC
+          LIMIT 1
+        ) img ON TRUE
+        LEFT JOIN "SellerProfile" sp ON sp.id = l."sellerProfileId"
         WHERE ${where} AND l."searchVector" @@ ${q}
         ORDER BY ${orderBy}
         LIMIT ${limit} OFFSET ${offset}
@@ -145,8 +162,20 @@ export class PostgresSearchClient implements SearchClient {
           l.id, l.title, l.title AS title_hl,
           l.price, l.currency, l.category, l."regionId", l.status, l."createdAt",
           l."propertyType", l.beds,
-          similarity(l.title, ${query}) AS rank
+          similarity(l.title, ${query}) AS rank,
+          r.name AS "regionName", r.city AS "regionCity",
+          img.url AS "imageUrl", img.width AS "imageWidth", img.height AS "imageHeight",
+          sp."agentTier" AS "sellerAgentTier"
         FROM "Listing" l
+        JOIN "Region" r ON r.id = l."regionId"
+        LEFT JOIN LATERAL (
+          SELECT li.url, li.width, li.height
+          FROM "ListingImage" li
+          WHERE li."listingId" = l.id
+          ORDER BY li."order" ASC
+          LIMIT 1
+        ) img ON TRUE
+        LEFT JOIN "SellerProfile" sp ON sp.id = l."sellerProfileId"
         WHERE ${where} AND similarity(l.title, ${query}) > 0.1
         ORDER BY rank DESC, l."createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -159,8 +188,20 @@ export class PostgresSearchClient implements SearchClient {
         l.id, l.title, l.title AS title_hl,
         l.price, l.currency, l.category, l."regionId", l.status, l."createdAt",
         l."propertyType", l.beds,
-        0::float AS rank
+        0::float AS rank,
+        r.name AS "regionName", r.city AS "regionCity",
+        img.url AS "imageUrl", img.width AS "imageWidth", img.height AS "imageHeight",
+        sp."agentTier" AS "sellerAgentTier"
       FROM "Listing" l
+      JOIN "Region" r ON r.id = l."regionId"
+      LEFT JOIN LATERAL (
+        SELECT li.url, li.width, li.height
+        FROM "ListingImage" li
+        WHERE li."listingId" = l.id
+        ORDER BY li."order" ASC
+        LIMIT 1
+      ) img ON TRUE
+      LEFT JOIN "SellerProfile" sp ON sp.id = l."sellerProfileId"
       WHERE ${where}
       ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
@@ -194,6 +235,10 @@ export class PostgresSearchClient implements SearchClient {
 
     const orderBy = sort === "newest"
       ? Prisma.sql`j."createdAt" DESC`
+      : sort === "salary_asc"
+      ? Prisma.sql`j."salaryMin" ASC NULLS LAST, j."createdAt" DESC`
+      : sort === "salary_desc"
+      ? Prisma.sql`j."salaryMin" DESC NULLS LAST, j."createdAt" DESC`
       : Prisma.sql`rank DESC, j."createdAt" DESC`;
 
     if (query.trim()) {
@@ -206,9 +251,12 @@ export class PostgresSearchClient implements SearchClient {
           j."regionId", j."remoteType",
           j."salaryMin", j."salaryMax", j.currency,
           j.status, j."createdAt",
-          ts_rank_cd(j."searchVector", ${q}) AS rank
+          ts_rank_cd(j."searchVector", ${q}) AS rank,
+          r2.name AS "regionName", r2.city AS "regionCity",
+          c."logoUrl", c."verifiedEmployer"
         FROM "JobPosting" j
         JOIN "Company" c ON c.id = j."companyId"
+        JOIN "Region" r2 ON r2.id = j."regionId"
         WHERE ${where} AND j."searchVector" @@ ${q}
         ORDER BY ${orderBy}
         LIMIT ${limit} OFFSET ${offset}
@@ -222,9 +270,12 @@ export class PostgresSearchClient implements SearchClient {
           j."regionId", j."remoteType",
           j."salaryMin", j."salaryMax", j.currency,
           j.status, j."createdAt",
-          similarity(j.title, ${query}) AS rank
+          similarity(j.title, ${query}) AS rank,
+          r2.name AS "regionName", r2.city AS "regionCity",
+          c."logoUrl", c."verifiedEmployer"
         FROM "JobPosting" j
         JOIN "Company" c ON c.id = j."companyId"
+        JOIN "Region" r2 ON r2.id = j."regionId"
         WHERE ${where} AND similarity(j.title, ${query}) > 0.1
         ORDER BY rank DESC, j."createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -238,9 +289,12 @@ export class PostgresSearchClient implements SearchClient {
         j."regionId", j."remoteType",
         j."salaryMin", j."salaryMax", j.currency,
         j.status, j."createdAt",
-        0::float AS rank
+        0::float AS rank,
+        r2.name AS "regionName", r2.city AS "regionCity",
+        c."logoUrl", c."verifiedEmployer"
       FROM "JobPosting" j
       JOIN "Company" c ON c.id = j."companyId"
+      JOIN "Region" r2 ON r2.id = j."regionId"
       WHERE ${where}
       ORDER BY ${orderBy}
       LIMIT ${limit} OFFSET ${offset}
