@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
+import { searchClient } from "@/core/search/postgres";
+import { encodeCursor } from "@/core/search/query";
+import type { ListingHit } from "@/core/search/postgres";
 import ListingCard from "@/components/shared/ListingCard";
 import MarketplaceShell from "./_components/MarketplaceShell";
 
@@ -36,78 +39,77 @@ const CATEGORIES = [
   "Gaming",
 ];
 
+async function resolveRegionId(slug: string | undefined): Promise<string | undefined> {
+  if (!slug) return undefined;
+  const r = await prisma.region.findUnique({ where: { slug }, select: { id: true } });
+  return r?.id;
+}
+
 export default async function MarketplacePage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
-  const sort = sp.sort ?? "recent";
 
-  const where: Prisma.ListingWhereInput = {
-    status: "ACTIVE",
-    ...(sp.q ? { title: { contains: sp.q, mode: "insensitive" } } : {}),
-    ...(sp.category && sp.category !== "All"
-      ? { category: { contains: sp.category, mode: "insensitive" } }
-      : {}),
-    ...(sp.region ? { region: { slug: sp.region } } : {}),
-    ...(sp.propertyType
-      ? { propertyType: sp.propertyType as "HOUSE" | "APARTMENT" | "PLOT" | "COMMERCIAL" | "OTHER" }
-      : {}),
-    ...(sp.minPrice || sp.maxPrice
-      ? {
-          price: {
-            ...(sp.minPrice ? { gte: new Prisma.Decimal(sp.minPrice) } : {}),
-            ...(sp.maxPrice ? { lte: new Prisma.Decimal(sp.maxPrice) } : {}),
-          },
-        }
-      : {}),
-    ...(sp.beds ? { beds: { gte: parseInt(sp.beds, 10) } } : {}),
-    ...(sp.verified === "1"
-      ? { sellerProfile: { agentTier: { in: ["PRO" as const] } } }
-      : {}),
-  };
+  // Map URL sort param to search engine sort values
+  const urlSort = sp.sort ?? "recent";
+  const searchSort =
+    urlSort === "price_asc" ? "price_asc" :
+    urlSort === "price_desc" ? "price_desc" :
+    "newest"; // "recent" → "newest"
 
-  const orderBy: Prisma.ListingOrderByWithRelationInput[] =
-    sort === "price_asc"
-      ? [{ price: "asc" }]
-      : sort === "price_desc"
-      ? [{ price: "desc" }]
-      : [{ featured: "desc" }, { createdAt: "desc" }];
+  const regionId = await resolveRegionId(sp.region);
 
-  const [listings, total] = await Promise.all([
-    prisma.listing.findMany({
-      where,
-      include: {
-        images: { orderBy: { order: "asc" }, take: 1 },
-        region: { select: { id: true, name: true, slug: true, city: true } },
-        sellerProfile: {
-          select: {
-            id: true,
-            agentTier: true,
-            user: { select: { id: true, name: true } },
-          },
-        },
-      },
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.listing.count({ where }),
-  ]);
+  const filters: Record<string, unknown> = {};
+  if (regionId) filters.regionId = regionId;
+  if (sp.category && sp.category !== "All") filters.category = sp.category;
+  if (sp.propertyType) filters.propertyType = sp.propertyType;
+  if (sp.minPrice) filters.priceMin = Number(sp.minPrice);
+  if (sp.maxPrice) filters.priceMax = Number(sp.maxPrice);
+  if (sp.beds) filters.beds = parseInt(sp.beds, 10);
 
+  const cursor = page > 1 ? encodeCursor((page - 1) * PAGE_SIZE) : undefined;
+
+  // Fetch search results
+  const result = await searchClient.search<ListingHit>({
+    vertical: "marketplace",
+    query: sp.q ?? "",
+    filters,
+    sort: searchSort,
+    cursor,
+    limit: PAGE_SIZE,
+  });
+
+  // Keep a separate count query for total pagination
+  const countWhere: Record<string, unknown> = { status: "ACTIVE" };
+  if (regionId) countWhere.regionId = regionId;
+  if (sp.category && sp.category !== "All") countWhere.category = { contains: sp.category, mode: "insensitive" };
+  if (sp.q) countWhere.title = { contains: sp.q, mode: "insensitive" };
+  if (sp.propertyType) countWhere.propertyType = sp.propertyType;
+  if (sp.beds) countWhere.beds = { gte: parseInt(sp.beds, 10) };
+  if (sp.minPrice || sp.maxPrice) {
+    const priceFilter: Record<string, unknown> = {};
+    if (sp.minPrice) priceFilter.gte = Number(sp.minPrice);
+    if (sp.maxPrice) priceFilter.lte = Number(sp.maxPrice);
+    countWhere.price = priceFilter;
+  }
+
+  const total = await prisma.listing.count({ where: countWhere as Prisma.ListingWhereInput });
   const pages = Math.ceil(total / PAGE_SIZE);
 
-  const serialisedListings = listings.map((l) => ({
-    ...l,
-    price: l.price.toString(),
-    createdAt: l.createdAt.toISOString(),
-    expiresAt: l.expiresAt?.toISOString() ?? null,
-    fbrValuationMin: l.fbrValuationMin?.toString() ?? null,
-    fbrValuationMax: l.fbrValuationMax?.toString() ?? null,
-    updatedAt: l.updatedAt.toISOString(),
-    images: l.images.map((img) => ({
-      url: getPublicUrl(img.url),
-      width: img.width,
-      height: img.height,
-    })),
+  // Map ListingHit to the shape MarketplaceShell / ListingCard expects
+  const serialisedListings = result.hits.map((hit) => ({
+    id: hit.id,
+    title: hit.title,
+    price: String(hit.price),
+    currency: hit.currency,
+    category: hit.category,
+    propertyType: hit.propertyType ?? null,
+    beds: hit.beds ?? null,
+    createdAt: hit.createdAt instanceof Date ? hit.createdAt.toISOString() : String(hit.createdAt),
+    region: { name: hit.regionName, city: hit.regionCity },
+    images: hit.imageUrl
+      ? [{ url: getPublicUrl(hit.imageUrl), width: hit.imageWidth ?? 0, height: hit.imageHeight ?? 0 }]
+      : [],
+    sellerProfile: { agentTier: hit.sellerAgentTier ?? "NONE" },
   }));
 
   return (
@@ -117,7 +119,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       total={total}
       pages={pages}
       currentPage={page}
-      currentSort={sort}
+      currentSort={urlSort}
       searchParams={sp as Record<string, string>}
     />
   );

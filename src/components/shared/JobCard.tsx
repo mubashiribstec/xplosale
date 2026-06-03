@@ -17,7 +17,7 @@ interface JobCardProps {
       verifiedEmployer: boolean;
     };
     region: { name: string; city: string };
-    _count: { applications: number };
+    _count?: { applications: number } | null;
   };
   matchScore?: number | null;
   skills?: string[];
@@ -278,7 +278,7 @@ export default function JobCard({ job, matchScore, skills, applied }: JobCardPro
           }}
         >
           <span style={{ fontFamily: "var(--body)", fontSize: 12, color: "var(--ink-faint)" }}>
-            {daysAgo(job.createdAt)} · {job._count.applications} applicant{job._count.applications !== 1 ? "s" : ""}
+            {daysAgo(job.createdAt)}{job._count != null ? ` · ${job._count.applications} applicant${job._count.applications !== 1 ? "s" : ""}` : ""}
           </span>
 
           {applied ? (
