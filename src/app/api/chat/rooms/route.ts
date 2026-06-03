@@ -4,6 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateRoom } from "@/core/messaging/rooms";
+import { rateLimit } from "@/lib/rate-limit";
 
 const createRoomSchema = z.object({
   contextType: z.enum(["LISTING", "JOB_APPLICATION", "NETWORK_DM"]),
@@ -16,6 +17,9 @@ export async function POST(req: NextRequest) {
     const session = await requireSession().catch(() => null);
     if (!session) return err("Unauthorized", 401);
     const myUserId = getUserId(session);
+
+    const limited = await rateLimit(`chat:room:${myUserId}`, 10, 3600);
+    if (!limited.allowed) return err("Too many requests", 429);
 
     const body = await req.json();
     const parsed = createRoomSchema.safeParse(body);
