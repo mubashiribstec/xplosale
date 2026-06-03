@@ -1,10 +1,35 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import ConnectButton from "@/components/shared/ConnectButton";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { getUserTier } from "@/lib/tier";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ handle: string }> }
+): Promise<Metadata> {
+  const { handle } = await params;
+  const profile = await prisma.networkProfile.findUnique({
+    where: { handle },
+    select: {
+      headline: true, currentRole: true, location: true,
+      user: { select: { name: true } },
+    },
+  });
+  if (!profile) return { title: "Profile not found" };
+
+  const name = profile.user.name ?? handle;
+  const description = [profile.headline, profile.currentRole, profile.location].filter(Boolean).join(" · ");
+
+  return {
+    title: `${name} | Xplosale`,
+    description: description || `${name}'s professional profile on Xplosale`,
+    openGraph: { title: name, description, type: "profile" },
+    twitter: { card: "summary", title: name, description },
+  };
+}
 
 export default async function ProfilePage({
   params,

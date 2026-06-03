@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
@@ -8,6 +9,40 @@ import EscrowWidget from "@/components/shared/EscrowWidget";
 
 interface PageProps {
   params: Promise<{ listingId: string }>;
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ listingId: string }> }
+): Promise<Metadata> {
+  const { listingId } = await params;
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    select: {
+      title: true, description: true, price: true, currency: true,
+      images: { select: { url: true }, take: 1, orderBy: { order: "asc" } },
+      region: { select: { name: true, city: true } },
+    },
+  });
+  if (!listing) return { title: "Listing not found" };
+
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://xplosale.com";
+  const price = `${listing.currency} ${Number(listing.price).toLocaleString("en-PK")}`;
+  const description = `${price} · ${listing.region.city}, ${listing.region.name} · ${listing.description?.slice(0, 150) ?? ""}`;
+  const imageUrl = listing.images[0]?.url
+    ? `${base}/api/upload/serve-public/${listing.images[0].url}`
+    : undefined;
+
+  return {
+    title: `${listing.title} — ${price} | Xplosale`,
+    description,
+    openGraph: {
+      title: listing.title,
+      description,
+      type: "website",
+      ...(imageUrl ? { images: [{ url: imageUrl }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title: listing.title, description },
+  };
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {
@@ -64,6 +99,27 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: listing.title,
+            description: listing.description,
+            offers: {
+              "@type": "Offer",
+              price: Number(listing.price),
+              priceCurrency: listing.currency,
+              availability: "https://schema.org/InStock",
+              seller: {
+                "@type": "Person",
+                name: listing.sellerProfile?.user?.name ?? "Seller",
+              },
+            },
+          }),
+        }}
+      />
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {listing.status !== "ACTIVE" && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm text-yellow-800">
