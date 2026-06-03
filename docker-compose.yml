@@ -58,8 +58,9 @@ services:
       context: .
       target: runner
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    # No public port — nginx proxies to "app:3000" over the internal network.
+    expose:
+      - "3000"
     env_file: .env
     volumes:
       - uploads_data:/app/uploads
@@ -71,7 +72,39 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # ── nginx reverse proxy (SSL termination) ───────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    # reload every 6h so renewed certificates are picked up automatically
+    command: >-
+      /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done &
+      nginx -g 'daemon off;'"
+    depends_on:
+      - app
+
+  # ── certbot (issues + auto-renews Let's Encrypt certificates) ───────────────
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    # check for renewal twice a day; renews when <30 days remain
+    entrypoint: >-
+      /bin/sh -c "trap exit TERM; while :; do certbot renew;
+      sleep 12h & wait $${!}; done;"
+
 volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  certbot_conf:
+  certbot_www:
