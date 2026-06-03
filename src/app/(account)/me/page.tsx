@@ -20,7 +20,7 @@ export default async function MePage() {
     prisma.networkProfile.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { verificationStatus: true, name: true, phone: true, email: true, role: true, isPartner: true, emailVerified: true },
+      select: { verificationStatus: true, name: true, phone: true, email: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
     }),
     prisma.connection.count({
       where: {
@@ -40,6 +40,11 @@ export default async function MePage() {
       ? prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } })
       : Promise.resolve(0),
   ]);
+
+  // New Google users who haven't chosen an account type → setup wizard
+  const hasAnyProfile = sellerProfile || jobSeekerProfile || networkProfile;
+  const accountIsNew = !hasAnyProfile && dbUser?.email && !dbUser?.phone;
+  if (accountIsNew) redirect("/me/setup");
 
   const tier = getUserTier({
     isPartner: dbUser?.isPartner ?? false,

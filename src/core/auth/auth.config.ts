@@ -66,14 +66,11 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      // For OAuth/email providers, ensure the user has a role set
       if (account && account.provider !== "credentials" && user.id) {
         try {
           await prisma.user.update({
             where: { id: user.id },
-            data: {
-              name: user.name ?? user.email?.split("@")[0] ?? "User",
-            },
+            data: { name: user.name ?? user.email?.split("@")[0] ?? "User" },
           });
         } catch {
           // User may not exist yet — adapter creates it; ignore
