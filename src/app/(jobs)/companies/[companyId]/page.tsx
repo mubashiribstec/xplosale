@@ -1,13 +1,47 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 
-export default async function CompanyPage({
-  params,
-}: {
+interface Props {
   params: Promise<{ companyId: string }>;
-}) {
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { companyId } = await params;
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { name: true, industry: true, region: { select: { city: true } } },
+  });
+  if (!company) return { title: "Company | Xplosale Jobs" };
+
+  const description = [
+    company.industry,
+    company.region.city,
+    "— hiring on Xplosale",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return {
+    title: `${company.name} | Xplosale Jobs`,
+    description,
+    openGraph: {
+      title: `${company.name} | Xplosale Jobs`,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `${company.name} | Xplosale Jobs`,
+      description,
+    },
+  };
+}
+
+export default async function CompanyPage({ params }: Props) {
   const { companyId } = await params;
 
   const company = await prisma.company.findUnique({
@@ -34,10 +68,13 @@ export default async function CompanyPage({
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
           <div className="flex items-start gap-4">
             {company.logoUrl && (
-              <img
+              <Image
                 src={company.logoUrl}
                 alt={company.name}
-                className="w-16 h-16 rounded-xl object-contain border border-gray-200"
+                width={64}
+                height={64}
+                className="rounded-xl object-contain border border-gray-200"
+                unoptimized
               />
             )}
             <div className="space-y-1">

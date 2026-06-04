@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     description: "Verified jobs at Pakistani companies. Apply with confidence.",
     type: "website",
   },
+  alternates: { canonical: "/jobs" },
 };
 
 interface SearchParams {
@@ -183,7 +184,7 @@ export default async function JobsPage({
           >
             <div style={{ position: "relative", flex: "1 1 240px", minWidth: 180 }}>
               <svg
-                style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+                style={{ position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
                 width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="2"
               >
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -195,7 +196,7 @@ export default async function JobsPage({
                 placeholder="Search job title..."
                 style={{
                   width: "100%",
-                  paddingLeft: 38,
+                  paddingInlineStart: 38,
                   paddingRight: 14,
                   paddingTop: 10,
                   paddingBottom: 10,
