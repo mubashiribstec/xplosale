@@ -47,12 +47,8 @@ export async function POST(req: NextRequest) {
           update: {},
           create: { userId },
         });
-      } else if (accountType === "EMPLOYER") {
-        await tx.employerProfile.upsert({
-          where: { userId },
-          update: {},
-          create: { userId },
-        });
+      // EMPLOYER: EmployerProfile requires a companyId which doesn't exist yet.
+      // Role is already set above; the profile gets created when they create a company.
       }
 
       // Always create a NetworkProfile so the user is discoverable

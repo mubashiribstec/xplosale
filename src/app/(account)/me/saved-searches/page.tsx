@@ -1,5 +1,3 @@
-"use server";
-
 import { redirect } from "next/navigation";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
