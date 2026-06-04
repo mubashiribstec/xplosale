@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/core/auth/session";
+import Navbar from "@/components/layout/Navbar";
 
 const NAV = [
   { href: "/partner", label: "Overview", icon: "◻" },
@@ -17,6 +18,8 @@ export default async function PartnerLayout({ children }: { children: React.Reac
   if (role !== "PARTNER" && role !== "ADMIN") redirect("/partner/register");
 
   return (
+    <>
+    <Navbar />
     <div
       style={{
         minHeight: "100vh",
@@ -78,5 +81,6 @@ export default async function PartnerLayout({ children }: { children: React.Reac
         {children}
       </div>
     </div>
+    </>
   );
 }
