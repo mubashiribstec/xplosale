@@ -19,8 +19,10 @@ const envSchema = z.object({
   SUPABASE_PUBLIC_BUCKET: z.string().default("xplosale-public"),
   SUPABASE_PRIVATE_BUCKET: z.string().default("xplosale-private"),
 
-  // Redis (rediss:// for Upstash TLS, redis:// for local)
+  // Redis — Node.js (ioredis) + optional REST API for Edge runtime
   UPSTASH_REDIS_URL: z.string().url(),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
   // App
   CNIC_HASH_SALT: z.string().min(32),

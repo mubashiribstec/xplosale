@@ -1,11 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import Nodemailer from "next-auth/providers/nodemailer";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { verifyOtp } from "./otp";
-import { z } from "zod";
 
 // Map legacy EMPLOYER* roles to PARTNER so old JWT tokens upgrade transparently.
 const LEGACY_EMPLOYER_ROLES = new Set([
@@ -19,40 +15,7 @@ function normalizeRole(role: string): string {
   return LEGACY_EMPLOYER_ROLES.has(role) ? "PARTNER" : role;
 }
 
-const credentialsSchema = z.object({
-  phone: z.string().min(10),
-  otp: z.string().length(6),
-});
-
-const providers: NextAuthConfig["providers"] = [
-  Credentials({
-    name: "Phone OTP",
-    credentials: {
-      phone: { label: "Phone", type: "text" },
-      otp: { label: "OTP", type: "text" },
-    },
-    async authorize(credentials) {
-      const parsed = credentialsSchema.safeParse(credentials);
-      if (!parsed.success) return null;
-
-      const { phone, otp } = parsed.data;
-      const result = await verifyOtp(phone, otp);
-      if (!result.ok) return null;
-
-      const user = await prisma.user.upsert({
-        where: { phone },
-        update: { isPhoneVerified: true },
-        create: {
-          phone,
-          name: phone,
-          isPhoneVerified: true,
-        },
-      });
-
-      return { id: user.id, phone: user.phone ?? "", name: user.name ?? "", role: user.role };
-    },
-  }),
-];
+const providers: NextAuthConfig["providers"] = [];
 
 // Only activate Google provider when credentials are configured
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -60,16 +23,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
-  );
-}
-
-// Only activate email provider when server is configured
-if (process.env.EMAIL_SERVER) {
-  providers.push(
-    Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM ?? "noreply@xplosale.com",
     })
   );
 }
@@ -87,7 +40,7 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account && account.provider !== "credentials" && user.id) {
+      if (account && user.id) {
         try {
           await prisma.user.update({
             where: { id: user.id },
@@ -107,9 +60,9 @@ export const authConfig: NextAuthConfig = {
         token.phone = (user as { phone?: string }).phone ?? null;
       }
 
-      // On OAuth sign-in, fetch the freshly-created DB user and optionally
+      // On sign-in, fetch the freshly-created DB user and optionally
       // auto-promote the configured ADMIN_EMAIL when no admin exists yet.
-      if (account && account.provider !== "credentials" && token.sub) {
+      if (account && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
           select: { id: true, role: true, phone: true, email: true, bannedAt: true, tokenVersion: true },

@@ -3,6 +3,10 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { kvSet, kvDel } from "@/core/adapters/kv";
+
+// 30-day TTL for the Redis ban key — generous margin above any JWT maxAge
+const BAN_KEY_TTL = 30 * 24 * 60 * 60;
 
 const bodySchema = z.object({
   role: z.enum(["USER", "PARTNER", "ADMIN"]).optional(),
@@ -65,6 +69,15 @@ export async function PATCH(
         },
       }),
     ]);
+
+    // Sync Redis ban key for instant middleware enforcement
+    if (body.ban !== undefined) {
+      if (body.ban) {
+        await kvSet(`banned:${userId}`, "1", BAN_KEY_TTL);
+      } else {
+        await kvDel(`banned:${userId}`);
+      }
+    }
 
     return ok(updated);
   } catch (e) {

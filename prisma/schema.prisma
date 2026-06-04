@@ -218,7 +218,10 @@ model User {
   isPartner          Boolean            @default(false)
   partnerType        PartnerType?
   bannedAt           DateTime?
+  banReason          String?
+  bannedUntil        DateTime?
   tokenVersion       Int                @default(0)
+  lastSeenAt         DateTime?
   defaultRegionId    String?
   languagePref       String             @default("en")
   createdAt          DateTime           @default(now())
