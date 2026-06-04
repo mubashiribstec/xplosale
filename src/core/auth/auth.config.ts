@@ -112,7 +112,7 @@ export const authConfig: NextAuthConfig = {
       if (account && account.provider !== "credentials" && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { id: true, role: true, phone: true, email: true },
+          select: { id: true, role: true, phone: true, email: true, bannedAt: true, tokenVersion: true },
         });
         if (dbUser) {
           const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
@@ -133,6 +133,8 @@ export const authConfig: NextAuthConfig = {
           }
           token.id = dbUser.id;
           token.phone = dbUser.phone ?? null;
+          token.bannedAt = dbUser.bannedAt?.toISOString() ?? null;
+          token.tokenVersion = dbUser.tokenVersion;
           token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         }
       }
@@ -150,17 +152,22 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
-      // Re-fetch role every 5 minutes so admin demotions take effect promptly
+      // Re-fetch role/ban status every 5 minutes so changes take effect promptly
       if (!user && token.id && trigger !== "update") {
         const now = Math.floor(Date.now() / 1000);
         const lastRefresh = (token.roleRefreshedAt as number | undefined) ?? 0;
         if (now - lastRefresh > 300) {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { role: true },
+            select: { role: true, bannedAt: true, tokenVersion: true },
           });
           if (dbUser) {
+            // If token version no longer matches, invalidate the token
+            if (token.tokenVersion !== undefined && dbUser.tokenVersion !== token.tokenVersion) {
+              return null as unknown as typeof token;
+            }
             token.role = normalizeRole(dbUser.role);
+            token.bannedAt = dbUser.bannedAt?.toISOString() ?? null;
             token.roleRefreshedAt = now;
           }
         }
@@ -171,10 +178,11 @@ export const authConfig: NextAuthConfig = {
 
     async session({ session, token }) {
       if (token && session.user) {
-        const u = session.user as unknown as { id: string; phone: string | null; role: string };
+        const u = session.user as unknown as { id: string; phone: string | null; role: string; bannedAt: string | null };
         u.id = token.id as string;
         u.phone = (token.phone as string | null) ?? null;
         u.role = token.role as string;
+        u.bannedAt = (token.bannedAt as string | null) ?? null;
       }
       return session;
     },

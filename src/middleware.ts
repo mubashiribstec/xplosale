@@ -6,6 +6,13 @@ export default auth(function middleware(req) {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
+  // Banned users can only visit /login and /
+  if (session && (session.user as { bannedAt?: string | null })?.bannedAt) {
+    if (!pathname.startsWith("/login") && pathname !== "/") {
+      return NextResponse.redirect(new URL("/login?reason=banned", req.nextUrl));
+    }
+  }
+
   // Admin routes — require ADMIN role
   if (pathname.startsWith("/admin")) {
     if (!session) {
