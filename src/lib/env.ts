@@ -28,7 +28,6 @@ const envSchema = z.object({
 
   // Cron secrets
   RECOMMENDATION_CRON_SECRET: z.string().min(16).optional(),
-  SEARCH_DIGEST_CRON_SECRET: z.string().min(16).optional(),
 
   // Recommendation engine config
   RECOMMENDATION_BATCH_SIZE: z.coerce.number().int().positive().default(200),
@@ -42,9 +41,16 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  // Email
-  RESEND_API_KEY: z.string().optional(),
+  // Email — SMTP magic-link provider (NextAuth) + Resend API for transactional mail
+  EMAIL_SERVER: z.string().optional(),
   EMAIL_FROM: z.string().email().default("noreply@xplosale.com"),
+  RESEND_API_KEY: z.string().optional(),
+
+  // Admin bootstrap — first user matching this email is auto-promoted to ADMIN
+  ADMIN_EMAIL: z.string().email().optional(),
+
+  // Analytics
+  NEXT_PUBLIC_ANALYTICS_ENABLED: z.coerce.boolean().default(false),
 
   // App URL
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
