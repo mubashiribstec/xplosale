@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 const LINKS = [
-  { label: "Profile settings", href: "/me/network" },
+  { label: "My Profile", href: "/profile" },
   { label: "Job seeker settings", href: "/me/job-seeker" },
   { label: "Listings", href: "/me/listings" },
   { label: "Applications", href: "/me/applications" },

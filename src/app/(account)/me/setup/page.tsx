@@ -4,13 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-type AccountType = "SELLER" | "JOB_SEEKER" | "EMPLOYER" | "NETWORKER";
+type AccountType = "SELLER" | "JOB_SEEKER" | "EMPLOYER";
 
 const ACCOUNT_TYPES: { key: AccountType; label: string; desc: string; icon: string }[] = [
   { key: "SELLER",    label: "Seller / Buyer",      desc: "List items, property, or vehicles for sale", icon: "🛒" },
   { key: "JOB_SEEKER",label: "Job Seeker",           desc: "Find jobs and apply to employers",           icon: "💼" },
   { key: "EMPLOYER",  label: "Employer / Recruiter", desc: "Post jobs and hire talent",                  icon: "🏢" },
-  { key: "NETWORKER", label: "Professional",         desc: "Build your network and brand",               icon: "🤝" },
 ];
 
 export default function SetupPage() {
@@ -43,7 +42,7 @@ export default function SetupPage() {
         setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
-      router.push("/me");
+      router.push("/profile");
     } catch {
       setError("Network error. Please try again.");
     } finally {

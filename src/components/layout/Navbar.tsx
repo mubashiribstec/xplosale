@@ -23,9 +23,8 @@ function Logo() {
 
 /* ─── Nav links ──────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { href: "/m",      label: "Marketplace" },
-  { href: "/jobs",   label: "Jobs" },
-  { href: "/n/feed", label: "Network" },
+  { href: "/m",    label: "Marketplace" },
+  { href: "/jobs", label: "Jobs" },
 ];
 
 /* ─── User dropdown ─────────────────────────────────────────────────────── */
@@ -90,11 +89,18 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
           }}
         >
           <Link
-            href="/me"
+            href="/profile"
             onClick={() => setOpen(false)}
             style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500 }}
           >
-            My Account
+            My Profile
+          </Link>
+          <Link
+            href="/me"
+            onClick={() => setOpen(false)}
+            style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink-soft)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500, borderTop: "1px solid var(--line)" }}
+          >
+            Account &amp; Settings
           </Link>
           {role === "ADMIN" && (
             <Link
@@ -246,7 +252,8 @@ export default function Navbar() {
             <LanguageSwitcher />
             {user ? (
               <>
-                <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Account</Link>
+                <Link href="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>
+                <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>Account &amp; Settings</Link>
                 {user.role === "ADMIN" && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Admin Panel</Link>
                 )}

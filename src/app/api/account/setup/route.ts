@@ -4,7 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
-const ACCOUNT_TYPE = z.enum(["SELLER", "JOB_SEEKER", "EMPLOYER", "NETWORKER"]);
+const ACCOUNT_TYPE = z.enum(["SELLER", "JOB_SEEKER", "EMPLOYER"]);
 
 const setupSchema = z.object({
   name: z.string().min(2).max(80),
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
 
     const { name, accountTypes } = parsed.data;
 
-    // Employer takes the highest role; everyone else is USER.
-    const role = accountTypes.includes("EMPLOYER") ? "EMPLOYER_HIRING_MANAGER" : "USER";
+    // Employer selection → PARTNER role (business accounts); everyone else is USER.
+    const role = accountTypes.includes("EMPLOYER") ? "PARTNER" : "USER";
 
     await prisma.$transaction(async (tx) => {
       await tx.user.update({

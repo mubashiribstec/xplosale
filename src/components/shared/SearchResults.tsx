@@ -167,7 +167,7 @@ export default function SearchResults({ q, listings, jobs, profiles }: SearchRes
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">People ({profiles.length})</h2>
-            <Link href="/n/people" className="text-sm text-blue-600 hover:underline">
+            <Link href="/profile" className="text-sm text-blue-600 hover:underline">
               View all people →
             </Link>
           </div>

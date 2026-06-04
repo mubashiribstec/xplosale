@@ -21,7 +21,7 @@ export default async function MePage() {
     prisma.networkProfile.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { verificationStatus: true, name: true, phone: true, email: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
+      select: { verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
     }),
     prisma.connection.count({
       where: {
@@ -48,8 +48,10 @@ export default async function MePage() {
   if (accountIsNew) redirect("/me/setup");
 
   const tier = getUserTier({
+    role: dbUser?.role,
     isPartner: dbUser?.isPartner ?? false,
     verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED",
+    hasVerifiedBadge: dbUser?.hasVerifiedBadge ?? false,
   });
 
   const displayName = dbUser?.name ?? user.name ?? dbUser?.email ?? user.phone ?? "User";

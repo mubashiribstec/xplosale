@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 // Role-based landing page after any sign-in method.
 // login/page.tsx and verify/page.tsx both use callbackUrl="/auth/post-login".
-// Phase 3 will update USER → /profile once that route exists.
 export default async function PostLoginPage() {
   const session = await auth();
   if (!session) redirect("/login");
@@ -11,5 +10,5 @@ export default async function PostLoginPage() {
   const role = (session.user as { role?: string } | undefined)?.role;
   if (role === "ADMIN") redirect("/admin");
   if (role === "PARTNER") redirect("/partner");
-  redirect("/me");
+  redirect("/profile");
 }

@@ -47,12 +47,6 @@ export default function MarketingHome() {
             Jobs
           </Link>
           <Link
-            href="/n/feed"
-            style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-soft)", textDecoration: "none" }}
-          >
-            Network
-          </Link>
-          <Link
             href="/login"
             style={{
               fontSize: 14,
@@ -331,7 +325,7 @@ export default function MarketingHome() {
             { val: "27,418", label: "Identities verified", sub: "via CNIC + email" },
             { val: "₨ 4.2 cr", label: "Escrow protected", sub: "across live transactions" },
             { val: "94%", label: "Listings from verified sellers", sub: "platform-wide" },
-            { val: "11,907", label: "Verified professionals", sub: "on Network" },
+            { val: "11,907", label: "Verified users", sub: "on Xplosale" },
           ].map(({ val, label, sub }) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span
@@ -406,11 +400,11 @@ export default function MarketingHome() {
             },
             {
               num: "03",
-              accent: "var(--purple)",
-              href: "/n/feed",
-              title: "Professionals who are who they say.",
-              desc: "Build a verified professional network. Endorse skills you&apos;ve witnessed. Connect with real people.",
-              metric: "11,907 professionals",
+              accent: "var(--green)",
+              href: "/me/verify-identity",
+              title: "Profiles backed by real identity.",
+              desc: "Every verified user has submitted identity documents reviewed by our team. Trust the badge.",
+              metric: "11,907 verified",
             },
           ].map(({ num, accent, href, title, desc, metric }) => (
             <Link
@@ -890,7 +884,7 @@ export default function MarketingHome() {
           {[
             { label: "Marketplace", href: "/m" },
             { label: "Jobs", href: "/jobs" },
-            { label: "Network", href: "/n/feed" },
+            { label: "For Partners", href: "/partner/register" },
             { label: "Verify identity", href: "/me/verify-identity" },
           ].map(({ label, href }) => (
             <Link
