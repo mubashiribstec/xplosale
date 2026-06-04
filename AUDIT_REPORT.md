@@ -1,246 +1,235 @@
-# Xplosale — Full-Site Audit Report
-
-**Branch:** `audit/baseline`
-**Date:** 2026-06-02
-**Scope:** Phases 1–28 (marketplace + jobs + network, ATS + assessments + admin, search + recommendations)
-**Pass:** 1 (read-only audit). No application code was modified.
-
----
-
-## Pass 0 — Baseline & Inventory
-
-### Toolchain results
-
-| Check | Result |
-|---|---|
-| `pnpm install` | ✅ Clean. Lockfile in sync. `postinstall` runs `prisma generate` OK (Prisma 7.8.0). |
-| `pnpm build` | ❌ **FAILS.** Turbopack: `Module not found: Can't resolve 'fs/promises'` ×3 in `src/core/adapters/storage.ts`, pulled into the **client bundle** via `ListingCard.tsx` (`"use client"`) → `MarketplaceShell.tsx`. Not suppressible by `ignoreBuildErrors` (module-resolution, not TS). |
-| `pnpm tsc --noEmit` | 1 error: `next.config.ts(12,3)` — `'eslint' does not exist in type 'NextConfig'`. (App source is otherwise clean.) |
-| `pnpm lint` (`next lint`) | ❌ Broken under Next 16 (`next lint` deprecated; misparses args). ESLint direct: **9 errors, 30 warnings**. |
-| `pnpm prisma validate` | ✅ Schema valid. |
-| `prisma migrate status` | ⚠️ Could not run (no DB URL in audit env). **Static drift analysis below shows 23 un-migrated models.** |
-
-### Inventory
-
-| Item | Count |
-|---|---|
-| API routes (`src/app/api/**/route.ts`) | 104 |
-| Pages (`page.tsx`) | 52 |
-| Server actions (`"use server"`) | 1 |
-| Client components (`"use client"`) | 48 |
-| Prisma models | 51 |
-| Prisma enums | 25 |
-| `dangerouslySetInnerHTML` | 2 |
-| Raw SQL call sites (`$queryRaw` etc.) | search module only (parameterized) |
-| `sitemap.ts` / `robots.ts` | **0 (missing)** |
-| `not-found.tsx` / `error.tsx` / `global-error.tsx` | **0 (missing)** |
-| `generateMetadata` / `metadata` exports | **1 (whole app)** |
-
-### Migration drift (CRITICAL)
-
-Only one migration exists: `20260531074859_init` (covers Phases ~1–15). **23 models in `schema.prisma` have no migration** — every Phase 16+ table:
-
-```
-Account, ApplicationTag, CandidateDoNotContact, CandidateMatch, CandidateNote,
-CandidateTag, EmailSendLog, EmailTemplate, HiringTeam, InviteToApply,
-JobRecommendation, PartnerApplication, PipelineStage, ResumeParsed, SavedSearch,
-SearchClickLog, Session, TestAssignment, TestQuestion, TestSession,
-TestSubmission, TestTemplate, VerificationToken
-```
-
-Plus `prisma/migrations/search_infra.sql` — a **raw, un-tracked SQL file** (not a Prisma migration) for the `tsvector` columns/GIN indexes/triggers. A fresh `prisma migrate deploy` would produce a DB missing 23 tables → app non-functional in a clean deploy. The schema has been kept in sync only via `prisma db push`-style edits.
-
-### Environment variables
-
-`src/lib/env.ts` zod-validates **only** the core set (DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET, STORAGE_MODE + S3, UPSTASH_REDIS_URL, CNIC_HASH_SALT, NODE_ENV). **Not validated but used in code:** `RECOMMENDATION_CRON_SECRET`, `RECOMMENDATION_BATCH_SIZE`, `INVITE_TO_APPLY_DAILY_CAP_PER_COMPANY`, `INVITE_TO_APPLY_MONTHLY_CAP_PER_CANDIDATE`, `SEARCH_DRIVER`, `SEARCH_AUTOSUGGEST_CACHE_TTL_SECONDS`, `GOOGLE_CLIENT_ID/SECRET`, `EMAIL_SERVER`, `EMAIL_FROM`, `RESEND_API_KEY`, `NEXT_PUBLIC_APP_URL`.
-
-### Dependencies (`pnpm audit --prod`)
-
-| Package | Severity | Vuln | Patched in | Note |
-|---|---|---|---|---|
-| nodemailer | moderate | SMTP command injection | ≥8.0.5 | Direct dep — bump recommended |
-| postcss | moderate | XSS via unescaped `</style>` | ≥8.5.10 | Transitive via `next` |
-| @hono/node-server | moderate | middleware bypass | ≥1.19.13 | Transitive |
-| nodemailer | low | SMTP injection (`envelope.size`) | ≥8.0.4 | Same dep |
-
-Next.js pinned at **16.2.6** (exact — good); no Next-specific advisory in this audit. React 19.2.4 / Prisma 7.8.0 exact-pinned. Several deps use `^` (zod, next-intl, ioredis, sharp, @auth/prisma-adapter) — recommend pinning infra libs.
-
-### route-map
-
-Generated at `scripts/audit/route-map.json` (104 routes, 98 call sites, 25 candidate-orphans — classified in Domain D below).
-
----
-
-## Findings
-
-> Severity: **CRITICAL** = exploitable hole / PII exposure / broken authz / build fails / data loss · **HIGH** = broken core flow / missing authz / injection / perf-at-load / SEO blocker · **MEDIUM** = degraded UX / minor logic bug / structural drift / SEO enhancement · **LOW** = polish / dead code.
-
-### A. Build & Compile
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| A1 | CRITICAL | `src/components/shared/ListingCard.tsx:1` + `src/core/adapters/storage.ts:13,21,27` | `ListingCard` is `"use client"` but imports `getPublicUrl` from the server-only storage adapter, which `import("fs/promises")`. Turbopack tries to bundle `fs/promises` for the browser. | **`pnpm build` fails outright.** No production deploy possible. | Make `ListingCard` a server component (it renders static markup + a `<Link>`), or compute the image URL in the server parent and pass a plain string prop; keep `storage.ts` out of any client import graph. |
-| A2 | HIGH | `next.config.ts:9,12` | `typescript.ignoreBuildErrors:true` + `eslint.ignoreDuringBuilds:true` mask all TS/lint errors at build time. Added to work around OOM, but now hides real regressions (e.g. the 9 ESLint errors). | Broken code can ship silently. | Re-enable once memory is addressed (or run `tsc`/`eslint` in CI as a hard gate); at minimum document the CI gate that replaces them. |
-| A3 | LOW | `next.config.ts:12` | `eslint` key triggers `tsc` error TS2353 (not in `NextConfig` type for this Next version). | 1 spurious typecheck error. | Cast config or move eslint setting; or upgrade `@types`. |
-| A4 | MEDIUM | ESLint (8×) e.g. `src/components/ui/XplosaleUI.tsx:428` "Cannot call impure function during render"; multiple "setState synchronously within an effect" in redesigned client components | React correctness violations introduced in the UI redesign (impure `Math.random()` in render; cascading `setState` in effects). | Hydration mismatches, cascading re-renders, unstable SVG ids. | Move random/id generation to `useId`/module scope; guard effect setState. |
-| A5 | LOW | `src/middleware.ts` | Next 16 warns "`middleware` convention deprecated, use `proxy`". | Deprecation; future breakage. | Rename per Next 16 guidance when convenient. |
-
-### B. Dependencies
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| B1 | MEDIUM | `package.json` nodemailer | Moderate SMTP-injection CVE (<8.0.5). | Email-send path injectable if attacker controls envelope. | Bump nodemailer ≥8.0.5 (non-major). |
-| B2 | LOW | transitive (next→postcss, @hono/node-server) | Moderate CVEs in transitive deps. | Low real exposure. | `pnpm update` / await next patch; document. |
-| B3 | LOW | `package.json` | Infra libs (`zod`,`next-intl`,`ioredis`,`sharp`,`@auth/prisma-adapter`) use `^` ranges. | Non-reproducible installs. | Pin exact versions. |
-
-*(Do not auto-bump majors — none recommended automatically.)*
-
-### C. Security — items confirmed directly (agent deep-dive appended below)
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| C1 | HIGH | `.env` (tracked in git); `.gitignore:38-39` deliberately keeps it | `.env` is committed and contains a **real 44-char `NEXTAUTH_SECRET`** and **real 44-char `CNIC_HASH_SALT`** (not placeholders). Infra URLs appear to be local-docker defaults. | Anyone with repo access can forge session JWTs (NEXTAUTH_SECRET) and, with a DB leak, brute-force 13-digit CNICs (salt known → defeats the hash). | Remove `.env` from git, rotate **both** secrets, move real secrets to deploy-time env only. Keep only a placeholder `.env.example`. |
-| C2 | MEDIUM | `next.config.ts:headers()` | Security headers present (nosniff, X-Frame-Options DENY, XSS, Referrer-Policy, HSTS-prod) but **no `Content-Security-Policy`**. | XSS blast radius larger than necessary. | Add a baseline CSP. |
-| C3 | MEDIUM | `src/app/api/upload/serve/route.ts:30-35` | Private-bucket serve checks only that **a** session exists, not that the requester is authorized for **that file**. Mitigated by short-TTL HMAC tokens, but any logged-in user with a (leaked/guessed) signed URL can fetch another user's private object. | Potential IDOR on CNIC/selfie/resume in local mode. | Bind the token to the viewer's userId, or check resource ownership before serving. |
-| C4 | MEDIUM | `src/lib/env.ts` | `RECOMMENDATION_CRON_SECRET` not in the validated env schema. If unset in prod, cron auth compares against `undefined`. | Header `!== undefined` still 403s (safe by luck), but the secret's existence isn't guaranteed. | Add cron secret + other used vars to `env.ts`; fail fast if missing. |
-
-**Security deep-dive (verified by dedicated read-only sweep). Verdict: no CRITICAL security holes; backend authz is largely solid.**
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| C5 | MEDIUM | `src/app/api/network/people/route.ts:9-50` | Candidate discovery directory filters `openToWork` + network `visibility:"PUBLIC"` but **never checks `recruiterDiscoverable === true`**, and has **no session/auth gate** (fully public). | Candidates who did not opt into recruiter discovery (default `false`) are still listed to anyone, incl. unauthenticated. Phase 28 privacy-control bypass. Payload exposes only name/handle/headline/photo/location/salary — no phone/CNIC/email. | Add `jobSeekerProfile:{ recruiterDiscoverable:true, openToWork:true }` to the `where`; require a session. |
-| C6 | MEDIUM | `src/lib/rate-limit.ts` (sole caller `src/core/auth/otp.ts`) | `rateLimit()` enforced **only** on OTP send. Message send (`chat/rooms/[roomId]/messages/route.ts:55`), room creation (`chat/rooms/route.ts:14`), listing creation (`listings/route.ts:108`), offers (`listings/[listingId]/offer/route.ts`) have no rate limit. | Spam/abuse: unbounded messages, rooms, listings, offers per authenticated user. (Invites have DB-count business caps but no request-rate throttle.) | Apply `rateLimit()` to message send, room/listing creation, and offers. |
-
-**Verified safe:** all 12 `/api/admin/**` routes role-gate server-side (+ last-admin/self-demotion guard); ATS routes (`applications`, `notes`, `assignments`, `match`, `jobs/[jobId]/applications`) gate via `canAccessJobApplications`; assignment `start/submit/autosave` require candidate ownership; chat verifies participant; test `correctIds` stripped for candidates (`assignments/[assignmentId]/route.ts:52-62`); no route trusts a client-supplied acting userId; search injection-safe (`websearch_to_tsquery` + `Prisma.sql` value interpolation, NUL stripped, no identifier concat); OTP hardened (5-min TTL, atomic single-use + 5-attempt lockout via Lua, HMAC-hashed, per-phone 3/hr + per-IP 5/hr); no open-redirect/SSRF (only hardcoded Resend fetch); presigned tokens HMAC-SHA256 + `timingSafeEqual` + path-traversal containment; the 2 `dangerouslySetInnerHTML` (`(marketing)/page.tsx:448,452`) render only static literals.
-
-### D. Frontend ↔ Backend Contract
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| D1 | HIGH | `src/components/shared/InviteButton.tsx` (0 render sites) | `InviteButton` is never imported/mounted; it's the only caller of `POST /api/invites`. The entire **Invite-to-Apply send flow is unwired**. | Recruiters cannot send invites from the UI despite a complete backend (caps, dedup, do-not-contact). | Mount `InviteButton` on candidate cards in network/people and ATS candidate views. |
-| D2 | HIGH | `src/components/shared/SaveSearchButton.tsx` (0 render sites) | `SaveSearchButton` never rendered. `POST /api/search/saved` works but no UI creates saved searches. `/me/saved-searches` can only edit/delete. | Users can never create a search alert; the search-digest cron has nothing to send. | Render `SaveSearchButton` on search/browse pages. |
-| D3 | MEDIUM | `src/app/search/page.tsx`, `(jobs)/jobs/page.tsx:56`, `(marketplace)/m/page.tsx:75`, `(network)/n/people/page.tsx:24`, `n/feed/page.tsx:52` | Browse/search pages query Prisma directly and never call the Phase-25 search API (`/api/search/{jobs,companies,marketplace,network,universal,suggest,click}`, `/api/network/{feed,people}`) — **9 routes genuinely dead**; full-text ranking + click analytics built but unreachable; logic duplicated in-page. | Dead code; two divergent query paths; no ranked search / analytics. | Wire pages to the search API (preferred) **or** delete the unused routes + search client. |
-| D4 | LOW | `src/components/shared/LanguageSwitcher.tsx:18-22` | Only writes a `NEXT_LOCALE` cookie; never calls `PATCH /api/account/language`. | Locale not persisted per-user/server-side; resets across devices. | Call the route on change, or delete it if cookie-only is intended. |
-| D5 | LOW | `InviteButton.tsx:31` vs `api/invites/route.ts:8-12` | Body sends `companyId`; route schema omits it (derives from employer profile). Non-strict zod ignores it. | Harmless contract drift. | Drop `companyId` from body. |
-| D6 | LOW | `(account)/me/saved-searches/SavedSearchesClient.tsx:31,43` | `updateFrequency`/`deleteSearch` don't check `res.ok`; optimistically mutate local state even on failure. | Silent data loss on network error. | Check `res.ok`; revert on failure. |
-
-**Orphan classification (25 candidates):** **dead (a):** 9 search/network routes above + `/api/account/applications` + `/api/account/language` + `/api/ats/match`. **legitimate (b):** `[...nextauth]`, 3 crons, `healthcheck`, `chat/sse` (EventSource), `upload/image`, `upload/serve`, `upload/serve-public`, `companies/[companyId]`, `admin/audit`, `network/profiles/[handle]` + `/endorse`. **bug — should be wired (c):** `/api/invites` (D1), `/api/search/saved` (D2).
-
-### E. Logic Correctness
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| E1 | CRITICAL | `prisma/schema.prisma:402-416` (`EscrowTransaction`); **0 mutation sites in `src/`** | The Escrow state machine (HELD→RELEASED/REFUNDED/DISPUTED) is **entirely unimplemented**. No create/update of `escrowTransaction` anywhere. The marketplace "offer" flow just posts a chat message of `kind:"OFFER"` — no escrow record, holds, or release/refund. | The advertised "escrow-protected" feature **does not exist server-side**. Marketing claim + UI badges are unbacked. | Implement escrow create-on-accept with guarded RELEASE/REFUND/DISPUTE transitions, **or** remove the model + escrow claims. (Product decision needed.) |
-| E2 | HIGH | `src/app/api/jobs/[jobId]/applications/[applicationId]/route.ts:43-49` | Phase-16 legacy-mirror divergence: this employer PATCH writes `status` only, never `currentStageId`. The Kanban `move` route writes both. | Status and pipeline stage diverge; candidate shows in old column while status says HIRED/REJECTED. | Map status→stage and write both, or deprecate this endpoint in favor of `/move`. |
-| E3 | MEDIUM | `src/app/api/jobs/[jobId]/apply/route.ts:69-72` | Re-apply `upsert.update` sets `status:"APPLIED"` but doesn't reset `currentStageId` to initial stage. | Re-applicant is APPLIED yet stuck on an old/rejected stage. | Set `currentStageId: initialStage?.id` in the update branch. |
-| E4 | MEDIUM | `src/app/api/admin/listings/[listingId]/approve/route.ts:18-26`; reject; PATCH `listings/[listingId]/route.ts:83-87` | Non-admin transitions are guarded (DRAFT→PENDING_REVIEW only), but **admin approve/reject/PATCH accept any current status** — a SOLD/EXPIRED listing can be flipped back to ACTIVE. | Admin can resurrect terminal-state listings; no transition table. | Guard approve to act only on `PENDING_REVIEW`; restrict admin status moves to a valid-transition table. |
-| E5 | MEDIUM | `src/app/api/account/recommendations/route.ts:26-53` | Recommendations list uses OFFSET pagination ordered by `score desc` only (no tie-breaker). Many recs share identical scores. | Unstable page boundaries → rows skipped/duplicated across pages. | Add secondary sort `{score:desc},{id:asc}`; prefer keyset on `(score,id)`. |
-| E6 | LOW | `src/core/search/postgres.ts:52,137-166` | Search uses `LIMIT/OFFSET` with an offset-encoded cursor (not true keyset). (Routes currently unwired — D3.) | Pagination drift/perf on large tables if ever wired. | Convert to keyset on `(rank,createdAt,id)` when wired. |
-| E7 | LOW | `invites/[inviteId]/route.ts:31`; `ats/assignments/[assignmentId]/start:36`, `submit:45` | State guards are read-then-write (non-atomic); concurrent PATCHes can both pass. | Rare double-processing (e.g. accept+decline race). | Use conditional `updateMany({where:{id,status:"PENDING"}})` + check `count`. |
-| E8 | LOW | `cron/expire-invites:8`; `cron/job-recommendations:9` | Both crons share `RECOMMENDATION_CRON_SECRET`. | One leaked secret exposes both. | Distinct per-cron secrets or a documented shared `CRON_SECRET`. |
-
-**Verified correct:** invite state machine + caps/dedup + single notification; job-rec notification dedup (`notified`/`sentAt`, only score≥0.5) and keyset-on-`id` cron pagination; invite auto-expiry (cron + on-read); assignment state machine (idempotent start, order-independent MCQ grade, transactional); ATS `move` dual-write (atomic, company-validated); listing non-admin transition guard; recommendation scoring (weights 0.4/0.3/0.2/0.1, capped, deterministic, no div-by-zero); match-score (empty list→1.0, weights 0.70/0.20/0.10, clamped 0–100).
-
-### F. Structure
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| F1 | MEDIUM | `src/core/adapters/storage.ts` (no `import "server-only"`) | Server-only adapter (fs/promises, node:crypto, @aws-sdk) lacks a `server-only` guard, so nothing prevents client import — exactly what broke the build (A1). | Recurring client/server boundary leaks. | Add `import "server-only";` at top of `storage.ts` (and other server adapters) to fail fast at import time. |
-| F2 | MEDIUM | search pages vs `src/core/search/*` | Phase-25 search engine duplicated by direct Prisma queries in pages (see D3) — `core/search` bypassed. | Two query implementations; vertical logic in pages. | Consolidate on `core/search` or remove it. |
-| F3 | LOW | general | Adapter pattern otherwise respected (storage/email/kv/realtime under `core/adapters`); `lib/http.ts` error shaping consistent; 1 `"use server"`, 48 `"use client"` (a few client components render static content — minor). | Minor drift. | Convert static client components to server where trivial. |
-
-### G. Performance
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| G1 | HIGH | `src/app/api/cron/job-recommendations/route.ts:29-101` | Per-profile N+1: inside `for(profile)` → `application.findMany`, `jobPosting.findMany`, then inside `for(scored)` → `findUnique` + `update`/`create` + `notification.create` + `update` **per job**. BATCH_SIZE 200 × many jobs = thousands of sequential round-trips. | Cron times out / hammers DB at scale. | Batch existing recs with one `findMany({jobPostingId:{in}})`; use `createMany`/transaction; batch notifications. |
-| G2 | HIGH | `cron/job-recommendations/route.ts:53-56` | `jobPosting.findMany` has **no `take`** — loads all active jobs into memory **for every profile**, scored in JS. | Unbounded memory + repeated full scans. | Add `take`; fetch active-jobs set **once** per cron run (same query reused per profile); pre-filter in SQL. |
-| G3 | MEDIUM | `cron/job-recommendations/route.ts:24` | `include:{user:true}` loads full User rows (phone/email/cnHash) though the engine never uses them. | Over-fetches sensitive columns into cron memory. | Replace with `select` of needed fields, or drop. |
-| G4 | MEDIUM | `api/regions:6`, `(jobs)/jobs/page.tsx:52`, `network/connections:23`, `account/applications:14`, several `ats/*`, `admin/verifications:11`, `admin/partners:11` | `findMany` without `take` on user-growth-driven lists (applications, connections, verifications, partners). | Response/memory degrade as data grows. | Add pagination/`take` caps. |
-| G5 | MEDIUM | `src/components/shared/ListingCard.tsx` + `storage.ts` | (= A1) Client component pulls server-only Node modules into the browser bundle. | Build break / bundle bloat. | See A1/F1. |
-| G6 | LOW | `verticals/jobs/recommendations/engine.ts:36-106` | Scores entire unbounded `jobs` array in JS per profile (compounds G2). | CPU scales jobs×profiles. | Pre-filter candidates in SQL; cap input. |
-| G7 | LOW | `jobs/[jobId]/page.tsx:141` | `similarJobs` fetched sequentially after the parallel block. | Minor extra round-trip. | Fold into the initial `Promise.all`. |
-
-**Verified good:** `suggest()` caches in Upstash (TTL `SEARCH_AUTOSUGGEST_CACHE_TTL_SECONDS`/300s); hot list paths use `Promise.all`; search GIN indexes present in `search_infra.sql`.
-
-### H. SEO
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| H1 | HIGH | only `layout.tsx:17-20` | No `generateMetadata` anywhere; all list + detail pages inherit one generic title/description. | Every listing/job/profile/company shares one title; poor snippets, ranking/CTR loss. | Add `generateMetadata` per detail page (listing title+price; `${job} at ${company}`; profile name+headline; company name). |
-| H2 | HIGH | absent | No `app/sitemap.ts`. | Crawlers can't discover active listings/jobs/profiles/companies. | Add `sitemap.ts` enumerating ACTIVE listings/jobs, PUBLIC profiles, companies; exclude /me,/admin,/chat. |
-| H3 | HIGH | absent | No `app/robots.ts`. | No crawl guidance; private areas crawlable; no sitemap pointer. | Add `robots.ts` (disallow /me,/admin,/chat,/api; reference sitemap). |
-| H4 | HIGH | absent (grep: 0 `ld+json`) | No JSON-LD structured data. | No Google-for-Jobs eligibility (JobPosting), no Product/Offer, Person/ProfilePage, Organization, BreadcrumbList rich results. | Inject JSON-LD per detail page. |
-| H5 | HIGH | absent (grep: 0 `openGraph`/`twitter`) | No OG/Twitter cards on shareable surfaces. | Shared links render with no image/title; poor social CTR. | Add `openGraph`/`twitter` in each detail `generateMetadata`. |
-| H6 | MEDIUM | list pages `m/page.tsx:38`, `jobs/page.tsx:25` | No canonical URLs; filter/sort/page params produce duplicate-content URLs. | Duplicate permutations indexed, diluting ranking. | Set `alternates.canonical`; canonicalize filtered lists to base path. |
-| H7 | MEDIUM | `layout.tsx:53-54` | `lang`/`dir` correct per locale, but no `hreflang` alternates for en/ur. | Multilingual variants not linked; wrong-locale results. | Add `alternates.languages` (hreflang). |
-| H8 | MEDIUM | absent | No `robots:{index:false}` on /me,/admin,/chat (session-gated, low exposure). | No defense-in-depth if a private URL leaks. | Add noindex metadata to those layouts. |
-| H9 | — (pass) | detail pages | All four detail pages are server components (indexable content SSR'd); single `h1` per page. | Correct. | None. |
-
-### I. Functionality & UX
-
-| ID | Sev | Location | Finding | Impact | Fix |
-|---|---|---|---|---|---|
-| I1 | MEDIUM | `(network)/n/[handle]/page.tsx:121,129`; `(jobs)/companies/[companyId]/page.tsx:37` | Profile banner/photo + company logo use raw `<img>` not `next/image`. | No optimization/lazy sizing; layout shift; larger payloads. | Use `next/image` with width/height. |
-| I2 | MEDIUM | absent | No `app/not-found.tsx` / `app/error.tsx`; many pages call `notFound()`. | Missing/errored pages render default unstyled Next screens; no error recovery. | Add custom `not-found.tsx` + `error.tsx`. |
-| I3 | MEDIUM | `(jobs)/jobs/page.tsx:138` (`left:12` inline); `n/[handle]` `pl-4` :181,202 | RTL: physical props (`left`, `pl-4`) won't mirror; Urdu search icon overlaps text, accents don't flip. | Broken RTL layout in Urdu. | Use logical props: `insetInlineStart`, Tailwind `ps-4`. |
-| I4 | LOW | `(jobs)/jobs/page.tsx:233-249` | Job-type chips are non-interactive `<span>` with `cursor:pointer` but no handler. | Misleading affordance — clicking does nothing. | Make them real filters or remove the pointer affordance. |
-
-**Verified good:** forms disable-while-pending + surface errors (Apply/Offer/Connect buttons); list empty states present; PWA manifest valid + service worker registers/precaches (minor: manifest `theme_color` #1a1a2e ≠ meta theme-color #F4F2EC — cosmetic).
+# Xplosale — Live-Site Audit Report
+**Branch:** `audit/live` | **Date:** 2026-06-04 | **Scope:** Pass 0 + Pass 1 (read-only)
 
 ---
 
 ## Executive Summary
 
-**Health verdict:** *Backend logic and security are largely sound and well-built — but the platform is **not deployable as-is**: the production build fails, a clean DB deploy would be missing 23 tables, a core advertised feature (escrow) is unimplemented, and three recently-built features are wired only on the backend.*
+The codebase builds cleanly (zero TypeScript errors, zero lint errors) and is structurally sound. However several **high-integrity issues** must be addressed before traffic scales:
+- Fabricated platform metrics displayed over an empty database
+- False NADRA/biometric claims that are legally risky in Pakistan
+- Phone-OTP auth still active (spec mandates Google-only)
+- Global Navbar/Footer absent from all inner pages (marketplace, jobs, account)
+- Session architecture cannot immediately enforce bans or track online presence
+- Dark mode exists only as OS-responsive CSS — no manual toggle, no SSR persistence
 
-### Findings by severity
-
-| Severity | Count | IDs |
-|---|---|---|
-| **CRITICAL** | 4 | A1 (build fails), Migration drift (23 models), C1 (real secrets committed), E1 (escrow unimplemented) |
-| **HIGH** | 11 | A2, E2, D1, D2, G1, G2, H1, H2, H3, H4, H5 |
-| **MEDIUM** | 19 | A4, B1, C2, C3, C4, C5, C6, D3, E3, E4, E5, F1, F2, G3, G4, H6, H7, H8, I1, I2, I3 |
-| **LOW** | 14 | A3, A5, B2, B3, D4, D5, D6, E6, E7, E8, F3, G6, G7, I4 |
-
-### Top 5 risks
-
-1. **Build is broken (A1)** — `ListingCard` (client) imports the server-only storage adapter → `pnpm build` fails. No deploy possible until fixed.
-2. **Migration drift** — only the Phase-1–15 init migration exists; 23 Phase-16+ models + the tsvector setup have no Prisma migration. A clean `migrate deploy` yields a broken DB.
-3. **Escrow is fiction (E1)** — the "escrow-protected" feature has zero server implementation; offers are just chat messages. Either build it or drop the claim.
-4. **Real secrets in git (C1)** — committed `NEXTAUTH_SECRET` (session forgery) + `CNIC_HASH_SALT` (defeats CNIC hashing). Rotate both, untrack `.env`.
-5. **Flagship features unreachable (D1/D2/D3)** — Invite-to-Apply send, Saved-search creation, and the entire Phase-25 search engine are built on the backend but never wired into the UI.
-
-### Prioritized remediation plan
-
-**Batch 1 — CRITICAL build + deploy (branch `fix/build`)**
-A1 (move URL build server-side / `server-only` guard F1) → restore `pnpm build`; re-enable or CI-gate A2; A3. Then resolve migration drift: generate proper Prisma migrations for the 23 models + fold `search_infra.sql` into a tracked migration (additive, reversible — call out before applying).
-
-**Batch 2 — CRITICAL security + data integrity (branch `fix/security`)**
-C1 (untrack `.env`, rotate secrets) → E1 (escrow: implement or formally remove + de-claim) → C5 (discovery privacy filter) → C2/C3/C4/C6 (CSP, per-file authz, env validation incl. cron secret, rate limits).
-
-**Batch 3 — HIGH broken flows (branch `fix/wiring`)**
-D1/D2 (mount InviteButton + SaveSearchButton) → D3 (wire or delete search API) → E2/E3 (legacy-mirror dual-write) → G1/G2 (recommendations cron N+1 + unbounded query).
-
-**Batch 4 — HIGH SEO (branch `fix/seo`)**
-H1–H5 (generateMetadata, sitemap, robots, JSON-LD, OG/Twitter).
-
-**Batch 5 — MEDIUM (branch `fix/medium`)**
-E4/E5, G3/G4, H6/H7/H8, I1/I2/I3, C-residuals, B1 dep bump.
-
-**Batch 6 — LOW (branch `fix/polish`)**
-Remaining LOW items, dead-code removal, A5 middleware rename.
-
-### Quick wins (high value, low effort)
-
-- **A1 / F1** — add `import "server-only"` to `storage.ts` + pass image URL as a prop from the server parent. *Unblocks the entire build.*
-- **C1** — `git rm --cached .env`, rotate the two secrets. Minutes; closes a CRITICAL.
-- **C5** — add `recruiterDiscoverable:true` to the people-directory `where`. One line; closes the privacy bug.
-- **H2/H3** — add `app/sitemap.ts` + `app/robots.ts`. Two small files; large SEO gain.
-- **I2** — add `app/not-found.tsx` + `app/error.tsx`. Removes soft-404s/unstyled crashes.
-- **D5/D6/I4** — drop stray `companyId`, add `res.ok` checks, fix dead chips. Trivial.
+The admin panel covers core functions but is missing online-status, platform controls, and sessions/security views.
 
 ---
 
-**Pass 1 complete. No application code was changed. Awaiting your review and priority order before starting Pass 2.**
+## Pass 0 — Baseline
 
+### Build / Typecheck / Lint
+
+| Check | Result |
+|---|---|
+| `pnpm tsc --noEmit` | **CLEAN** — zero errors |
+| `pnpm build` | **CLEAN** — all routes compiled; Prisma runtime warnings during static generation are expected (no DB in build env) |
+| Lint | **CLEAN** |
+
+### Database State
+
+No seed data in any table. `searchClient.search()` on both feeds filters `status = 'ACTIVE'` against an empty table and correctly returns zero results — the feeds are not silently erroring. **The empty feed is purely a data problem** (no seed run / no production import), not a query bug.
+
+### Auth Setup (recorded)
+
+| Property | Value |
+|---|---|
+| Session strategy | `jwt` — `auth.config.ts:83` |
+| `maxAge` | `SESSION_MAX_AGE_DAYS × 86400` (default 30 days) |
+| `updateAge` | Not set (NextAuth v5 default: 24 h) |
+| Providers | Credentials/Phone-OTP (**always active**); Google OAuth (conditional on `GOOGLE_CLIENT_ID`); Nodemailer (conditional on `EMAIL_SERVER`) |
+| Ban mechanism | `User.bannedAt` + `User.tokenVersion` — token refresh check throttled to **every 5 minutes** |
+| Online presence | **Not implemented** — no `lastSeenAt` field, no tracking |
+| Cookie attributes | httpOnly ✓, secure (prod) ✓, sameSite=lax ✓ — NextAuth v5 defaults |
+
+---
+
+## Findings
+
+| ID | Sev | Area | Location | Finding | Impact | Fix | Effort |
+|---|---|---|---|---|---|---|---|
+| **C1** | CRITICAL | Bug/Trust | `(marketing)/page.tsx:143,199,214–217,260–263,326,334,342,477` | **Fabricated metrics** — "27,418 verified", "94% sellers verified", "₨4.2cr escrow", "11,907 professionals/verified", "48,200 active listings", "1,316 open roles" are all hardcoded strings with no Prisma backing. DB is empty; `/m` shows 0 listings, `/jobs` shows 0 jobs — direct contradiction. | False advertising; destroys user trust | Replace every hardcoded metric with a real `prisma.*.count()` call in the server component. Zeros → honest empty-state copy ("Be the first to post"). | S |
+| **C2** | CRITICAL | Logic/Legal | `(marketing)/page.tsx:77,199,477` | **False NADRA/biometric claims** — "powered by NADRA", "cross-check with NADRA in real time", "CNIC + biometrics". NADRA API is mocked (`otp.ts:106` prints `[MOCK SMS]`); no NADRA integration exists; no biometric capture exists. | Legally risky in Pakistan; deceptive | Remove all NADRA/biometric/real-time-government-verification language. Replace with accurate: "We manually review your uploaded identity document." | S |
+| **H1** | HIGH | Auth | `(auth)/login/page.tsx:14–47`, `auth.config.ts:27–55`, `core/auth/otp.ts` | **Phone-OTP auth still live** — login page has expandable phone form (`phoneOpen` state), calls `/api/auth/phone/send-otp`, `/verify` page exists, Credentials provider always registered in `auth.config.ts`, `core/auth/otp.ts` fully functional. Spec §2 mandates Google-only. | Violates §2 mandate; dead code; attack surface | Remove Credentials provider from `auth.config.ts`. Delete `/api/auth/phone/` routes, `core/auth/otp.ts`, `/verify` page. Remove phone OTP UI from login page. Phone remains optional contact field only. | M |
+| **H2** | HIGH | Structure | All inner pages | **Global Navbar/Footer absent from all inner pages** — no `layout.tsx` under `(marketplace)/`, `(jobs)/`, `(account)/`, `(profile)/`. `MarketplaceShell` and jobs page render standalone `<main>` with no header. Root `layout.tsx` intentionally excludes Navbar (it's a client component). Marketing home `page.tsx` is the only page with Navbar + Footer. | Disconnected UX; logo doesn't link home from any feed or detail page | Add `layout.tsx` to each route group: `(marketplace)/layout.tsx`, `(jobs)/layout.tsx`, `(account)/layout.tsx`, `(profile)/layout.tsx`, `(partner)/layout.tsx`. Each renders `<Navbar />` + `{children}` + `<Footer />`. | S |
+| **H3** | HIGH | Feature/SEO | `(marketplace)/m/page.tsx`, `(jobs)/jobs/page.tsx` | **No per-page SEO metadata on feed pages** — neither page exports `metadata` or `generateMetadata`. Both share the root title "Xplosale — Sell. Hire. Connect. Verified." Detail pages (`/m/[listingId]`, `/jobs/[jobId]`) DO have `generateMetadata` + JSON-LD ✓. | Poor search indexing for primary landing routes | Add `export const metadata = { title: "Marketplace — Xplosale", description: "..." }` to each feed page. Add `generateMetadata` for filtered views. | S |
+| **H4** | HIGH | Feature | `app/globals.css:133`, `layout.tsx`, `components/layout/Navbar.tsx` | **Dark mode: OS-responsive CSS exists, manual toggle does not** — `globals.css:133` has `@media (prefers-color-scheme: dark)` that correctly remaps all CSS custom properties. But: `next-themes` is not installed, there is no toggle button anywhere, and the server cannot know the client's theme preference — a flash of wrong theme is possible on first SSR load. | §2/§6.D mandate unmet; UX inconsistency on first load | Install `next-themes`. Wrap root layout body in `ThemeProvider`. Add a toggle icon to Navbar. Persist choice via cookie so SSR matches. The CSS variable tokens are already correct — only the wiring is missing. | M |
+| **H5** | HIGH | Structure | `(marketing)/page.tsx:308,321–342` | **Stale "Three trusted verticals"** — section heading "One platform. Three trusted verticals." and a third card "#03 Profiles backed by real identity" with `href="/me/verify-identity"` and metric "11,907 verified" are remnants of the removed Network vertical. | Confusing UX; dead metric | Rewrite as two verticals (Marketplace, Jobs) + a trust/verification card that describes the identity layer cross-cutting both, not as a separate destination. | S |
+| **M1** | MEDIUM | Auth | `auth.config.ts:156–174` | **Ban enforcement delayed up to 5 minutes** — `bannedAt`/`tokenVersion` check runs only when `now - lastRefresh > 300`. A newly banned user can make authenticated requests for up to 5 min. | Banned users can continue acting briefly | See §4.4 recommendation: move ban check to a Redis-key lookup in middleware (O(1), runs every request) | M |
+| **M2** | MEDIUM | Admin | `(admin)/admin/users/page.tsx:22` | **Stale `EMPLOYER` role in admin filter** — `role as "USER" \| "EMPLOYER" \| "ADMIN"`. EMPLOYER was migrated to PARTNER in Phase 2. Filter silently returns 0 results for PARTNER users. | Admin user search by role is broken for PARTNER | Change to `"USER" \| "PARTNER" \| "ADMIN"` | XS |
+| **M3** | MEDIUM | Admin | `(admin)/admin/users/page.tsx:33–43` | **Admin users query missing critical fields** — `select` omits `bannedAt`, `hasVerifiedBadge`, `email`, `image`, `isPartner`. Admin cannot see ban status, verified badges, or user emails. | Admin blind to most user state | Extend `select`; update `AdminUsersTable` to display these fields and a ban status indicator. | S |
+| **M4** | MEDIUM | Admin | Schema, middleware, admin panel | **No online presence / lastSeenAt** — `User` model has no `lastSeenAt` field. Admin "who is online" view is impossible. §5 mandates this. | §5 admin spec unmet | Add `lastSeenAt DateTime?` to User; update middleware to set a Redis key throttled per-minute; admin reads Redis keys for "online now" | M |
+| **M5** | MEDIUM | Admin | `(admin)/admin/` | **Admin panel missing three required sections**: (a) Platform Controls (feature flags, maintenance mode, announcement banner, regions/categories); (b) Sessions/Security (active sessions, login-attempt log, force-logout-all); (c) Jobs moderation (`/admin/jobs` page does not exist — only `/admin/listings`). | §5 admin spec unmet | Add three new admin pages and their API routes. Sessions section requires §4.4 implementation. | L |
+| **M6** | MEDIUM | SEO | `app/robots.ts:8` | **robots.txt allows `/n/`** — the Network routes redirect to `/profile/`. `allow: ["/n/"]` wastes crawl budget on redirect chains. `/profile/` is not in the allow list. | Crawl budget waste; public profiles under `/profile/` invisible to crawlers | Replace `/n/` with `/profile/` in the `allow` array. | XS |
+| **L1** | LOW | SEO | `app/sitemap.ts:39` | **`/n` in sitemap static routes** — redirects to `/m`; creates redirect chain for crawlers. `/profile` not in static routes. | Minor SEO signal dilution | Remove `/n`, add `/profile` to static routes. | XS |
+| **L2** | LOW | Auth | `auth.config.ts:89–99` | **Auth `signIn` callback silently swallows all DB errors** — catch block discards every error without logging. Genuine DB failures during OAuth sign-in are invisible. | Hard-to-debug auth failures | `catch (e) { if ((e as {code?:string})?.code !== 'P2025') console.error('[auth:signIn]', e); }` | XS |
+| **L3** | LOW | Trust | `(marketing)/page.tsx:625–655` | **Fabricated testimonials** — "Asad Khan / Buyer, Lahore", "Sana Rizvi / Recruiter", "Fahad Qureshi / Freelance Developer" are invented personas. Minor but compounds C1 trust problem. | Minor credibility risk | Remove testimonials section until real user quotes can be obtained, or replace with a "coming soon" placeholder. | XS |
+
+---
+
+## §4 Deep Auth Audit
+
+### 4.1 Login (current state)
+- **Google** provider: correctly conditional on env vars ✓
+- **Credentials/Phone-OTP**: always active — see H1
+- **Nodemailer**: conditional on `EMAIL_SERVER` — spec §9 also requires removal
+- Post-login redirect via `/auth/post-login` server component: USER→`/profile`, PARTNER→`/partner`, ADMIN→`/admin` ✓
+- First OAuth sign-in: `PrismaAdapter` creates User; `signIn` callback upserts name/email ✓
+- Error states: falls through to NextAuth's default `/api/auth/error` page (no custom branded error UI)
+
+### 4.2 Logout
+- `signOut({ callbackUrl: "/" })` in Navbar clears the session JWT cookie ✓
+- **Known weakness confirmed**: pure JWT — a copied token stays valid for up to 30 days after logout. The `tokenVersion` mechanism (increment on force-logout) partially mitigates this but only fires every 5 minutes. See §4.4.
+- No bfcache/back-button protection beyond Next.js's default `no-store` headers on RSC payloads.
+
+### 4.3 Session Persistence
+- `maxAge: 30 days` — persistent across browser restarts ✓
+- `updateAge`: unset — token renewed at most every 24 h (NextAuth v5 default)
+- Cookie `domain`: not explicitly set → exact origin scope (`app.xplosole.com`) — correct; not widened ✓
+- JWT payload: `{id, role, phone, bannedAt, tokenVersion}` — no secrets in payload ✓
+- `NEXT_PUBLIC_*` contains only `APP_URL` and `ANALYTICS_ENABLED` — no secrets ✓
+
+### 4.4 Session Architecture: Recommendation
+
+**Recommended: Option B Enhanced — keep JWT + Redis enforcement layer**
+
+Switching to DB sessions (Option A) requires a schema migration, changing the session strategy, rewriting all session reads, and significant testing on a live platform. Option B can satisfy every constraint with targeted additions:
+
+```
+Additions required:
+  Schema:     User.lastSeenAt   DateTime?
+              User.banReason    String?
+              User.bannedUntil  DateTime?     (null = permanent)
+
+  Redis keys:
+    banned:{userId}    = "1"  (TTL = maxAge)    set on ban; deleted on unban
+    lastSeen:{userId}  = epoch_ms               set in middleware, throttled 1/min
+
+  Middleware (on every auth'd request):
+    1. Decode JWT (already done by NextAuth middleware hook)
+    2. Redis GET banned:{userId}
+       → If exists: clear cookie, 302 /login?reason=banned   [instant enforcement]
+    3. Redis SET lastSeen:{userId} {now} EX 300  (throttled via NX + TTL trick)
+
+  Ban API (PATCH /api/admin/users/[userId]):
+    → DB: bannedAt = new Date(), tokenVersion++
+    → Redis: SET banned:{userId} 1
+
+  Logout (client-side signOut or force-logout):
+    → DB: tokenVersion++
+    → Redis: SET banned:{userId} 1 EX 300   (short-lived; forces re-auth)
+
+  Admin "online now":
+    Redis SCAN lastSeen:* or query User.lastSeenAt > now - 5min
+    (cron every 5 min: flush Redis lastSeen keys → Postgres User.lastSeenAt)
+```
+
+**Tradeoffs of Option B:**
+- ✓ No session strategy migration; existing JWT flows unchanged
+- ✓ Redis lookups are O(1) ~0.5ms — negligible per-request overhead
+- ✓ Ban enforcement: near-instant (next request after ban action)
+- ✓ Logout: effective on next request post-signOut (not truly immediate, but within seconds)
+- ✗ A stolen token is still valid until `tokenVersion` mismatch is detected (next request, near-instant if Redis check is synchronous in middleware)
+- ✗ Redis becomes a single point of failure — must handle Redis-down gracefully (fall back to DB query, don't block all auth)
+
+### 4.5 Ban Enforcement
+- Schema: `bannedAt DateTime?` ✓, `tokenVersion Int @default(0)` ✓
+- Missing: `banReason String?`, `bannedUntil DateTime?` (timed suspension not possible)
+- 5-minute enforcement delay (M1) means a ban is not immediate as the spec requires
+- Admin guard against banning admins exists in `PATCH /api/admin/users/[userId]:35–39` ✓
+
+### 4.6 Presence / Online Status
+- Not implemented at all: no `lastSeenAt` in schema, no middleware tracking, no admin view
+- Required by §5 — see M4 and §4.4 plan above
+
+---
+
+## §5 Admin Panel Gap Analysis
+
+| Required Capability | Status | Notes |
+|---|---|---|
+| User list: searchable/filterable | ✓ Partial | Missing bannedAt, hasVerifiedBadge, email, isPartner in select (M3) |
+| User list: online/offline indicator | ✗ | No lastSeenAt (M4) |
+| Ban user (permanent) | ✓ Partial | API exists; UI unclear; banReason/bannedUntil not in schema |
+| Suspend (timed ban) | ✗ | No bannedUntil field |
+| Unban user | ✓ | Supported in PATCH API |
+| Force-logout sessions | ✓ | tokenVersion increment in PATCH API |
+| Verify user / allocate badge | ✓ | `/admin/verifications` + API |
+| Revoke badge | ✓ | hasVerifiedBadge=false via PATCH API |
+| Role promote/demote | ✓ | PATCH API with last-admin guard |
+| Partner verification queue | ✓ | `/admin/partners` page + API |
+| Content moderation — listings | ✓ | `/admin/listings` page + approve/reject API |
+| Content moderation — jobs | ✗ | No `/admin/jobs` page (M5) |
+| Platform controls (flags, maintenance, regions) | ✗ | Not implemented (M5) |
+| Sessions/security view | ✗ | Not implemented; requires §4.4 Redis layer (M5) |
+| Analytics (real real-time counts) | ✗ | Dashboard has static counts; no dedicated analytics section (M5) |
+| Audit log | ✓ | `/admin/audit` with full AdminActionLog table |
+| Support DM rooms | ✓ | `/admin/support` |
+
+---
+
+## §6 Checklist Summary
+
+### A. Bugs
+- Fabricated metrics: C1
+- NADRA/biometric claims: C2
+- Stale EMPLOYER role in admin filter: M2
+- Admin users query missing fields: M3
+- No runtime or hydration errors detected in build output
+
+### B. Logic
+- All metrics need live Prisma queries (C1)
+- tokenVersion ban check runs every 5 min — not immediately (M1)
+- Phone OTP auth still live — spec mandates removal (H1)
+- Testimonials are fabricated personas (L3)
+- **Language files are complete** — all 7 locales have identical key counts (141 each). No action needed.
+
+### C. Structure
+- No layout.tsx in `(marketplace)/`, `(jobs)/`, `(account)/`, `(profile)/` — Navbar absent everywhere except marketing home (H2)
+- Network routes correctly redirect to `/profile/*` ✓
+- `robots.ts` allows `/n/` — should allow `/profile/` instead (M6)
+- Phone OTP routes still live as dead code (H1)
+
+### D. Features
+- Dark mode: CSS variables in place, `@media` query remaps tokens — but no `next-themes`, no toggle, no SSR persistence (H4)
+- Feed pages (`/m`, `/jobs`) lack `generateMetadata` (H3)
+- JSON-LD on detail pages (listing: Product, job: JobPosting) ✓
+- sitemap contains `/n` stale route; missing `/profile` (L1)
+
+---
+
+## Prioritized Remediation Plan
+
+### Batch 1 — Critical Trust & Integrity
+1. **C1** Replace all hardcoded landing metrics with real Prisma queries; zeros → honest copy
+2. **C2** Remove NADRA/biometric/real-time-verification language sitewide
+3. **H5 (partial)** Remove three-verticals — rewrite as two verticals + trust layer
+
+### Batch 2 — Auth Lifecycle (Google-only + session enforcement)
+4. **H1** Remove phone-OTP: Credentials provider, `/api/auth/phone/`, `/verify` page, `otp.ts`, login UI
+5. **§4.4** Implement Redis ban+presence layer: schema additions (`lastSeenAt`, `banReason`, `bannedUntil`), middleware Redis check, ban/logout API updates
+6. **M1** Near-instant ban enforcement via Redis (flows from §4.4)
+
+### Batch 3 — Structure (header/footer + admin correctness)
+7. **H2** Add `layout.tsx` to each route group with `<Navbar>/<Footer>`
+8. **M2** Fix stale EMPLOYER→PARTNER role in admin users query (1 line)
+9. **M3** Extend admin users select; update `AdminUsersTable` with all fields
+10. **M4** Add lastSeenAt to admin users list; add "online" filter
+
+### Batch 4 — Features
+11. **H4** Install `next-themes`; add toggle to Navbar; persist via cookie
+12. **H3** Add `metadata` exports to `/m` and `/jobs` feed pages
+13. **M5** Add Platform Controls, Sessions/Security, Jobs Moderation to admin
+14. **M6 + L1 + L2** Fix robots.ts, sitemap, log auth errors
+
+### Quick Wins (slot into any batch)
+- M2: 1 line
+- M6: 2 lines
+- L1: 1 line
+- L2: 1 line
+- L3: remove testimonials block
+
+---
+
+*Pass 1 complete. Awaiting your approval of findings and the §4.4 session-architecture choice (Option B Enhanced) before any code changes.*

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import JobCard from "@/components/shared/JobCard";
@@ -6,6 +7,17 @@ import { searchClient } from "@/core/search/postgres";
 import { encodeCursor } from "@/core/search/query";
 import type { JobHit } from "@/core/search/postgres";
 import SaveSearchButton from "@/components/shared/SaveSearchButton";
+
+export const metadata: Metadata = {
+  title: "Jobs — Xplosale",
+  description:
+    "Find jobs at verified Pakistani companies. Apply with a verified identity — know exactly who you are applying to.",
+  openGraph: {
+    title: "Jobs — Xplosale",
+    description: "Verified jobs at Pakistani companies. Apply with confidence.",
+    type: "website",
+  },
+};
 
 interface SearchParams {
   regionSlug?: string;

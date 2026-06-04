@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/shared/NotificationBell";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
 /* ─── Logo ───────────────────────────────────────────────────────────────── */
 function Logo() {
@@ -199,6 +200,7 @@ export default function Navbar() {
 
         {/* Right — language + auth */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="hidden md:flex">
+          <ThemeToggle />
           <LanguageSwitcher />
           {user ? (
             <>
@@ -249,7 +251,10 @@ export default function Navbar() {
             </Link>
           ))}
           <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-            <LanguageSwitcher />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ThemeToggle />
+              <LanguageSwitcher />
+            </div>
             {user ? (
               <>
                 <Link href="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
 import localFont from "next/font/local";
+import { cookies } from "next/headers";
 import { AuthSessionProvider } from "@/components/shared/session-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
@@ -44,6 +45,9 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const isRTL = RTL_LOCALES.includes(locale);
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("xplosale-theme")?.value;
+  const theme = themeCookie === "light" || themeCookie === "dark" ? themeCookie : undefined;
 
   const scriptFontVar =
     locale === "ar" || locale === "ur" ? notoArabic.variable
@@ -54,6 +58,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={isRTL ? "rtl" : "ltr"}
+      data-theme={theme}
       className={`${zodiak.variable} ${plusJakartaSans.variable} ${scriptFontVar} h-full antialiased`}
     >
       <head>

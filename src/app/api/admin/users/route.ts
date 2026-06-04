@@ -3,6 +3,9 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
+// A user is considered "online" if seen within the last 5 minutes
+const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession().catch(() => null);
@@ -13,6 +16,8 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") ?? "";
     const role = searchParams.get("role") ?? "";
     const verificationStatus = searchParams.get("verificationStatus") ?? "";
+    const online = searchParams.get("online") === "true";
+    const bannedOnly = searchParams.get("banned") === "true";
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "30", 10));
 
@@ -22,10 +27,13 @@ export async function GET(req: NextRequest) {
             OR: [
               { name: { contains: search, mode: "insensitive" as const } },
               { phone: { contains: search } },
+              { email: { contains: search, mode: "insensitive" as const } },
             ],
           }
         : {}),
-      ...(role ? { role: role as "USER" | "EMPLOYER" | "ADMIN" } : {}),
+      ...(role
+        ? { role: role as "USER" | "EMPLOYER" | "PARTNER" | "ADMIN" }
+        : {}),
       ...(verificationStatus
         ? {
             verificationStatus: verificationStatus as
@@ -35,6 +43,10 @@ export async function GET(req: NextRequest) {
               | "REJECTED",
           }
         : {}),
+      ...(online
+        ? { lastSeenAt: { gte: new Date(Date.now() - ONLINE_WINDOW_MS) } }
+        : {}),
+      ...(bannedOnly ? { bannedAt: { not: null } } : {}),
     };
 
     const [total, users] = await Promise.all([
@@ -44,9 +56,15 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           phone: true,
+          email: true,
           name: true,
+          image: true,
           role: true,
           verificationStatus: true,
+          hasVerifiedBadge: true,
+          isPartner: true,
+          bannedAt: true,
+          lastSeenAt: true,
           createdAt: true,
           sellerProfile: { select: { id: true } },
           networkProfile: { select: { handle: true } },
