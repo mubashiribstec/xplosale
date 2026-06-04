@@ -40,11 +40,17 @@ const providers: NextAuthConfig["providers"] = [
       return { id: user.id, phone: user.phone ?? "", name: user.name ?? "", role: user.role };
     },
   }),
-  Google({
-    clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-  }),
 ];
+
+// Only activate Google provider when credentials are configured
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  );
+}
 
 // Only activate email provider when server is configured
 if (process.env.EMAIL_SERVER) {
