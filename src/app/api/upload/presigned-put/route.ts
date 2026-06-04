@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyLocalToken } from "@/core/adapters/storage";
 import { writeFile, mkdir } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, normalize, sep } from "path";
 import { env } from "@/lib/env";
+
+const ALLOWED_BUCKETS = new Set(["public", "private"]);
 
 export async function PUT(req: NextRequest) {
   if (env.STORAGE_MODE !== "local") {
@@ -10,16 +12,16 @@ export async function PUT(req: NextRequest) {
   }
 
   const { searchParams } = req.nextUrl;
-  const bucket = searchParams.get("bucket") as "public" | "private" | null;
+  const bucket = searchParams.get("bucket");
   const key = searchParams.get("key");
   const exp = parseInt(searchParams.get("exp") ?? "0", 10);
   const sig = searchParams.get("sig");
 
-  if (!bucket || !key || !exp || !sig) {
-    return NextResponse.json({ ok: false, error: "Missing params" }, { status: 400 });
+  if (!bucket || !ALLOWED_BUCKETS.has(bucket) || !key || !exp || !sig) {
+    return NextResponse.json({ ok: false, error: "Missing or invalid params" }, { status: 400 });
   }
 
-  if (!verifyLocalToken("put", bucket, key, exp, sig)) {
+  if (!verifyLocalToken("put", bucket as "public" | "private", key, exp, sig)) {
     return NextResponse.json({ ok: false, error: "Invalid or expired token" }, { status: 403 });
   }
 
@@ -28,7 +30,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "File too large (max 10MB)" }, { status: 413 });
   }
 
-  const filePath = join(process.cwd(), "uploads", bucket, key);
+  // Path traversal protection: resolve and verify the path stays inside the uploads directory
+  const baseDir = join(process.cwd(), "uploads", bucket);
+  const filePath = normalize(join(baseDir, key));
+  if (filePath !== baseDir && !filePath.startsWith(baseDir + sep)) {
+    return NextResponse.json({ ok: false, error: "Invalid path" }, { status: 400 });
+  }
+
   await mkdir(dirname(filePath), { recursive: true });
   await writeFile(filePath, Buffer.from(body));
 

@@ -5,6 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import ApplyButton from "@/components/shared/ApplyButton";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import { serializeJsonLd } from "@/lib/json-ld";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ jobId: string }> }
@@ -189,7 +190,7 @@ export default async function JobDetailPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             "@context": "https://schema.org",
             "@type": "JobPosting",
             title: job.title,

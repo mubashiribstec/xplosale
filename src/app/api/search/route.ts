@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 const querySchema = z.object({
   q: z.string().min(2, "Query must be at least 2 characters").max(100),
@@ -11,6 +12,13 @@ const querySchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    // Rate-limit by IP: 60 search requests per minute
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+    const limited = await rateLimit(`search:${ip}`, 60, 60);
+    if (!limited.allowed) {
+      return err("Too many requests. Please slow down.", 429);
+    }
+
     const { searchParams } = req.nextUrl;
     const raw = {
       q: searchParams.get("q") ?? undefined,

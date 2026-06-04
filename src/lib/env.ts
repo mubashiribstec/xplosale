@@ -48,8 +48,9 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().email().default("noreply@xplosale.com"),
   RESEND_API_KEY: z.string().optional(),
 
-  // Admin bootstrap — first user matching this email is auto-promoted to ADMIN
-  ADMIN_EMAIL: z.string().email().optional(),
+  // Admin bootstrap — one-time token required to self-promote via POST /api/admin/bootstrap
+  // Remove this variable from the environment after the first admin is created.
+  ADMIN_BOOTSTRAP_TOKEN: z.string().min(16).optional(),
 
   // Analytics
   NEXT_PUBLIC_ANALYTICS_ENABLED: z.coerce.boolean().default(false),

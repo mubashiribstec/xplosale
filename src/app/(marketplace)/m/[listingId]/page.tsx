@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import OfferButton from "@/components/shared/OfferButton";
 import EscrowWidget from "@/components/shared/EscrowWidget";
+import { serializeJsonLd } from "@/lib/json-ld";
 
 interface PageProps {
   params: Promise<{ listingId: string }>;
@@ -102,7 +103,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             "@context": "https://schema.org",
             "@type": "Product",
             name: listing.title,
