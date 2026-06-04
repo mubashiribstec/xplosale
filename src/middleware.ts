@@ -20,13 +20,25 @@ export default auth(function middleware(req) {
     }
   }
 
-  // Account / me routes — require authentication
-  if (pathname.startsWith("/me") || pathname.startsWith("/employer") || pathname.startsWith("/chat")) {
+  // Account / me / partner routes — require authentication
+  if (
+    pathname.startsWith("/me") ||
+    pathname.startsWith("/employer") ||
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/partner")
+  ) {
     if (!session) {
       const url = req.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
+    }
+    // /partner requires PARTNER or ADMIN role
+    if (pathname.startsWith("/partner") && pathname !== "/partner/register") {
+      const role = (session.user as { role?: string } | undefined)?.role;
+      if (role !== "PARTNER" && role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/partner/register", req.nextUrl));
+      }
     }
   }
 
@@ -34,5 +46,5 @@ export default auth(function middleware(req) {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/me/:path*", "/employer/:path*", "/chat/:path*"],
+  matcher: ["/admin/:path*", "/me/:path*", "/employer/:path*", "/chat/:path*", "/partner/:path*"],
 };

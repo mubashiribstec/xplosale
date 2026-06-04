@@ -37,7 +37,7 @@ export default function VerifyPage() {
       }
 
       sessionStorage.removeItem("otp_phone");
-      router.push("/me");
+      router.push("/auth/post-login");
     } catch {
       setError("Network error. Please try again.");
     } finally {

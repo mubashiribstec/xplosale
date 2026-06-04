@@ -8,6 +8,7 @@ const envSchema = z.object({
   // NextAuth
   NEXTAUTH_SECRET: z.string().min(32),
   NEXTAUTH_URL: z.string().url().default("http://localhost:3000"),
+  SESSION_MAX_AGE_DAYS: z.coerce.number().int().positive().default(30),
 
   // Storage — S3 vars are optional when STORAGE_MODE=local
   STORAGE_MODE: z.enum(["local", "s3"]).default("s3"),

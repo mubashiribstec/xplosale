@@ -62,10 +62,13 @@ if (process.env.EMAIL_SERVER) {
   );
 }
 
+const SESSION_MAX_AGE_SECS =
+  parseInt(process.env.SESSION_MAX_AGE_DAYS ?? "30") * 24 * 60 * 60;
+
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers,
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECS },
   trustHost: true,
   pages: {
     signIn: "/login",
