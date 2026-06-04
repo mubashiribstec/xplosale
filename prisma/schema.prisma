@@ -206,6 +206,7 @@ model User {
   email              String?            @unique
   emailVerified      DateTime?
   name               String?
+  image              String?
   cnHash             String?            @unique
   role               Role               @default(USER)
   isPhoneVerified    Boolean            @default(false)
