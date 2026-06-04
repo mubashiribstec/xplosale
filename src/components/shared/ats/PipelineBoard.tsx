@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import CandidateDrawer from "./CandidateDrawer";
+import InviteButton from "@/components/shared/InviteButton";
 
 type Stage = {
   id: string;
@@ -452,9 +453,16 @@ export default function PipelineBoard({
                           </div>
                         )}
 
-                        <p className="text-xs text-gray-300 mt-1.5">
-                          {new Date(app.createdAt).toLocaleDateString()}
-                        </p>
+                        <div className="flex items-center justify-between mt-1.5">
+                          <p className="text-xs text-gray-300">
+                            {new Date(app.createdAt).toLocaleDateString()}
+                          </p>
+                          <InviteButton
+                            jobPostingId={jobId}
+                            candidateId={app.jobSeeker.user.id}
+                            companyId={companyId}
+                          />
+                        </div>
                       </div>
                     ))}
 

@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     description: "Verified listings across Pakistan. Escrow-protected transactions.",
     type: "website",
   },
+  alternates: { canonical: "/m" },
 };
 
 interface SearchParams {
