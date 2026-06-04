@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import ServiceWorkerRegistration from "@/components/shared/ServiceWorkerRegistration";
 import SupportButton from "@/components/shared/SupportButton";
+import CookieBanner from "@/components/shared/CookieBanner";
 import { RTL_LOCALES } from "@/i18n/request";
 import "./globals.css";
 
@@ -66,6 +67,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthSessionProvider>
             {children}
+            <CookieBanner />
             <SupportButton />
             <ServiceWorkerRegistration />
           </AuthSessionProvider>

@@ -886,6 +886,8 @@ export default function MarketingHome() {
             { label: "Jobs", href: "/jobs" },
             { label: "For Partners", href: "/partner/register" },
             { label: "Verify identity", href: "/me/verify-identity" },
+            { label: "Privacy", href: "/privacy" },
+            { label: "Cookie preferences", href: "/cookies" },
           ].map(({ label, href }) => (
             <Link
               key={label}
