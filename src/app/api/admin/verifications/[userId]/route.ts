@@ -41,7 +41,10 @@ export async function POST(
       // CNIC requires the actual number to hash; passport does not
       if (!isPassport && !cnicNumber) return err("cnicNumber is required for CNIC approval", 422);
 
-      const updateData: Record<string, unknown> = { verificationStatus: "VERIFIED" };
+      const updateData: Record<string, unknown> = {
+        verificationStatus: "VERIFIED",
+        hasVerifiedBadge: true,
+      };
 
       if (cnicNumber) {
         const cnHash = hashCnic(cnicNumber);

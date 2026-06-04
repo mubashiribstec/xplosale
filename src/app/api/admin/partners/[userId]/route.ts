@@ -41,7 +41,7 @@ export async function PATCH(
         }),
         prisma.user.update({
           where: { id: userId },
-          data: { isPartner: true, partnerType: application.partnerType },
+          data: { role: "PARTNER", isPartner: true, partnerType: application.partnerType },
         }),
         prisma.adminActionLog.create({
           data: {
@@ -62,7 +62,7 @@ export async function PATCH(
         // Revoke partner privileges so a reject can't leave isPartner stuck true
         prisma.user.update({
           where: { id: userId },
-          data: { isPartner: false, partnerType: null },
+          data: { role: "USER", isPartner: false, partnerType: null },
         }),
         prisma.adminActionLog.create({
           data: {

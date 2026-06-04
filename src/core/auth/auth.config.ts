@@ -7,6 +7,18 @@ import { prisma } from "@/lib/prisma";
 import { verifyOtp } from "./otp";
 import { z } from "zod";
 
+// Map legacy EMPLOYER* roles to PARTNER so old JWT tokens upgrade transparently.
+const LEGACY_EMPLOYER_ROLES = new Set([
+  "EMPLOYER",
+  "EMPLOYER_RECRUITER",
+  "EMPLOYER_HIRING_MANAGER",
+  "EMPLOYER_INTERVIEWER",
+]);
+
+function normalizeRole(role: string): string {
+  return LEGACY_EMPLOYER_ROLES.has(role) ? "PARTNER" : role;
+}
+
 const credentialsSchema = z.object({
   phone: z.string().min(10),
   otp: z.string().length(6),
@@ -91,7 +103,7 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role ?? "USER";
+        token.role = normalizeRole((user as { role?: string }).role ?? "USER");
         token.phone = (user as { phone?: string }).phone ?? null;
       }
 
@@ -117,7 +129,7 @@ export const authConfig: NextAuthConfig = {
               token.role = dbUser.role;
             }
           } else {
-            token.role = dbUser.role;
+            token.role = normalizeRole(dbUser.role);
           }
           token.id = dbUser.id;
           token.phone = dbUser.phone ?? null;
@@ -133,7 +145,7 @@ export const authConfig: NextAuthConfig = {
           select: { role: true },
         });
         if (dbUser) {
-          token.role = dbUser.role;
+          token.role = normalizeRole(dbUser.role);
           token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         }
       }
@@ -148,7 +160,7 @@ export const authConfig: NextAuthConfig = {
             select: { role: true },
           });
           if (dbUser) {
-            token.role = dbUser.role;
+            token.role = normalizeRole(dbUser.role);
             token.roleRefreshedAt = now;
           }
         }

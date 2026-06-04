@@ -12,6 +12,8 @@ enum Role {
   USER
   EMPLOYER
   ADMIN
+  PARTNER
+  // Legacy EMPLOYER_* values kept for DB compatibility; all users migrated to PARTNER
   EMPLOYER_RECRUITER
   EMPLOYER_HIRING_MANAGER
   EMPLOYER_INTERVIEWER
@@ -211,6 +213,7 @@ model User {
   role               Role               @default(USER)
   isPhoneVerified    Boolean            @default(false)
   verificationStatus VerificationStatus @default(UNVERIFIED)
+  hasVerifiedBadge   Boolean            @default(false)
   docType            IdentityDocType?
   isPartner          Boolean            @default(false)
   partnerType        PartnerType?
