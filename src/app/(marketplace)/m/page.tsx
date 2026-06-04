@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
@@ -6,6 +7,17 @@ import { encodeCursor } from "@/core/search/query";
 import type { ListingHit } from "@/core/search/postgres";
 import ListingCard from "@/components/shared/ListingCard";
 import MarketplaceShell from "./_components/MarketplaceShell";
+
+export const metadata: Metadata = {
+  title: "Marketplace — Xplosale",
+  description:
+    "Browse thousands of verified listings across Pakistan. Buy and sell with confidence — identity-verified sellers, escrow-protected transactions.",
+  openGraph: {
+    title: "Marketplace — Xplosale",
+    description: "Verified listings across Pakistan. Escrow-protected transactions.",
+    type: "website",
+  },
+};
 
 interface SearchParams {
   q?: string;

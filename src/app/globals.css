@@ -130,8 +130,9 @@ html[lang="zh"] body {
 }
 
 /* ─── Dark mode ──────────────────────────────────────────────────────────── */
+/* System preference (default) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #1A1613;
     --paper-2: #221E1A;
     --paper-3: #2A2521;
@@ -142,8 +143,25 @@ html[lang="zh"] body {
     --white: #ECE8DF;
   }
 
-  body {
+  :root:not([data-theme="light"]) body {
     background: var(--paper);
     color: var(--ink);
   }
+}
+
+/* Manual overrides — set via data-theme attribute on <html> */
+:root[data-theme="dark"] {
+  --paper: #1A1613;
+  --paper-2: #221E1A;
+  --paper-3: #2A2521;
+  --line: #3D362F;
+  --ink: #F4F2EC;
+  --ink-soft: #D6D0C6;
+  --ink-faint: #8C8378;
+  --white: #ECE8DF;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--paper);
+  color: var(--ink);
 }

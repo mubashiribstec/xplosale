@@ -37,6 +37,16 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   pages: {
     signIn: "/login",
+    error: "/login",
+  },
+  logger: {
+    error(err) {
+      // Log auth errors with context but never expose tokens or secrets
+      console.error("[NextAuth] Error:", err instanceof Error ? err.message : String(err));
+    },
+    warn(code) {
+      console.warn("[NextAuth] Warning:", code);
+    },
   },
   callbacks: {
     async signIn({ user, account }) {
