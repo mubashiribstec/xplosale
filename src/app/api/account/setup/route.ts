@@ -4,17 +4,12 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
+const ACCOUNT_TYPE = z.enum(["SELLER", "JOB_SEEKER", "EMPLOYER", "NETWORKER"]);
+
 const setupSchema = z.object({
   name: z.string().min(2).max(80),
-  accountType: z.enum(["SELLER", "JOB_SEEKER", "EMPLOYER", "NETWORKER"]),
+  accountTypes: z.array(ACCOUNT_TYPE).min(1),
 });
-
-const ROLE_MAP = {
-  SELLER: "USER",
-  JOB_SEEKER: "JOB_SEEKER",
-  EMPLOYER: "EMPLOYER_HIRING_MANAGER",
-  NETWORKER: "USER",
-} as const;
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,32 +21,39 @@ export async function POST(req: NextRequest) {
     const parsed = setupSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const { name, accountType } = parsed.data;
+    const { name, accountTypes } = parsed.data;
+
+    // Employer takes the highest role; everyone else is USER.
+    const role = accountTypes.includes("EMPLOYER") ? "EMPLOYER_HIRING_MANAGER" : "USER";
 
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { name, role: ROLE_MAP[accountType] },
+        data: { name, role },
       });
 
-      // Create the matching profile stubs so /me doesn't redirect again
-      if (accountType === "SELLER") {
+      // Create profile stubs for each selected type.
+      // Prisma 7 requires the relation object in create — passing only the scalar FK is no longer valid.
+      if (accountTypes.includes("SELLER")) {
         await tx.sellerProfile.upsert({
-          where: { userId },
+          where:  { userId },
           update: {},
-          create: { userId },
+          create: { user: { connect: { id: userId } } },
         });
-      } else if (accountType === "JOB_SEEKER") {
-        await tx.jobSeekerProfile.upsert({
-          where: { userId },
-          update: {},
-          create: { userId },
-        });
-      // EMPLOYER: EmployerProfile requires a companyId which doesn't exist yet.
-      // Role is already set above; the profile gets created when they create a company.
       }
 
-      // Always create a NetworkProfile so the user is discoverable
+      if (accountTypes.includes("JOB_SEEKER")) {
+        await tx.jobSeekerProfile.upsert({
+          where:  { userId },
+          update: {},
+          create: { user: { connect: { id: userId } } },
+        });
+      }
+
+      // EMPLOYER: EmployerProfile requires a companyId that doesn't exist at setup time.
+      // Role is set above; the profile is created when the user creates their first company.
+
+      // Always create a NetworkProfile so the user is discoverable.
       const handle = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -59,9 +61,9 @@ export async function POST(req: NextRequest) {
         .slice(0, 30);
       const uniqueHandle = `${handle}-${userId.slice(-6)}`;
       await tx.networkProfile.upsert({
-        where: { userId },
+        where:  { userId },
         update: {},
-        create: { userId, handle: uniqueHandle },
+        create: { user: { connect: { id: userId } }, handle: uniqueHandle },
       });
     });
 
