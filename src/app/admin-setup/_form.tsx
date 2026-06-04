@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 export default function BootstrapForm() {
+  const { update } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,7 +18,9 @@ export default function BootstrapForm() {
         setError(data.error ?? "Failed to promote account.");
         return;
       }
-      // Force a full session refresh then navigate to admin
+      // Force the JWT token to re-fetch the role from DB immediately.
+      // Without this the middleware still sees the old role for up to 5 min.
+      await update();
       window.location.href = "/admin";
     } catch {
       setError("Network error. Please try again.");

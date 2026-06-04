@@ -79,32 +79,64 @@ export const authConfig: NextAuthConfig = {
             data: { name: user.name ?? user.email?.split("@")[0] ?? "User" },
           });
         } catch {
-          // User may not exist yet — adapter creates it; ignore
+          // User may not exist yet — adapter creates it first; ignore
         }
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "USER";
         token.phone = (user as { phone?: string }).phone ?? null;
       }
-      // On OAuth sign-in, user.id comes from the adapter-created record
+
+      // On OAuth sign-in, fetch the freshly-created DB user and optionally
+      // auto-promote the configured ADMIN_EMAIL when no admin exists yet.
       if (account && account.provider !== "credentials" && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { id: true, role: true, phone: true },
+          select: { id: true, role: true, phone: true, email: true },
         });
         if (dbUser) {
+          const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+          if (
+            adminEmail &&
+            dbUser.email?.toLowerCase() === adminEmail &&
+            dbUser.role !== "ADMIN"
+          ) {
+            const existingAdmin = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+            if (!existingAdmin) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+              token.role = "ADMIN";
+            } else {
+              token.role = dbUser.role;
+            }
+          } else {
+            token.role = dbUser.role;
+          }
           token.id = dbUser.id;
-          token.role = dbUser.role;
           token.phone = dbUser.phone ?? null;
           token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         }
       }
+
+      // Force immediate role refresh when the client calls session.update()
+      // (used after admin bootstrap so the new ADMIN role is visible right away)
+      if (trigger === "update" && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.roleRefreshedAt = Math.floor(Date.now() / 1000);
+        }
+      }
+
       // Re-fetch role every 5 minutes so admin demotions take effect promptly
-      if (!user && token.id) {
+      if (!user && token.id && trigger !== "update") {
         const now = Math.floor(Date.now() / 1000);
         const lastRefresh = (token.roleRefreshedAt as number | undefined) ?? 0;
         if (now - lastRefresh > 300) {
@@ -118,8 +150,10 @@ export const authConfig: NextAuthConfig = {
           }
         }
       }
+
       return token;
     },
+
     async session({ session, token }) {
       if (token && session.user) {
         const u = session.user as unknown as { id: string; phone: string | null; role: string };

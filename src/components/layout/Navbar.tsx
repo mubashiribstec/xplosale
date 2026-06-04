@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/shared/NotificationBell";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 
@@ -11,20 +11,8 @@ import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 function Logo() {
   return (
     <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          background: "var(--clay)",
-          display: "grid",
-          placeItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontFamily: "var(--display)", fontSize: 20, fontWeight: 800, color: "var(--white)", lineHeight: 1 }}>
-          X
-        </span>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--clay)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+        <span style={{ fontFamily: "var(--display)", fontSize: 20, fontWeight: 800, color: "var(--white)", lineHeight: 1 }}>X</span>
       </div>
       <span style={{ fontFamily: "var(--display)", fontSize: 19, fontWeight: 800, letterSpacing: "-.02em", color: "var(--ink)" }}>
         Xplosale
@@ -40,19 +28,121 @@ const NAV_LINKS = [
   { href: "/n/feed", label: "Network" },
 ];
 
+/* ─── User dropdown ─────────────────────────────────────────────────────── */
+function UserDropdown({ name, image, role }: { name: string; image?: string | null; role: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "6px 14px",
+          borderRadius: 999,
+          border: "1.5px solid var(--line)",
+          background: "var(--white)",
+          cursor: "pointer",
+          color: "var(--ink)",
+          fontSize: 14,
+          fontWeight: 500,
+          fontFamily: "var(--body)",
+        }}
+      >
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--clay)", display: "grid", placeItems: "center", color: "var(--white)", fontSize: 12, fontWeight: 700 }}>
+            {(name ?? "U")[0].toUpperCase()}
+          </span>
+        )}
+        {name.split(" ")[0]}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            right: 0,
+            minWidth: 180,
+            background: "var(--white)",
+            border: "1px solid var(--line)",
+            borderRadius: 14,
+            boxShadow: "var(--shadow-lg)",
+            overflow: "hidden",
+            zIndex: 200,
+          }}
+        >
+          <Link
+            href="/me"
+            onClick={() => setOpen(false)}
+            style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500 }}
+          >
+            My Account
+          </Link>
+          {role === "ADMIN" && (
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--clay)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 600, borderTop: "1px solid var(--line)" }}
+            >
+              Admin Panel
+            </Link>
+          )}
+          <button
+            onClick={() => { setOpen(false); void signOut({ callbackUrl: "/" }); }}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "11px 16px",
+              fontSize: 14,
+              color: "var(--ink-soft)",
+              background: "none",
+              border: "none",
+              borderTop: "1px solid var(--line)",
+              textAlign: "left",
+              cursor: "pointer",
+              fontFamily: "var(--body)",
+              fontWeight: 500,
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Navbar ─────────────────────────────────────────────────────────────── */
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const user = session?.user as { name?: string; image?: string; role?: string } | undefined;
+
   return (
     <nav
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
+        top: 0, left: 0, right: 0,
         zIndex: 100,
         height: 62,
         background: "var(--white)",
@@ -104,82 +194,17 @@ export default function Navbar() {
         {/* Right — language + auth */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="hidden md:flex">
           <LanguageSwitcher />
-
-          {session?.user ? (
+          {user ? (
             <>
               <NotificationBell />
-              <Link
-                href="/me"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "6px 14px",
-                  borderRadius: 999,
-                  border: "1.5px solid var(--line)",
-                  textDecoration: "none",
-                  color: "var(--ink)",
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
-              >
-                {session.user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name ?? "avatar"}
-                    style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: "50%",
-                      background: "var(--clay)",
-                      display: "grid",
-                      placeItems: "center",
-                      color: "var(--white)",
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {(session.user.name ?? "U")[0].toUpperCase()}
-                  </span>
-                )}
-                {session.user.name?.split(" ")[0]}
-              </Link>
+              <UserDropdown name={user.name ?? "User"} image={user.image} role={user.role ?? "USER"} />
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: 999,
-                  border: "1.5px solid var(--line)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "var(--ink)",
-                  textDecoration: "none",
-                  transition: "all .2s",
-                }}
-              >
+              <Link href="/login" style={{ padding: "8px 18px", borderRadius: 999, border: "1.5px solid var(--line)", fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
                 Log in
               </Link>
-              <Link
-                href="/login"
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: 999,
-                  background: "var(--ink)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "var(--paper)",
-                  textDecoration: "none",
-                  transition: "all .2s",
-                }}
-              >
+              <Link href="/login" style={{ padding: "8px 18px", borderRadius: 999, background: "var(--ink)", fontSize: 14, fontWeight: 600, color: "var(--paper)", textDecoration: "none" }}>
                 Sign up
               </Link>
             </>
@@ -208,48 +233,32 @@ export default function Navbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div
-          style={{
-            position: "absolute",
-            top: 62,
-            left: 0,
-            right: 0,
-            background: "var(--white)",
-            borderBottom: "1px solid var(--line)",
-            padding: "12px 20px 20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
+          style={{ position: "absolute", top: 62, left: 0, right: 0, background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "12px 20px 20px", display: "flex", flexDirection: "column", gap: 4 }}
           className="md:hidden"
         >
           {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMobileOpen(false)}
-              style={{ padding: "10px 14px", borderRadius: 8, fontSize: 15, fontWeight: 500, color: "var(--ink-soft)", textDecoration: "none" }}
-            >
+            <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+              style={{ padding: "10px 14px", borderRadius: 8, fontSize: 15, fontWeight: 500, color: "var(--ink-soft)", textDecoration: "none" }}>
               {label}
             </Link>
           ))}
           <div style={{ borderTop: "1px solid var(--line)", marginTop: 8, paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
             <LanguageSwitcher />
-            {session?.user ? (
-              <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
-                My Account
-              </Link>
+            {user ? (
+              <>
+                <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Account</Link>
+                {user.role === "ADMIN" && (
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Admin Panel</Link>
+                )}
+                <button onClick={() => { setMobileOpen(false); void signOut({ callbackUrl: "/" }); }}
+                  style={{ background: "none", border: "none", textAlign: "left", padding: 0, fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", cursor: "pointer", fontFamily: "var(--body)" }}>
+                  Sign out
+                </button>
+              </>
             ) : (
               <div style={{ display: "flex", gap: 10 }}>
-                <Link href="/login" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
-                  Log in
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  style={{ padding: "8px 18px", borderRadius: 999, background: "var(--ink)", fontSize: 14, fontWeight: 600, color: "var(--paper)", textDecoration: "none" }}
-                >
-                  Sign up
-                </Link>
+                <Link href="/login" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>Log in</Link>
+                <Link href="/login" onClick={() => setMobileOpen(false)} style={{ padding: "8px 18px", borderRadius: 999, background: "var(--ink)", fontSize: 14, fontWeight: 600, color: "var(--paper)", textDecoration: "none" }}>Sign up</Link>
               </div>
             )}
           </div>
