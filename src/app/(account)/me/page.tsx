@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { TierCard } from "@/components/shared/TierCard";
