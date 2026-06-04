@@ -2,66 +2,15 @@ import Link from "next/link";
 import GlobalSearchBar from "@/components/shared/GlobalSearchBar";
 import { KhatamPattern, VerificationSeal } from "@/components/ui/XplosaleUI";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import GoogleSignInButton from "@/components/shared/GoogleSignInButton";
 
 export default function MarketingHome() {
   return (
-    <main style={{ background: "var(--paper)", color: "var(--ink)", fontFamily: "var(--body)" }}>
-
-      {/* ─── Nav ──────────────────────────────────────────────────────────── */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 clamp(20px, 5vw, 80px)",
-          height: 62,
-          borderBottom: "1px solid var(--line)",
-          background: "var(--paper)",
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--display)",
-            fontWeight: 800,
-            fontSize: 20,
-            letterSpacing: "-0.03em",
-            color: "var(--ink)",
-          }}
-        >
-          Xplosale
-        </span>
-        <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          <Link
-            href="/m"
-            style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-soft)", textDecoration: "none" }}
-          >
-            Marketplace
-          </Link>
-          <Link
-            href="/jobs"
-            style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-soft)", textDecoration: "none" }}
-          >
-            Jobs
-          </Link>
-          <Link
-            href="/login"
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: "var(--white)",
-              background: "var(--ink)",
-              borderRadius: 10,
-              padding: "8px 18px",
-              textDecoration: "none",
-            }}
-          >
-            Sign in
-          </Link>
-        </nav>
-      </header>
+    <>
+      <Navbar />
+    <main style={{ background: "var(--paper)", color: "var(--ink)", fontFamily: "var(--body)", paddingTop: 62 }}>
 
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
       <section
@@ -163,6 +112,7 @@ export default function MarketingHome() {
 
           {/* CTAs */}
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+            <GoogleSignInButton />
             <Link
               href="/me/verify-identity"
               style={{
@@ -182,21 +132,6 @@ export default function MarketingHome() {
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Link>
-            <Link
-              href="#how-it-works"
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                color: "var(--ink)",
-                background: "transparent",
-                border: "1.5px solid var(--line)",
-                borderRadius: 12,
-                padding: "13px 26px",
-                textDecoration: "none",
-              }}
-            >
-              See how it works
             </Link>
           </div>
 
@@ -857,52 +792,8 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      {/* ─── Footer ───────────────────────────────────────────────────────── */}
-      <footer
-        style={{
-          background: "var(--ink)",
-          color: "rgba(251,250,245,.5)",
-          padding: "clamp(28px, 4vw, 44px) clamp(20px, 5vw, 80px)",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--display)",
-            fontWeight: 800,
-            fontSize: 18,
-            color: "var(--white)",
-          }}
-        >
-          Xplosale
-        </span>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-          {[
-            { label: "Marketplace", href: "/m" },
-            { label: "Jobs", href: "/jobs" },
-            { label: "For Partners", href: "/partner/register" },
-            { label: "Verify identity", href: "/me/verify-identity" },
-            { label: "Privacy", href: "/privacy" },
-            { label: "Cookie preferences", href: "/cookies" },
-          ].map(({ label, href }) => (
-            <Link
-              key={label}
-              href={href}
-              style={{ fontSize: 13, color: "rgba(251,250,245,.5)", textDecoration: "none" }}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, margin: 0 }}>
-          &copy; {new Date().getFullYear()} Xplosale. All rights reserved.
-        </p>
-      </footer>
-
     </main>
+      <Footer />
+    </>
   );
 }
