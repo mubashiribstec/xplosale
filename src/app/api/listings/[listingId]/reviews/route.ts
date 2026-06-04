@@ -20,10 +20,30 @@ export async function POST(
 
     const { listingId } = await params;
 
-    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      include: { sellerProfile: { select: { userId: true } } },
+    });
     if (!listing) return err("Listing not found", 404);
     if (listing.status !== "ACTIVE" && listing.status !== "SOLD") {
       return err("Reviews are only allowed on active or sold listings", 422);
+    }
+
+    // Prevent sellers reviewing their own listing
+    if (listing.sellerProfile?.userId === authorId) {
+      return err("You cannot review your own listing", 422);
+    }
+
+    // Only users who completed an escrow transaction on this listing may review
+    const transaction = await prisma.escrowTransaction.findFirst({
+      where: {
+        listingId,
+        buyerId: authorId,
+        status: { in: ["RELEASED", "DISPUTED"] },
+      },
+    });
+    if (!transaction) {
+      return err("You must have completed a purchase on this listing to leave a review", 422);
     }
 
     const body = await req.json() as unknown;

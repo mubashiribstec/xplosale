@@ -41,7 +41,6 @@ export const authConfig: NextAuthConfig = {
   },
   logger: {
     error(err) {
-      // Log auth errors with context but never expose tokens or secrets
       console.error("[NextAuth] Error:", err instanceof Error ? err.message : String(err));
     },
     warn(code) {
@@ -70,30 +69,16 @@ export const authConfig: NextAuthConfig = {
         token.phone = (user as { phone?: string }).phone ?? null;
       }
 
-      // On sign-in, fetch the freshly-created DB user and optionally
-      // auto-promote the configured ADMIN_EMAIL when no admin exists yet.
+      // On sign-in: hydrate token from DB. Role is database-driven only.
+      // Admin promotion is done via POST /api/admin/bootstrap (first-admin flow)
+      // or directly in the database — never through an environment variable.
       if (account && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { id: true, role: true, phone: true, email: true, bannedAt: true, tokenVersion: true },
+          select: { id: true, role: true, phone: true, bannedAt: true, tokenVersion: true },
         });
         if (dbUser) {
-          const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-          if (
-            adminEmail &&
-            dbUser.email?.toLowerCase() === adminEmail &&
-            dbUser.role !== "ADMIN"
-          ) {
-            const existingAdmin = await prisma.user.findFirst({ where: { role: "ADMIN" } });
-            if (!existingAdmin) {
-              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
-              token.role = "ADMIN";
-            } else {
-              token.role = dbUser.role;
-            }
-          } else {
-            token.role = normalizeRole(dbUser.role);
-          }
+          token.role = normalizeRole(dbUser.role);
           token.id = dbUser.id;
           token.phone = dbUser.phone ?? null;
           token.bannedAt = dbUser.bannedAt?.toISOString() ?? null;
@@ -125,7 +110,7 @@ export const authConfig: NextAuthConfig = {
             select: { role: true, bannedAt: true, tokenVersion: true },
           });
           if (dbUser) {
-            // If token version no longer matches, invalidate the token
+            // Token version mismatch → force sign-out (admin rotated the token)
             if (token.tokenVersion !== undefined && dbUser.tokenVersion !== token.tokenVersion) {
               return null as unknown as typeof token;
             }
@@ -141,7 +126,12 @@ export const authConfig: NextAuthConfig = {
 
     async session({ session, token }) {
       if (token && session.user) {
-        const u = session.user as unknown as { id: string; phone: string | null; role: string; bannedAt: string | null };
+        const u = session.user as unknown as {
+          id: string;
+          phone: string | null;
+          role: string;
+          bannedAt: string | null;
+        };
         u.id = token.id as string;
         u.phone = (token.phone as string | null) ?? null;
         u.role = token.role as string;

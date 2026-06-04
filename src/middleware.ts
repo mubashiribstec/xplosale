@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { edgeKvGet, edgeKvSetNx } from "@/core/adapters/kv.edge";
 
+const BANNED_PAGE = "/banned";
+const OPEN_PATHS = [BANNED_PAGE, "/login", "/"];
+
+function isBannedSafe(pathname: string): boolean {
+  return OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(p + "?"));
+}
+
 export default auth(async function middleware(req) {
   const { pathname } = req.nextUrl;
   const session = req.auth;
@@ -12,24 +19,22 @@ export default auth(async function middleware(req) {
 
     if (userId) {
       // Instant ban enforcement via Redis (O(1), ~0.5 ms).
-      // Falls back to JWT bannedAt check if REST env vars are not configured.
       const redisBanned = await edgeKvGet(`banned:${userId}`);
       if (redisBanned === "1") {
-        if (!pathname.startsWith("/login") && pathname !== "/") {
-          return NextResponse.redirect(new URL("/login?reason=banned", req.nextUrl));
+        if (!isBannedSafe(pathname)) {
+          return NextResponse.redirect(new URL(BANNED_PAGE, req.nextUrl));
         }
       }
 
       // Throttled lastSeen tracking — at most one write per 55 s per user.
-      // Uses SET NX so only the first request in the window writes to Redis.
       edgeKvSetNx(`lastSeen:${userId}`, String(Date.now()), 55).catch(() => null);
     }
 
     // JWT-based ban fallback (delayed up to 5 min until token refresh)
     const bannedAt = (session.user as { bannedAt?: string | null })?.bannedAt;
     if (bannedAt) {
-      if (!pathname.startsWith("/login") && pathname !== "/") {
-        return NextResponse.redirect(new URL("/login?reason=banned", req.nextUrl));
+      if (!isBannedSafe(pathname)) {
+        return NextResponse.redirect(new URL(BANNED_PAGE, req.nextUrl));
       }
     }
   }
@@ -74,5 +79,13 @@ export default auth(async function middleware(req) {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/me/:path*", "/employer/:path*", "/chat/:path*", "/partner/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/me/:path*",
+    "/employer/:path*",
+    "/chat/:path*",
+    "/partner/:path*",
+    // also run for authenticated sessions on all pages for ban enforcement
+    "/((?!_next/static|_next/image|favicon.ico|api/auth).*)",
+  ],
 };

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { requireSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { hashCnic } from "@/core/auth/otp";
+import { hashCnic } from "@/lib/cnic-hash";
 
 const bodySchema = z.object({
   action: z.enum(["approve", "reject"]),

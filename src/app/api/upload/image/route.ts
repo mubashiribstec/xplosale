@@ -4,8 +4,10 @@ import { ok, err, parseError } from '@/lib/http';
 import { requireSession, getUserId } from '@/core/auth/session';
 import { putObject, getPublicUrl } from '@/core/adapters/storage';
 import { detectMimeType, processImage, MAX_IMAGE_SIZE } from '@/core/media/pipeline';
+import { prisma } from '@/lib/prisma';
 
 const purposeSchema = z.enum(['profile_photo', 'banner', 'listing_image']);
+const listingIdSchema = z.string().cuid();
 
 const dimensionMap: Record<string, { maxWidth: number; maxHeight: number }> = {
   profile_photo: { maxWidth: 512, maxHeight: 512 },
@@ -18,15 +20,36 @@ export async function POST(req: NextRequest) {
     const session = await requireSession().catch(() => null);
     if (!session) return err('Unauthorized', 401);
     const userId = getUserId(session);
+    const isAdmin = (session.user as { role?: string }).role === 'ADMIN';
 
     const { searchParams } = new URL(req.url);
     const purposeResult = purposeSchema.safeParse(searchParams.get('purpose'));
     if (!purposeResult.success) return err('Invalid purpose', 422);
     const purpose = purposeResult.data;
 
-    const listingId = searchParams.get('listingId');
-    if (purpose === 'listing_image' && !listingId) {
+    const rawListingId = searchParams.get('listingId');
+    if (purpose === 'listing_image' && !rawListingId) {
       return err('listingId is required for listing_image', 422);
+    }
+
+    // Validate listingId format to prevent path traversal
+    let listingId: string | null = null;
+    if (rawListingId) {
+      const parsed = listingIdSchema.safeParse(rawListingId);
+      if (!parsed.success) return err('Invalid listingId', 422);
+      listingId = parsed.data;
+    }
+
+    // Verify the user owns the listing they're uploading images to
+    if (purpose === 'listing_image' && listingId) {
+      const listing = await prisma.listing.findUnique({
+        where: { id: listingId },
+        include: { sellerProfile: { select: { userId: true } } },
+      });
+      if (!listing) return err('Listing not found', 404);
+      if (!listing.sellerProfile || (listing.sellerProfile.userId !== userId && !isAdmin)) {
+        return err('Forbidden', 403);
+      }
     }
 
     const form = await req.formData();
