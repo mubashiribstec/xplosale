@@ -50,13 +50,20 @@ export async function GET(req: NextRequest) {
       take: 200,
     });
 
+    // Batch-load all applied job IDs for the whole profile page in one query
+    const profileIds = profiles.map((p) => p.id);
+    const batchApplications = await prisma.application.findMany({
+      where: { jobSeekerId: { in: profileIds } },
+      select: { jobSeekerId: true, jobPostingId: true },
+    });
+    const appsByProfile = new Map<string, Set<string>>();
+    for (const app of batchApplications) {
+      if (!appsByProfile.has(app.jobSeekerId)) appsByProfile.set(app.jobSeekerId, new Set());
+      appsByProfile.get(app.jobSeekerId)!.add(app.jobPostingId);
+    }
+
     for (const profile of profiles) {
-      // Load applied job IDs for this profile
-      const applications = await prisma.application.findMany({
-        where: { jobSeekerId: profile.id },
-        select: { jobPostingId: true },
-      });
-      const appliedJobIds = new Set(applications.map((a) => a.jobPostingId));
+      const appliedJobIds = appsByProfile.get(profile.id) ?? new Set<string>();
 
       // Filter the already-fetched job list by region preference
       const preferredRegionIds = Array.isArray(profile.preferredRegionIds)

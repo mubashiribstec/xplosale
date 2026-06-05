@@ -96,14 +96,11 @@ export async function POST(req: NextRequest) {
       const tag = await prisma.candidateTag.findUnique({ where: { id: tagId } });
       if (!tag || tag.companyId !== companyId) return err("Tag not found", 404);
 
-      for (const appId of applicationIds) {
-        await prisma.applicationTag.upsert({
-          where: { applicationId_tagId: { applicationId: appId, tagId } },
-          update: {},
-          create: { applicationId: appId, tagId },
-        });
-        results.push({ applicationId: appId, ok: true });
-      }
+      await prisma.applicationTag.createMany({
+        data: applicationIds.map((appId) => ({ applicationId: appId, tagId })),
+        skipDuplicates: true,
+      });
+      applicationIds.forEach((id) => results.push({ applicationId: id, ok: true }));
     }
 
     else if (action === "SEND_EMAIL" || action === "REJECT_WITH_TEMPLATE") {

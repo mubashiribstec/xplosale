@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
     const templates = await prisma.testTemplate.findMany({
       where: { companyId },
       orderBy: { createdAt: "desc" },
+      take: 100,
       include: {
         _count: { select: { questions: true, assignments: true } },
       },

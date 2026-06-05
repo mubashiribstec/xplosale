@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     const templates = await prisma.emailTemplate.findMany({
       where: { companyId },
       orderBy: [{ kind: "asc" }, { name: "asc" }],
+      take: 100,
     });
     return ok(templates);
   } catch (e) {

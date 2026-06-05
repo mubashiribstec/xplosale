@@ -46,10 +46,11 @@ export async function POST(
       body: `A dispute has been raised: ${reason}`,
     });
 
-    // Notify all admins
+    // Notify all admins (capped at 50 to prevent notification flood)
     const admins = await prisma.user.findMany({
       where: { role: "ADMIN" },
       select: { id: true },
+      take: 50,
     });
 
     await Promise.all(

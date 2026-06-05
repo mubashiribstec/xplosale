@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     const tags = await prisma.candidateTag.findMany({
       where: { companyId },
       orderBy: { name: "asc" },
+      take: 200,
     });
     return ok(tags);
   } catch (e) {
