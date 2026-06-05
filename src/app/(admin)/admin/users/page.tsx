@@ -19,7 +19,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           ],
         }
       : {}),
-    ...(role ? { role: role as "USER" | "EMPLOYER" | "ADMIN" } : {}),
+    ...(role ? { role: role as "USER" | "PARTNER" | "ADMIN" } : {}),
     ...(status
       ? { verificationStatus: status as "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED" }
       : {}),

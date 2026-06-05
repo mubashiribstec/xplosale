@@ -12,6 +12,7 @@ export async function GET() {
       where: { verificationStatus: "PENDING" },
       select: { id: true, name: true, phone: true, email: true, createdAt: true, verificationStatus: true, docType: true },
       orderBy: { createdAt: "asc" },
+      take: 200,
     });
 
     return ok(pending);

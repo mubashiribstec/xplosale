@@ -20,6 +20,7 @@ export async function GET() {
     const searches = await prisma.savedSearch.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
+      take: 50,
     });
 
     return ok(searches);

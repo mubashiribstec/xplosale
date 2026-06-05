@@ -16,6 +16,7 @@ export async function GET() {
         },
       },
       orderBy: { createdAt: "asc" },
+      take: 200,
     });
 
     return ok(applications);

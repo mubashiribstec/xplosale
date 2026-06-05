@@ -34,7 +34,21 @@ const notoDevanagari = Noto_Sans_Devanagari({ variable: "--font-noto-devanagari"
 
 export const metadata: Metadata = {
   title: "Xplosale — Sell. Hire. Connect. Verified.",
-  description: "Sell. Hire. Connect. Verified.",
+  description:
+    "Xplosale is Pakistan's verified marketplace and jobs platform. Buy and sell property, vehicles, and goods with escrow protection. Find verified jobs and hire trusted talent.",
+  openGraph: {
+    title: "Xplosale — Sell. Hire. Connect. Verified.",
+    description:
+      "Pakistan's verified marketplace and jobs platform. Escrow-protected transactions, identity-verified sellers, and trusted hiring.",
+    type: "website",
+    siteName: "Xplosale",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Xplosale — Sell. Hire. Connect. Verified.",
+    description:
+      "Pakistan's verified marketplace and jobs platform. Escrow-protected transactions, identity-verified sellers, and trusted hiring.",
+  },
 };
 
 export default async function RootLayout({

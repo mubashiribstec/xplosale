@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { TierCard } from "@/components/shared/TierCard";
-import { getUserTier } from "@/lib/tier";
+import { getUserTier, computeTrustScore } from "@/lib/tier";
 import { TrustGauge, VerificationSeal } from "@/components/ui/XplosaleUI";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import QuickLinks from "./_quick-links";
@@ -58,13 +58,7 @@ export default async function MePage() {
   const verificationStatus = dbUser?.verificationStatus ?? "UNVERIFIED";
   const emailVerified = !!dbUser?.emailVerified;
 
-  // Compute trust score
-  let trustScore = 0;
-  if (emailVerified) trustScore += 25;
-  if (verificationStatus === "VERIFIED") trustScore += 40;
-  else if (verificationStatus === "PENDING") trustScore += 10;
-  trustScore += Math.min(20, listingCount * 2);
-  trustScore += Math.min(15, endorsementCount * 3);
+  const trustScore = computeTrustScore({ emailVerified, verificationStatus, listingCount, endorsementCount });
 
   return (
     <main

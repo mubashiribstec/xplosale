@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-type AccountType = "SELLER" | "JOB_SEEKER" | "EMPLOYER";
+type AccountType = "SELLER" | "JOB_SEEKER" | "PARTNER";
 
 const ACCOUNT_TYPES: { key: AccountType; label: string; desc: string; icon: string }[] = [
   { key: "SELLER",    label: "Seller / Buyer",      desc: "List items, property, or vehicles for sale", icon: "🛒" },
   { key: "JOB_SEEKER",label: "Job Seeker",           desc: "Find jobs and apply to employers",           icon: "💼" },
-  { key: "EMPLOYER",  label: "Employer / Recruiter", desc: "Post jobs and hire talent",                  icon: "🏢" },
+  { key: "PARTNER",   label: "Employer / Recruiter", desc: "Post jobs and hire talent",                  icon: "🏢" },
 ];
 
 export default function SetupPage() {

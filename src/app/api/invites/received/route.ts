@@ -13,6 +13,7 @@ export async function GET() {
     const invites = await prisma.inviteToApply.findMany({
       where: { candidateUserId: userId },
       orderBy: { sentAt: "desc" },
+      take: 100,
       include: {
         jobPosting: {
           select: {

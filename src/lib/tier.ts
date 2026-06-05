@@ -10,3 +10,18 @@ export function getUserTier(user: {
   if (user.hasVerifiedBadge || user.verificationStatus === "VERIFIED") return "VERIFIED";
   return "BASIC";
 }
+
+export function computeTrustScore(input: {
+  emailVerified: boolean;
+  verificationStatus: string;
+  listingCount: number;
+  endorsementCount: number;
+}): number {
+  let score = 0;
+  if (input.emailVerified) score += 25;
+  if (input.verificationStatus === "VERIFIED") score += 40;
+  else if (input.verificationStatus === "PENDING") score += 10;
+  score += Math.min(20, input.listingCount * 2);
+  score += Math.min(15, input.endorsementCount * 3);
+  return Math.min(100, score);
+}

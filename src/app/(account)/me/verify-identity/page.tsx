@@ -90,9 +90,6 @@ export default function VerifyIdentityPage() {
             Your {docType === "PASSPORT" ? "passport" : "CNIC"} is under review.
             You will be notified once verified (usually within 24 hours).
           </p>
-          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-            ⚠️ This is a mock verification process. Production requires real identity verification integration.
-          </p>
           <button onClick={() => router.push("/me")} className="mt-6 text-sm text-blue-600 hover:underline">
             Back to My Account
           </button>
@@ -123,10 +120,6 @@ export default function VerifyIdentityPage() {
               {dt === "CNIC" ? "CNIC (Pakistani)" : "Passport"}
             </button>
           ))}
-        </div>
-
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-xs text-amber-700">
-          ⚠️ <strong>Mock verification:</strong> Images stored for admin review only. Not connected to any government database.
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

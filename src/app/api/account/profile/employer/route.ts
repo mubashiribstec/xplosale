@@ -77,8 +77,7 @@ export async function POST(req: NextRequest) {
       profile = result;
     }
 
-    // Update user role to EMPLOYER
-    await prisma.user.update({ where: { id: userId }, data: { role: "EMPLOYER" } });
+    await prisma.user.update({ where: { id: userId }, data: { role: "PARTNER" } });
 
     return ok(profile);
   } catch (e) { return parseError(e); }

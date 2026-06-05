@@ -24,7 +24,7 @@ interface AdminUsersTableProps {
 
 const roleBadge: Record<string, string> = {
   USER: "bg-gray-100 text-gray-700",
-  EMPLOYER: "bg-blue-100 text-blue-700",
+  PARTNER: "bg-blue-100 text-blue-700",
   ADMIN: "bg-red-100 text-red-700",
 };
 
@@ -103,7 +103,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
         >
           <option value="">All roles</option>
           <option value="USER">USER</option>
-          <option value="EMPLOYER">EMPLOYER</option>
+          <option value="PARTNER">PARTNER</option>
           <option value="ADMIN">ADMIN</option>
         </select>
         <select
@@ -178,7 +178,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                         className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
                         <option value="USER">USER</option>
-                        <option value="EMPLOYER">EMPLOYER</option>
+                        <option value="PARTNER">PARTNER</option>
                         <option value="ADMIN">ADMIN</option>
                       </select>
                       {pendingRoles[user.id] && pendingRoles[user.id] !== user.role && (

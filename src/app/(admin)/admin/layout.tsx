@@ -14,6 +14,8 @@ const navLinks = [
   { href: "/admin/jobs", label: "Jobs" },
   { href: "/admin/escrow", label: "Escrow" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/security", label: "Security" },
+  { href: "/admin/reports", label: "Reports" },
   { href: "/admin/audit", label: "Audit Log" },
   { href: "/admin/companies", label: "Companies" },
   { href: "/admin/platform", label: "Platform" },

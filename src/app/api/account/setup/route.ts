@@ -4,7 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
-const ACCOUNT_TYPE = z.enum(["SELLER", "JOB_SEEKER", "EMPLOYER"]);
+const ACCOUNT_TYPE = z.enum(["SELLER", "JOB_SEEKER", "PARTNER"]);
 
 const setupSchema = z.object({
   name: z.string().min(2).max(80),
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
 
     const { name, accountTypes } = parsed.data;
 
-    // Employer selection → PARTNER role (business accounts); everyone else is USER.
-    const role = accountTypes.includes("EMPLOYER") ? "PARTNER" : "USER";
+    // Partner selection → PARTNER role (business accounts); everyone else is USER.
+    const role = accountTypes.includes("PARTNER") ? "PARTNER" : "USER";
 
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // EMPLOYER: EmployerProfile requires a companyId that doesn't exist at setup time.
+      // PARTNER: EmployerProfile requires a companyId that doesn't exist at setup time.
       // Role is set above; the profile is created when the user creates their first company.
 
       // Always create a NetworkProfile so the user is discoverable.
