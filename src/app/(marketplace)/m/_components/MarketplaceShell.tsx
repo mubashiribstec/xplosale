@@ -281,13 +281,14 @@ export default function MarketplaceShell({
       >
         {/* ── Sidebar ── */}
         <aside
+          className={`mp-sidebar${mobileSidebarOpen ? " mp-sidebar-open" : ""}`}
           style={{
             background: "var(--white)",
             borderRadius: 18,
             border: "1px solid var(--line)",
             padding: "20px",
             position: "sticky",
-            top: 24,
+            top: "calc(62px + 24px)",
           }}
         >
           <div
@@ -508,15 +509,39 @@ export default function MarketplaceShell({
               gap: 10,
             }}
           >
-            <span
-              style={{
-                fontFamily: "var(--body)",
-                fontSize: 14,
-                color: "var(--ink-faint)",
-              }}
-            >
-              {total.toLocaleString()} listing{total !== 1 ? "s" : ""}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
+                style={{
+                  fontFamily: "var(--body)",
+                  fontSize: 14,
+                  color: "var(--ink-faint)",
+                }}
+              >
+                {total.toLocaleString()} listing{total !== 1 ? "s" : ""}
+              </span>
+              {/* Mobile filter toggle — hidden on md+ */}
+              <button
+                className="flex items-center gap-1.5 md:hidden"
+                onClick={() => setMobileSidebarOpen((v) => !v)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 999,
+                  border: mobileSidebarOpen ? "1.5px solid var(--ink)" : "1.5px solid var(--line)",
+                  background: mobileSidebarOpen ? "var(--ink)" : "transparent",
+                  color: mobileSidebarOpen ? "var(--white)" : "var(--ink-soft)",
+                  fontFamily: "var(--body)",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                {mobileSidebarOpen ? <X size={13} /> : <SlidersHorizontal size={13} />}
+                {mobileSidebarOpen ? "Hide filters" : "Filters"}
+              </button>
+            </div>
 
             <div style={{ display: "flex", gap: 6 }}>
               {SORT_OPTIONS.map((opt) => (
@@ -668,6 +693,13 @@ export default function MarketplaceShell({
           }
           .lc-grid {
             grid-template-columns: repeat(2, 1fr) !important;
+          }
+          /* Sidebar hidden by default on mobile; shown when toggle is active */
+          .mp-sidebar {
+            display: none;
+          }
+          .mp-sidebar.mp-sidebar-open {
+            display: block;
           }
         }
         @media (max-width: 480px) {

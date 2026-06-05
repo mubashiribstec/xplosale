@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 const LANGUAGE_OPTIONS = [
   { locale: 'en', label: 'EN' },
@@ -21,6 +22,7 @@ export default function LanguageSwitcher() {
   const [currentLocale, setCurrentLocale] = useState('en');
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setCurrentLocale(getLocaleCookie());
@@ -29,6 +31,14 @@ export default function LanguageSwitcher() {
   function setLocale(locale: string) {
     document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=31536000;SameSite=Lax`;
     setCurrentLocale(locale);
+    // Persist preference to DB so it survives across devices for logged-in users
+    if (session) {
+      void fetch('/api/account/language', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      }).catch(() => null);
+    }
     startTransition(() => router.refresh());
   }
 
