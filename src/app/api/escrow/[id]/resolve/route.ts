@@ -32,10 +32,13 @@ export async function POST(
     const { outcome } = parsed.data;
 
     if (outcome === "release") {
-      await prisma.escrowTransaction.update({
-        where: { id },
+      // Conditional write: only resolve if still DISPUTED, preventing a
+      // double-resolve from two concurrent admin actions.
+      const result = await prisma.escrowTransaction.updateMany({
+        where: { id, status: "DISPUTED" },
         data: { status: "RELEASED", releasedAt: new Date() },
       });
+      if (result.count === 0) return err("Escrow is no longer in DISPUTED status", 409);
 
       await createNotification(escrow.buyerId, "ADMIN", {
         escrowId: id,
@@ -46,10 +49,11 @@ export async function POST(
         body: "Admin resolved the dispute — funds released to you",
       });
     } else {
-      await prisma.escrowTransaction.update({
-        where: { id },
+      const result = await prisma.escrowTransaction.updateMany({
+        where: { id, status: "DISPUTED" },
         data: { status: "REFUNDED", refundedAt: new Date() },
       });
+      if (result.count === 0) return err("Escrow is no longer in DISPUTED status", 409);
 
       await createNotification(escrow.buyerId, "ADMIN", {
         escrowId: id,

@@ -6,6 +6,10 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],
+    // next-auth's compiled output imports "next/server" without an extension,
+    // which Node's ESM resolver can't find inside the pnpm layout. Inlining lets
+    // Vite's resolver (which handles extensionless specifiers) process it.
+    server: { deps: { inline: ["next-auth", "@auth/core"] } },
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Map legacy EMPLOYER* roles to PARTNER so old JWT tokens upgrade transparently.
 const LEGACY_EMPLOYER_ROLES = new Set([
@@ -39,10 +40,22 @@ providers.push(
       username: { label: "Username", type: "text" },
       password: { label: "Password", type: "password" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const username = String(credentials?.username ?? "").trim().toLowerCase();
       const password = String(credentials?.password ?? "");
       if (!username || !password) return null;
+
+      // Throttle password attempts to prevent brute-force against admin
+      // accounts. Limit per-username and per-IP; on either limit, fail closed.
+      const ip =
+        request?.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request?.headers?.get?.("x-real-ip") ||
+        "unknown";
+      const [byUser, byIp] = await Promise.all([
+        rateLimit(`admin-login:user:${username}`, 8, 600),
+        rateLimit(`admin-login:ip:${ip}`, 20, 600),
+      ]);
+      if (!byUser.allowed || !byIp.allowed) return null;
 
       const user = await prisma.user.findFirst({
         where: { username, role: "ADMIN" },

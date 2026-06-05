@@ -20,10 +20,14 @@ export async function POST(
     if (escrow.buyerId !== userId) return err("Forbidden", 403);
     if (escrow.status !== "HELD") return err("Escrow is not in HELD status", 422);
 
-    await prisma.escrowTransaction.update({
-      where: { id },
+    // Conditional write: only transition if still HELD. This closes the
+    // read-then-write race where a concurrent dispute/resolve could flip the
+    // status between our check above and this update (double release of funds).
+    const result = await prisma.escrowTransaction.updateMany({
+      where: { id, status: "HELD" },
       data: { status: "RELEASED", releasedAt: new Date() },
     });
+    if (result.count === 0) return err("Escrow is no longer in HELD status", 409);
 
     await createNotification(escrow.sellerId, "OFFER", {
       escrowId: id,

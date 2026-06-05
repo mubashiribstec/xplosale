@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const online = searchParams.get("online") === "true";
     const bannedOnly = searchParams.get("banned") === "true";
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-    const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "30", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "30", 10)));
 
     const where = {
       ...(search

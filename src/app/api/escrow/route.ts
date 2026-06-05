@@ -40,16 +40,26 @@ export async function POST(req: NextRequest) {
     });
     if (existing) return err("An active escrow already exists for this listing", 422);
 
-    const escrow = await prisma.escrowTransaction.create({
-      data: {
-        listingId,
-        buyerId,
-        sellerId,
-        amount: listing.price,
-        currency: listing.currency,
-      },
-      select: { id: true, status: true, amount: true, currency: true },
-    });
+    let escrow;
+    try {
+      escrow = await prisma.escrowTransaction.create({
+        data: {
+          listingId,
+          buyerId,
+          sellerId,
+          amount: listing.price,
+          currency: listing.currency,
+        },
+        select: { id: true, status: true, amount: true, currency: true },
+      });
+    } catch (e) {
+      // Partial unique index (listingId WHERE status='HELD') backstops the
+      // findFirst check above against concurrent creates.
+      if (e && typeof e === "object" && (e as { code?: string }).code === "P2002") {
+        return err("An active escrow already exists for this listing", 422);
+      }
+      throw e;
+    }
 
     return ok(
       { escrow: { id: escrow.id, status: escrow.status, amount: escrow.amount.toString(), currency: escrow.currency } },

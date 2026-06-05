@@ -38,8 +38,8 @@ describe("Admin bootstrap security", () => {
   it("requires ADMIN_BOOTSTRAP_TOKEN header", async () => {
     // Bootstrap endpoint must return 403 without correct header
     // Cannot test without a real DB — documented here as acceptance criteria
-    const TOKEN = "correct-token-here";
-    const provided = "wrong-token";
+    const TOKEN: string = "correct-token-here";
+    const provided: string = "wrong-token";
     expect(provided !== TOKEN).toBe(true);
   });
 
