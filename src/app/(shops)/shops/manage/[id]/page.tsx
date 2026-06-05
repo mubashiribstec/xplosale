@@ -27,6 +27,7 @@ interface ShopData {
   verifiedShop: boolean;
   slug: string;
   images: ShopImage[];
+  subscription: { planKey: string; status: string; currentPeriodEnd: string | null } | null;
 }
 
 interface PlanData {
@@ -156,6 +157,30 @@ export default function EditShopPage() {
             />
           </div>
         )}
+
+        {/* Subscription banner */}
+        {(() => {
+          const isPremium = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PREMIUM";
+          if (isPremium) {
+            const end = shop.subscription?.currentPeriodEnd;
+            return (
+              <div style={{ background: "rgba(15,184,126,.05)", border: "1px solid var(--green)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                <p style={{ fontSize: 13, color: "var(--green)", fontWeight: 600, margin: 0 }}>
+                  ✓ Premium plan active{end ? ` · renews ${new Date(end).toLocaleDateString()}` : ""}
+                </p>
+                <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "none" }}>Manage →</Link>
+              </div>
+            );
+          }
+          return (
+            <div style={{ background: "rgba(160,78,55,.05)", border: "1px solid var(--clay)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+              <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>
+                Free plan · 4 products max · 2 images per product
+              </p>
+              <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Upgrade to Premium →</Link>
+            </div>
+          );
+        })()}
 
         {/* Submit for review */}
         {canSubmit && (
