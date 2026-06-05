@@ -327,6 +327,43 @@ async function main() {
   }
 
   console.log(`Created network profile + 2 posts + 5 connections`);
+
+  // ── Plans ──
+  await prisma.plan.upsert({
+    where: { key: "FREE" },
+    update: {},
+    create: {
+      key: "FREE",
+      name: "Free",
+      priceMonthly: 0,
+      currency: "PKR",
+      maxShops: 1,
+      maxProducts: 4,
+      maxImagesPerProduct: 2,
+      featuredPlacement: false,
+      analytics: false,
+      customBanner: false,
+    },
+  });
+
+  await prisma.plan.upsert({
+    where: { key: "PREMIUM" },
+    update: {},
+    create: {
+      key: "PREMIUM",
+      name: "Premium",
+      priceMonthly: 1500,
+      currency: "PKR",
+      maxShops: 5,
+      maxProducts: 30,
+      maxImagesPerProduct: 5,
+      featuredPlacement: true,
+      analytics: true,
+      customBanner: true,
+    },
+  });
+
+  console.log("Seeded FREE + PREMIUM plans");
   console.log("Seed complete!");
 }
 

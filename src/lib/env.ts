@@ -52,6 +52,13 @@ const envSchema = z.object({
   // Remove this variable from the environment after the first admin is created.
   ADMIN_BOOTSTRAP_TOKEN: z.string().min(16).optional(),
 
+  // Billing / subscriptions
+  PAYMENT_PROVIDER: z.enum(["mock", "stripe", "jazzcash", "easypaisa"]).default("mock"),
+  PAYMENT_MOCK: z.coerce.boolean().default(true),
+  PREMIUM_PRICE_PKR: z.coerce.number().int().positive().default(1500),
+  BILLING_CURRENCY: z.string().default("PKR"),
+  BILLING_WEBHOOK_SECRET: z.string().min(8).default("REPLACE"),
+
   // Analytics
   NEXT_PUBLIC_ANALYTICS_ENABLED: z.coerce.boolean().default(false),
 
