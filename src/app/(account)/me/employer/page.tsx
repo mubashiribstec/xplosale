@@ -14,6 +14,7 @@ export default function EmployerProfilePage() {
   const [form, setForm] = useState({ companyName: "", industry: "", size: "", websiteUrl: "", roleAtCompany: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     fetch("/api/account/profile/employer")
@@ -23,7 +24,8 @@ export default function EmployerProfilePage() {
           setData(d);
           setForm({ companyName: d.company.name ?? "", industry: d.company.industry ?? "", size: d.company.size ?? "", websiteUrl: d.company.websiteUrl ?? "", roleAtCompany: d.roleAtCompany ?? "" });
         }
-      });
+      })
+      .catch(() => setLoadError("Failed to load employer profile. Please refresh."));
   }, []);
 
   function set(k: string, v: string) { setForm((prev) => ({ ...prev, [k]: v })); }
@@ -48,6 +50,7 @@ export default function EmployerProfilePage() {
       <div className="max-w-lg mx-auto">
         <button onClick={() => router.push("/me")} className="text-sm text-gray-400 hover:text-gray-600 mb-4">← Back</button>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">{data ? "Edit" : "Set up"} Employer Profile</h1>
+        {loadError && <p className="text-sm text-red-600 mb-4">{loadError}</p>}
         <form onSubmit={handleSave} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>

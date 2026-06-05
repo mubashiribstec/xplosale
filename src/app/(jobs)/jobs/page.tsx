@@ -324,24 +324,29 @@ export default async function JobsPage({
 
           {/* Job type chips */}
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-            {JOB_TYPES.map((type) => (
-              <span
-                key={type}
-                style={{
-                  padding: "5px 14px",
-                  borderRadius: 99,
-                  fontFamily: "var(--body)",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  border: "1px solid var(--line)",
-                  background: "var(--paper-2)",
-                  color: "var(--ink-soft)",
-                  cursor: "pointer",
-                }}
-              >
-                {type}
-              </span>
-            ))}
+            {JOB_TYPES.map((type) => {
+              const isActive = type === "All" ? !sp.keyword : sp.keyword === type;
+              const href = `/jobs?${new URLSearchParams({ ...spRecord, keyword: type === "All" ? "" : type, page: "1" }).toString()}`;
+              return (
+                <Link
+                  key={type}
+                  href={href}
+                  style={{
+                    padding: "5px 14px",
+                    borderRadius: 99,
+                    fontFamily: "var(--body)",
+                    fontSize: 12,
+                    fontWeight: isActive ? 600 : 500,
+                    border: `1px solid ${isActive ? "var(--clay)" : "var(--line)"}`,
+                    background: isActive ? "var(--clay)" : "var(--paper-2)",
+                    color: isActive ? "var(--white)" : "var(--ink-soft)",
+                    textDecoration: "none",
+                  }}
+                >
+                  {type}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -350,7 +355,7 @@ export default async function JobsPage({
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "256px 1fr", gap: 24, alignItems: "start" }}>
           {/* Sidebar */}
-          <aside style={{ position: "sticky", top: 24 }}>
+          <aside style={{ position: "sticky", top: "calc(62px + 24px)" }}>
             <div
               style={{
                 background: "var(--white)",

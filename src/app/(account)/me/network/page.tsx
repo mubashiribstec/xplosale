@@ -25,6 +25,7 @@ export default function NetworkProfilePage() {
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     fetch("/api/account/profile/network")
@@ -41,7 +42,8 @@ export default function NetworkProfilePage() {
             visibility: data.visibility ?? "PUBLIC",
           });
         }
-      });
+      })
+      .catch(() => setLoadError("Failed to load profile. Please refresh."));
   }, []);
 
   function set(k: string, v: string) {
@@ -95,6 +97,9 @@ export default function NetworkProfilePage() {
         >
           {profile ? "Edit" : "Set up"} Network Profile
         </h1>
+        {loadError && (
+          <p style={{ fontSize: 13, color: "var(--clay)", marginBottom: 16 }}>{loadError}</p>
+        )}
         <form
           onSubmit={handleSave}
           style={{

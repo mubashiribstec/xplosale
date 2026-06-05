@@ -14,7 +14,7 @@ export default function CancelSubscriptionButton({ shopId }: Props) {
   const [done, setDone] = useState(false);
 
   async function handleCancel() {
-    if (!confirm("Cancel your Premium subscription? Products over the Free limit (4) will be hidden immediately.")) return;
+    if (!confirm("Cancel your Premium subscription? You'll keep Premium access until the end of your current billing period, after which products over the Free limit (4) will be hidden.")) return;
 
     setLoading(true);
     setError("");

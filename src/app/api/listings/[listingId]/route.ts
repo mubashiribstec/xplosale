@@ -81,7 +81,10 @@ export async function PATCH(
     const { price, status, ...rest } = parsed.data;
 
     if (status && !isAdmin) {
-      if (!(listing.status === "DRAFT" && status === "PENDING_REVIEW")) {
+      const allowed =
+        (listing.status === "DRAFT" && status === "PENDING_REVIEW") ||
+        (listing.status === "REJECTED" && status === "DRAFT");
+      if (!allowed) {
         return err("Invalid status transition", 422);
       }
     }

@@ -51,6 +51,15 @@ export async function POST(
     const parsed = applySchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
+    // Guard: prevent re-applying once an application has progressed past the initial stage.
+    const existingApplication = await prisma.application.findUnique({
+      where: { jobPostingId_jobSeekerId: { jobPostingId: jobId, jobSeekerId: jobSeekerId_profile.id } },
+      select: { status: true },
+    });
+    if (existingApplication && ["SHORTLISTED", "INTERVIEWED", "OFFERED", "HIRED"].includes(existingApplication.status)) {
+      return err("Your application has already progressed and cannot be re-submitted", 409);
+    }
+
     // Place the new application in the company's initial pipeline stage so it
     // shows up on the Kanban board immediately (keeps dual-write in sync).
     const initialStage = await prisma.pipelineStage.findFirst({

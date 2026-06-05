@@ -129,7 +129,7 @@ export default async function PartnerDashboard() {
         </h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {[
-            { label: "Edit profile", href: "/profile/edit" },
+            { label: "Network profile", href: "/me/network" },
             { label: "My listings", href: "/me/listings" },
             { label: "My jobs", href: "/me/employer/jobs" },
             { label: "Applications", href: "/me/applications" },

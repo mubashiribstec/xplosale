@@ -20,6 +20,7 @@ export default function JobSeekerProfilePage() {
   const [form, setForm] = useState({ headline: "", summary: "", currentRoleTitle: "", openToWork: true, expectedSalaryMin: "", expectedSalaryMax: "", currency: "PKR" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [resumeKey, setResumeKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,7 +40,8 @@ export default function JobSeekerProfilePage() {
             currency: data.currency ?? "PKR",
           });
         }
-      });
+      })
+      .catch(() => setLoadError("Failed to load profile. Please refresh."));
   }, []);
 
   function set(k: string, v: string | boolean) {
@@ -70,6 +72,7 @@ export default function JobSeekerProfilePage() {
       <div className="max-w-lg mx-auto">
         <button onClick={() => router.push("/me")} className="text-sm text-gray-400 hover:text-gray-600 mb-4">← Back</button>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">{profile ? "Edit" : "Set up"} Job Seeker Profile</h1>
+        {loadError && <p className="text-sm text-red-600 mb-4">{loadError}</p>}
         <form onSubmit={handleSave} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
           {[
             { label: "Headline", key: "headline", placeholder: "e.g. Senior Engineer | React | Node.js", max: 120 },
