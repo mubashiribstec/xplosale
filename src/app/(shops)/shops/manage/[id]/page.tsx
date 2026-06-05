@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import ShopForm from "@/components/shared/shops/ShopForm";
+import StorefrontBoardUploader from "@/components/shared/shops/StorefrontBoardUploader";
+import ProductsManager from "@/components/shared/shops/ProductsManager";
+
+interface ShopImage {
+  id: string;
+  url: string;
+  kind: string;
+}
 
 interface ShopData {
   id: string;
@@ -18,24 +26,43 @@ interface ShopData {
   status: string;
   verifiedShop: boolean;
   slug: string;
+  images: ShopImage[];
+}
+
+interface PlanData {
+  maxProducts: number;
+  maxImagesPerProduct: number;
+  key: string;
 }
 
 export default function EditShopPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [shop, setShop] = useState<ShopData | null>(null);
+  const [plan, setPlan] = useState<PlanData>({ maxProducts: 4, maxImagesPerProduct: 2, key: "FREE" });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitDone, setSubmitDone] = useState(false);
+  const [storefrontImage, setStorefrontImage] = useState<{ id: string; url: string } | null>(null);
 
   const fetchShop = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/shops/${id}`);
-      if (!res.ok) { router.push("/shops/manage"); return; }
-      const json = await res.json() as { data: ShopData };
-      setShop(json.data);
+      const [shopRes, planRes] = await Promise.all([
+        fetch(`/api/shops/${id}`),
+        fetch(`/api/shops/${id}/plan`),
+      ]);
+      if (!shopRes.ok) { router.push("/shops/manage"); return; }
+      const shopJson = await shopRes.json() as { data: ShopData };
+      setShop(shopJson.data);
+      const board = shopJson.data.images?.find((i) => i.kind === "STOREFRONT_BOARD") ?? null;
+      setStorefrontImage(board);
+
+      if (planRes.ok) {
+        const planJson = await planRes.json() as { data: PlanData };
+        if (planJson.data) setPlan(planJson.data);
+      }
     } finally {
       setLoading(false);
     }
@@ -72,6 +99,7 @@ export default function EditShopPage() {
 
   const canEdit = shop.status === "DRAFT" || shop.status === "REJECTED";
   const canSubmit = shop.status === "DRAFT" || shop.status === "REJECTED";
+  const hasStorefront = !!storefrontImage;
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
@@ -91,16 +119,41 @@ export default function EditShopPage() {
             fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 99,
             background: "var(--paper-2)", color: shop.status === "ACTIVE" ? "var(--green)" : shop.status === "PENDING_REVIEW" ? "#d97706" : "var(--ink-faint)",
           }}>
-            {shop.status.replace("_", " ")}
+            {shop.status.replace(/_/g, " ")}
           </span>
         </div>
         <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: "0 0 36px", fontFamily: "var(--body)" }}>
           {canEdit ? "Edit your shop details below." : "This shop cannot be edited in its current status."}
         </p>
 
+        {/* Storefront photo */}
+        {canSubmit && (
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+            <StorefrontBoardUploader
+              shopId={shop.id}
+              currentUrl={storefrontImage?.url}
+              currentImageId={storefrontImage?.id}
+              onUpdate={(img) => setStorefrontImage(img)}
+            />
+          </div>
+        )}
+
+        {/* Shop details form */}
         {canEdit && (
-          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 24 }}>
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 16 }}>
             <ShopForm initialData={shop} />
+          </div>
+        )}
+
+        {/* Products */}
+        {canEdit && (
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+            <ProductsManager
+              shopId={shop.id}
+              maxProducts={plan.maxProducts}
+              maxImagesPerProduct={plan.maxImagesPerProduct}
+              planKey={plan.key}
+            />
           </div>
         )}
 
@@ -114,9 +167,13 @@ export default function EditShopPage() {
               <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: "0 0 4px" }}>Submit for Review</p>
               <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
                 Once submitted, our team will review your shop and activate it within 24 hours.
-                {" "}Phase B: you&rsquo;ll need to add a storefront photo before submitting.
               </p>
             </div>
+            {!hasStorefront && (
+              <p style={{ fontSize: 13, color: "#d97706", margin: 0 }}>
+                ⚠ Upload a storefront photo above before submitting.
+              </p>
+            )}
             {submitError && (
               <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>{submitError}</p>
             )}
@@ -127,11 +184,12 @@ export default function EditShopPage() {
             ) : (
               <button
                 onClick={() => void handleSubmitForReview()}
-                disabled={submitting}
+                disabled={submitting || !hasStorefront}
                 style={{
                   padding: "10px 24px", background: "var(--green)", color: "var(--white)", border: "none",
                   borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: "var(--body)",
-                  cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.6 : 1,
+                  cursor: (submitting || !hasStorefront) ? "not-allowed" : "pointer",
+                  opacity: (submitting || !hasStorefront) ? 0.5 : 1,
                   alignSelf: "flex-start",
                 }}
               >

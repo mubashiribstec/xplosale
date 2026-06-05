@@ -17,20 +17,23 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const userId = getUserId(session);
 
     const { id } = await params;
-    const shop = await prisma.shop.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        ownerUserId: true,
-        status: true,
-        name: true,
-        category: true,
-        type: true,
-        description: true,
-        addressLine: true,
-        regionId: true,
-      },
-    });
+    const [shop, storefrontCount] = await Promise.all([
+      prisma.shop.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          ownerUserId: true,
+          status: true,
+          name: true,
+          category: true,
+          type: true,
+          description: true,
+          addressLine: true,
+          regionId: true,
+        },
+      }),
+      prisma.shopImage.count({ where: { shopId: id, kind: "STOREFRONT_BOARD" } }),
+    ]);
 
     if (!shop) return err("Shop not found", 404);
     if (shop.ownerUserId !== userId) return err("Forbidden", 403);
@@ -41,6 +44,10 @@ export async function POST(_req: NextRequest, { params }: Params) {
     // Basic completeness check — all required fields must be non-empty
     if (!shop.name || !shop.category || !shop.type || !shop.description || !shop.addressLine || !shop.regionId) {
       return err("Please complete all required shop fields before submitting.", 422);
+    }
+
+    if (storefrontCount === 0) {
+      return err("Please upload a storefront photo before submitting for review.", 422);
     }
 
     const updated = await prisma.shop.update({
