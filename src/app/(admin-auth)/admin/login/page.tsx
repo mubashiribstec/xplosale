@@ -3,11 +3,13 @@
 import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
+  const justSetup = searchParams.get("setup") === "1";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -95,6 +97,11 @@ function AdminLoginForm() {
           <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
             Xplosale · Restricted area
           </p>
+          {justSetup && (
+            <p style={{ marginTop: 10, fontSize: 13, color: "#4ade80", fontWeight: 600 }}>
+              Admin account created. You can now sign in.
+            </p>
+          )}
         </div>
 
         {/* Form */}
@@ -186,6 +193,13 @@ function AdminLoginForm() {
           >
             {loading ? "Signing in…" : "Sign in to Admin Panel"}
           </button>
+
+          <p style={{ textAlign: "center", margin: 0, fontSize: 12, color: "#475569" }}>
+            No admin account yet?{" "}
+            <Link href="/admin/setup" style={{ color: "#94a3b8", textDecoration: "underline" }}>
+              Set it up here
+            </Link>
+          </p>
         </form>
       </div>
     </main>
