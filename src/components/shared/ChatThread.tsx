@@ -11,15 +11,18 @@ interface ChatThreadProps {
   roomId: string;
   initialMessages: MessageWithSender[];
   currentUserId: string;
+  contextType?: string;
 }
 
-export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThreadProps) {
+export function ChatThread({ roomId, initialMessages, currentUserId, contextType }: ChatThreadProps) {
   const [messages, setMessages] = useState<MessageWithSender[]>(
     [...initialMessages].reverse()
   );
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isSupport = contextType === "ADMIN_DM";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,8 +47,6 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
           // ignore malformed events
         }
       };
-      // On error the browser stops delivering events; tear down and reconnect
-      // with a small backoff so the thread keeps receiving messages.
       es.onerror = () => {
         es?.close();
         if (closed) return;
@@ -65,6 +66,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
     const text = input.trim();
     if (!text || sending) return;
     setSending(true);
+    setSendError("");
     setInput("");
     try {
       const res = await fetch(`/api/chat/rooms/${roomId}/messages`, {
@@ -72,15 +74,22 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: text }),
       });
-      if (res.ok) {
-        const json = (await res.json()) as { ok: boolean; data: MessageWithSender };
-        if (json.ok) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === json.data.id)) return prev;
-            return [...prev, json.data];
-          });
-        }
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        setSendError(json.error ?? "Failed to send. Please try again.");
+        setInput(text);
+        return;
       }
+      const json = (await res.json()) as { ok: boolean; data: MessageWithSender };
+      if (json.ok) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === json.data.id)) return prev;
+          return [...prev, json.data];
+        });
+      }
+    } catch {
+      setSendError("Network error. Message not sent.");
+      setInput(text);
     } finally {
       setSending(false);
     }
@@ -95,6 +104,16 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
 
   return (
     <div className="flex flex-col h-full">
+      {isSupport && messages.length === 0 && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-500 text-center">
+          Send us a message and our support team will reply as soon as possible.
+        </div>
+      )}
+      {isSupport && messages.length > 0 && (
+        <div className="mb-3 text-xs text-center text-gray-400">
+          Support team · typically replies within a few hours
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto space-y-2 pb-4">
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUserId;
@@ -111,7 +130,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
                 }`}
               >
                 {!isOwn && (
-                  <p className="text-xs font-medium mb-1 opacity-70">{msg.sender.name ?? "User"}</p>
+                  <p className="text-xs font-medium mb-1 opacity-70">{msg.sender.name ?? "Support"}</p>
                 )}
                 <p className="whitespace-pre-wrap">{msg.body}</p>
               </div>
@@ -120,13 +139,25 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
         })}
         <div ref={bottomRef} />
       </div>
+      {sendError && (
+        <div className="mb-2 flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
+          <span>{sendError}</span>
+          <button
+            onClick={() => setSendError("")}
+            className="text-red-400 hover:text-red-600 font-bold leading-none"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div className="flex gap-2 pt-4 border-t border-gray-200">
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => { setInput(e.target.value); if (sendError) setSendError(""); }}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message…"
+          placeholder={sending ? "Sending…" : "Type a message…"}
           disabled={sending}
           className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
         />
@@ -135,7 +166,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId }: ChatThrea
           disabled={sending || !input.trim()}
           className="px-4 py-2 bg-blue-600 text-white text-sm rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          Send
+          {sending ? "Sending…" : "Send"}
         </button>
       </div>
     </div>

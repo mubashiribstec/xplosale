@@ -30,11 +30,12 @@ export default async function ChatRoomPage({
   });
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8 flex flex-col h-screen">
+    <main className="max-w-2xl mx-auto px-4 py-8 flex flex-col" style={{ height: "calc(100vh - 62px)" }}>
       <ChatThread
         roomId={roomId}
         initialMessages={initialMessages}
         currentUserId={userId}
+        contextType={room.contextType}
       />
     </main>
   );
