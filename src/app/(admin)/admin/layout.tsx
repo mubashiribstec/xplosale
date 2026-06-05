@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getSession } from "@/core/auth/session";
+import { getSession, getUserId } from "@/core/auth/session";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -25,8 +26,12 @@ const navLinks = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  if (!session) redirect("/login");
-  if ((session.user as { role: string }).role !== "ADMIN") redirect("/");
+  if (!session) redirect("/admin/login");
+
+  // Always verify role from DB (bypasses stale JWT cache)
+  const userId = getUserId(session);
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!dbUser || dbUser.role !== "ADMIN") redirect("/admin/login");
 
   return (
     <div className="flex min-h-screen">

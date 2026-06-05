@@ -254,6 +254,8 @@ model User {
   banReason          String?
   bannedUntil        DateTime?
   tokenVersion       Int                @default(0)
+  username           String?            @unique
+  passwordHash       String?
   lastSeenAt         DateTime?
   defaultRegionId    String?
   languagePref       String             @default("en")

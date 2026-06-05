@@ -3,7 +3,7 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { verifyOtp } from "@/core/auth/otp";
+import { verifyPassword } from "@/lib/password";
 
 // Map legacy EMPLOYER* roles to PARTNER so old JWT tokens upgrade transparently.
 const LEGACY_EMPLOYER_ROLES = new Set([
@@ -19,7 +19,7 @@ function normalizeRole(role: string): string {
 
 const providers: NextAuthConfig["providers"] = [];
 
-// Only activate Google provider when credentials are configured
+// Google provider — only active when credentials are configured
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     Google({
@@ -29,34 +29,36 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// Phone OTP credentials provider — always available
+// Admin credentials provider — username + password (stored as scrypt hash in DB)
+// Only authenticates users with role=ADMIN.
 providers.push(
   Credentials({
-    id: "phone-otp",
-    name: "Phone OTP",
+    id: "admin-credentials",
+    name: "Admin",
     credentials: {
-      phone: { label: "Phone", type: "tel" },
-      otp: { label: "OTP", type: "text" },
+      username: { label: "Username", type: "text" },
+      password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-      const phone = String(credentials?.phone ?? "").trim();
-      const otp = String(credentials?.otp ?? "").trim();
-      if (!phone || !otp) return null;
+      const username = String(credentials?.username ?? "").trim().toLowerCase();
+      const password = String(credentials?.password ?? "");
+      if (!username || !password) return null;
 
-      const result = await verifyOtp(phone, otp);
-      if (!result.ok) return null;
+      const user = await prisma.user.findFirst({
+        where: { username, role: "ADMIN" },
+        select: { id: true, username: true, passwordHash: true, role: true, name: true, email: true, bannedAt: true, tokenVersion: true },
+      });
+      if (!user || !user.passwordHash) return null;
+      if (user.bannedAt) return null;
 
-      let user = await prisma.user.findUnique({ where: { phone } });
-      if (!user) {
-        user = await prisma.user.create({ data: { phone } });
-      }
+      const valid = verifyPassword(password, user.passwordHash);
+      if (!valid) return null;
 
       return {
         id: user.id,
-        phone: user.phone,
-        role: user.role,
-        name: user.name,
+        name: user.name ?? user.username,
         email: user.email,
+        role: user.role,
       };
     },
   })
@@ -105,8 +107,6 @@ export const authConfig: NextAuthConfig = {
       }
 
       // On sign-in: hydrate token from DB. Role is database-driven only.
-      // Admin promotion is done via POST /api/admin/bootstrap (first-admin flow)
-      // or directly in the database — never through an environment variable.
       if (account && token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
@@ -122,8 +122,24 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
+      // For Credentials provider, token.sub isn't set on the `account` branch.
+      // Hydrate from the `user` object instead (returned by authorize()).
+      if (!account && user?.id && token.role === undefined) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { id: true, role: true, phone: true, bannedAt: true, tokenVersion: true },
+        });
+        if (dbUser) {
+          token.role = normalizeRole(dbUser.role);
+          token.id = dbUser.id;
+          token.phone = dbUser.phone ?? null;
+          token.bannedAt = dbUser.bannedAt?.toISOString() ?? null;
+          token.tokenVersion = dbUser.tokenVersion;
+          token.roleRefreshedAt = Math.floor(Date.now() / 1000);
+        }
+      }
+
       // Force immediate role refresh when the client calls session.update()
-      // (used after admin bootstrap so the new ADMIN role is visible right away)
       if (trigger === "update" && token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
@@ -145,7 +161,6 @@ export const authConfig: NextAuthConfig = {
             select: { role: true, bannedAt: true, tokenVersion: true },
           });
           if (dbUser) {
-            // Token version mismatch → force sign-out (admin rotated the token)
             if (token.tokenVersion !== undefined && dbUser.tokenVersion !== token.tokenVersion) {
               return null as unknown as typeof token;
             }
