@@ -98,6 +98,13 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
             My Profile
           </Link>
           <Link
+            href="/shops/manage"
+            onClick={() => setOpen(false)}
+            style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink-soft)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500, borderTop: "1px solid var(--line)" }}
+          >
+            My Shops
+          </Link>
+          <Link
             href="/me"
             onClick={() => setOpen(false)}
             style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink-soft)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500, borderTop: "1px solid var(--line)" }}
@@ -259,6 +266,7 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link href="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>
+                <Link href="/shops/manage" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>My Shops</Link>
                 <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>Account &amp; Settings</Link>
                 {user.role === "ADMIN" && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Admin Panel</Link>

@@ -9,11 +9,11 @@ const skillsArray = z.array(z.string().max(60)).max(30).default([]);
 const createSchema = z.object({
   title: z.string().min(5).max(200),
   description: z.string().min(20).max(10000),
-  regionId: z.string().cuid(),
+  regionId: z.string().optional(),
   remoteType: z.enum(["ONSITE", "HYBRID", "REMOTE"]).default("ONSITE"),
   salaryMin: z.number().int().positive().optional(),
   salaryMax: z.number().int().positive().optional(),
-  currency: z.string().default("PKR"),
+  currency: z.string().default("USD"),
   requiredSkills: skillsArray,
   niceToHaveSkills: skillsArray,
   requiredKeywords: skillsArray,
@@ -88,11 +88,31 @@ export async function POST(req: NextRequest) {
     const employerProfile = await prisma.employerProfile.findUnique({ where: { userId } });
     if (!employerProfile) return err("Employer profile not found", 404);
 
+    // Resolve regionId — for REMOTE jobs, fall back to the worldwide region
+    let regionId = parsed.data.regionId;
+    if (!regionId) {
+      const remoteRegion = await prisma.region.upsert({
+        where: { slug: "remote-worldwide" },
+        update: {},
+        create: {
+          id: "remote-worldwide-xps01",
+          name: "Remote / Worldwide",
+          nameUr: "ریموٹ / عالمی",
+          slug: "remote-worldwide",
+          city: "Remote",
+          country: "REMOTE",
+        },
+      });
+      regionId = remoteRegion.id;
+    }
+
     const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
 
+    const { regionId: _r, ...restData } = parsed.data;
     const job = await prisma.jobPosting.create({
       data: {
-        ...parsed.data,
+        ...restData,
+        regionId,
         companyId: employerProfile.companyId,
         postedByUserId: userId,
         status: "DRAFT",
