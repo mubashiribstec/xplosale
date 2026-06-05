@@ -24,8 +24,9 @@ function Logo() {
 
 /* ─── Nav links ──────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { href: "/m",    label: "Marketplace" },
-  { href: "/jobs", label: "Jobs" },
+  { href: "/m",     label: "Marketplace" },
+  { href: "/jobs",  label: "Jobs" },
+  { href: "/shops", label: "Shops" },
 ];
 
 /* ─── User dropdown ─────────────────────────────────────────────────────── */
