@@ -1,13 +1,22 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const POST_LOGIN = "/auth/post-login";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) router.replace("/me");
+  }, [session, router]);
+
+  if (status === "loading" || session) return null;
 
   async function handleGoogleSignIn() {
     setLoading(true);

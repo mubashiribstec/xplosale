@@ -66,7 +66,7 @@ export default async function MarketingHome() {
               />
               <path d="M5.5 8l1.8 1.8 3.2-3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Now verifying in Lahore &middot; Karachi &amp; Islamabad next
+            Now live &middot; Identity-verified marketplace worldwide
           </div>
 
           {/* H1 */}
@@ -634,7 +634,7 @@ export default async function MarketingHome() {
             {
               initials: "AK",
               name: "Asad Khan",
-              role: "Car dealer · Lahore",
+              role: "Car dealer · Dubai",
               color: "var(--blue)",
               quote:
                 "Finally a platform where I know the buyer is real. Sold my first car within 48 hours — no time-wasters.",
@@ -642,7 +642,7 @@ export default async function MarketingHome() {
             {
               initials: "SR",
               name: "Sana Rizvi",
-              role: "UX Designer · Karachi",
+              role: "UX Designer · London",
               color: "var(--purple)",
               quote:
                 "Got hired through Xplosale Jobs in two weeks. The verification gave the employer confidence that my credentials were legitimate.",
@@ -650,7 +650,7 @@ export default async function MarketingHome() {
             {
               initials: "FQ",
               name: "Fahad Qureshi",
-              role: "Tech Recruiter · Islamabad",
+              role: "Tech Recruiter · Toronto",
               color: "var(--green)",
               quote:
                 "We've screened 300 applications this month. Verified profiles save us hours — we skip straight to the interview.",

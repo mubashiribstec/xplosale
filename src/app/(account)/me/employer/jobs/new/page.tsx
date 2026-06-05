@@ -30,7 +30,7 @@ export default function NewJobPage() {
     remoteType: "ONSITE",
     salaryMin: "",
     salaryMax: "",
-    currency: "PKR",
+    currency: "USD",
   });
 
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
@@ -55,13 +55,13 @@ export default function NewJobPage() {
     const body: Record<string, unknown> = {
       title: form.title,
       description: form.description,
-      regionId: form.regionId,
       remoteType: form.remoteType,
       currency: form.currency,
       requiredSkills,
       niceToHaveSkills,
       requiredKeywords,
     };
+    if (form.regionId) body.regionId = form.regionId;
     if (form.salaryMin) body.salaryMin = parseInt(form.salaryMin, 10);
     if (form.salaryMax) body.salaryMax = parseInt(form.salaryMax, 10);
 
@@ -129,27 +129,10 @@ export default function NewJobPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-              <select
-                value={form.regionId}
-                onChange={(e) => set("regionId", e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a region</option>
-                {regions.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.city ? `${r.city} — ` : ""}{r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Work type</label>
               <select
                 value={form.remoteType}
-                onChange={(e) => set("remoteType", e.target.value)}
+                onChange={(e) => { set("remoteType", e.target.value); if (e.target.value === "REMOTE") set("regionId", ""); }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {REMOTE_TYPES.map((rt) => (
@@ -157,6 +140,30 @@ export default function NewJobPage() {
                 ))}
               </select>
             </div>
+
+            {form.remoteType !== "REMOTE" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <select
+                  value={form.regionId}
+                  onChange={(e) => set("regionId", e.target.value)}
+                  required={form.remoteType !== "REMOTE"}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select a region</option>
+                  {regions.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.city ? `${r.city} — ` : ""}{r.name}
+                    </option>
+                  ))}
+                </select>
+                {regions.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">No regions available yet — choose &quot;Remote&quot; as work type or contact support.</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Location: <strong>Remote / Worldwide</strong></p>
+            )}
           </section>
 
           <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">

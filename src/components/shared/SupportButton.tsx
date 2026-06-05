@@ -19,12 +19,12 @@ export default function SupportButton() {
     setErrorMsg("");
     try {
       const res = await fetch("/api/support/room", { method: "POST" });
-      const data = await res.json() as { roomId?: string; error?: string };
-      if (!res.ok) {
-        setErrorMsg(data.error ?? "Unable to open support chat. Please try again.");
+      const json = await res.json() as { ok: boolean; data?: { roomId?: string }; error?: string };
+      if (!res.ok || !json.ok) {
+        setErrorMsg(json.error ?? "Unable to open support chat. Please try again.");
         return;
       }
-      router.push(`/chat/${data.roomId!}`);
+      router.push(`/chat/${json.data!.roomId!}`);
     } catch {
       setErrorMsg("Network error. Please try again.");
     } finally {
