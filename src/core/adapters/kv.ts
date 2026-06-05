@@ -26,11 +26,3 @@ export async function kvSet(key: string, value: string, ttlSeconds: number): Pro
 export async function kvDel(key: string): Promise<void> {
   await kv.del(key);
 }
-
-export async function kvIncr(key: string, ttlSeconds: number): Promise<number> {
-  const pipeline = kv.pipeline();
-  pipeline.incr(key);
-  pipeline.expire(key, ttlSeconds);
-  const results = await pipeline.exec();
-  return (results?.[0]?.[1] as number) ?? 0;
-}

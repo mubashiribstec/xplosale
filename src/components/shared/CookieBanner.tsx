@@ -16,7 +16,7 @@ function setConsent(value: "all" | "essential") {
   document.cookie = `${COOKIE_NAME}=${value};path=/;max-age=${MAX_AGE};SameSite=Lax`;
 }
 
-export function hasAnalyticsConsent(): boolean {
+function hasAnalyticsConsent(): boolean {
   return getConsent() === "all";
 }
 

@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
-export const DEFAULT_STAGES = [
+const DEFAULT_STAGES = [
   { name: "Applied",    order: 0, color: "#6B7280", isInitial: true,  isHired: false, isRejected: false },
   { name: "Screening",  order: 1, color: "#3B82F6", isInitial: false, isHired: false, isRejected: false },
   { name: "Interview",  order: 2, color: "#8B5CF6", isInitial: false, isHired: false, isRejected: false },

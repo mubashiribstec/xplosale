@@ -41,11 +41,3 @@ export async function edgeKvGet(key: string): Promise<string | null> {
 export async function edgeKvSetNx(key: string, value: string, ttlSeconds: number): Promise<void> {
   await upstashRest(["SET", key, value, "EX", ttlSeconds, "NX"]);
 }
-
-export async function edgeKvSet(key: string, value: string, ttlSeconds: number): Promise<void> {
-  await upstashRest(["SET", key, value, "EX", ttlSeconds]);
-}
-
-export async function edgeKvDel(key: string): Promise<void> {
-  await upstashRest(["DEL", key]);
-}
