@@ -63,9 +63,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const apiUrl = `${base}/api/search?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}&limit=9`;
 
-  let listings: SearchApiResponse["data"]["listings"] = [];
-  let jobs: SearchApiResponse["data"]["jobs"] = [];
-  let profiles: SearchApiResponse["data"]["profiles"] = [];
+  type SearchData = NonNullable<SearchApiResponse["data"]>;
+  let listings: SearchData["listings"] = [];
+  let jobs: SearchData["jobs"] = [];
+  let profiles: SearchData["profiles"] = [];
 
   try {
     const res = await fetch(apiUrl, { cache: "no-store" });

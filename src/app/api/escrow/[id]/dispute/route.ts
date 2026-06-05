@@ -31,10 +31,13 @@ export async function POST(
 
     const { reason } = parsed.data;
 
-    await prisma.escrowTransaction.update({
-      where: { id },
+    // Conditional write: only transition if still HELD, so a dispute can't race
+    // with a confirm-receipt release.
+    const result = await prisma.escrowTransaction.updateMany({
+      where: { id, status: "HELD" },
       data: { status: "DISPUTED" },
     });
+    if (result.count === 0) return err("Escrow is no longer in HELD status", 409);
 
     // Notify the other party
     const otherPartyId = escrow.buyerId === userId ? escrow.sellerId : escrow.buyerId;

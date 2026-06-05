@@ -60,25 +60,27 @@ export default async function CityPage({ params }: Props) {
   });
   if (!region) notFound();
 
-  const listings = await prisma.listing.findMany({
-    where: { status: "ACTIVE", regionId: region.id },
-    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    take: 24,
-    include: {
-      images: { take: 1, orderBy: { order: "asc" } },
-      region: { select: { name: true, city: true } },
-      sellerProfile: {
-        select: {
-          agentTier: true,
-          user: { select: { id: true, name: true, verificationStatus: true, isPartner: true } },
+  // These two queries are independent — run them concurrently.
+  const [listings, listingCount] = await Promise.all([
+    prisma.listing.findMany({
+      where: { status: "ACTIVE", regionId: region.id },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      take: 24,
+      include: {
+        images: { take: 1, orderBy: { order: "asc" } },
+        region: { select: { name: true, city: true } },
+        sellerProfile: {
+          select: {
+            agentTier: true,
+            user: { select: { id: true, name: true, verificationStatus: true, isPartner: true } },
+          },
         },
       },
-    },
-  });
-
-  const listingCount = await prisma.listing.count({
-    where: { status: "ACTIVE", regionId: region.id },
-  });
+    }),
+    prisma.listing.count({
+      where: { status: "ACTIVE", regionId: region.id },
+    }),
+  ]);
 
   const serialisedListings = listings.map((l) => ({
     id: l.id,

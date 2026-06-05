@@ -24,6 +24,9 @@ export async function GET() {
       where: { OR: [{ requesterId: userId }, { recipientId: userId }] },
       include: { requester: userSelect, recipient: userSelect },
       orderBy: { id: "desc" },
+      // Safety bound against unbounded result sets. A user with more than this
+      // many connections should move to cursor pagination here.
+      take: 500,
     });
 
     return ok({ connections });

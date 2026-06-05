@@ -23,13 +23,15 @@ export async function POST(req: NextRequest) {
 
     const { name, accountTypes } = parsed.data;
 
-    // Partner selection → PARTNER role (business accounts); everyone else is USER.
-    const role = accountTypes.includes("PARTNER") ? "PARTNER" : "USER";
-
+    // SECURITY: the PARTNER role is a privileged tier and must NEVER be granted
+    // from self-service signup input. Selecting "business" here only records the
+    // intent (a profile stub); elevation to PARTNER happens solely via the
+    // partner-application flow after admin approval
+    // (see /api/admin/partners/[userId]). Account setup only ever sets USER.
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
-        data: { name, role },
+        data: { name, role: "USER" },
       });
 
       // Create profile stubs for each selected type.

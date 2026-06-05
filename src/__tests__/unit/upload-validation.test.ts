@@ -43,7 +43,7 @@ describe("Upload extension validation", () => {
 describe("listingId path traversal prevention", () => {
   const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
-  it("accepts a valid cuid", () => expect(CUID_PATTERN.test("cld4qg1g400003b6h2c8o5l2b")).toBe(false));
+  it("accepts a valid cuid", () => expect(CUID_PATTERN.test("cld4qg1g400003b6h2c8o5l2b")).toBe(true));
   it("rejects path traversal attempt", () =>
     expect(CUID_PATTERN.test("../../etc/passwd")).toBe(false));
   it("rejects null bytes", () =>
