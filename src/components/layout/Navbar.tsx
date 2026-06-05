@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotificationBell } from "@/components/shared/NotificationBell";
@@ -24,10 +25,9 @@ function Logo() {
 
 /* ─── Nav links ──────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
-  { href: "/m",        label: "Marketplace" },
-  { href: "/jobs",     label: "Jobs" },
-  { href: "/shops",    label: "Shops" },
-  { href: "/n/people", label: "Network" },
+  { href: "/m",     label: "Marketplace" },
+  { href: "/jobs",  label: "Jobs" },
+  { href: "/shops", label: "Shops" },
 ];
 
 /* ─── User dropdown ─────────────────────────────────────────────────────── */
@@ -63,8 +63,7 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
         }}
       >
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} />
+          <Image src={image} alt={name} width={26} height={26} style={{ borderRadius: "50%", objectFit: "cover" }} />
         ) : (
           <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--clay)", display: "grid", placeItems: "center", color: "var(--white)", fontSize: 12, fontWeight: 700 }}>
             {(name ?? "U")[0].toUpperCase()}

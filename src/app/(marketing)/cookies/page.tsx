@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 const COOKIE_NAME = "xplosale-consent";
 const MAX_AGE = 60 * 60 * 24 * 365;
@@ -34,7 +36,10 @@ export default function CookiesPage() {
   const analyticsEnabled = consent === "all";
 
   return (
-    <main className="max-w-3xl mx-auto px-5 py-16 text-gray-800">
+    <>
+      <Navbar />
+      <div style={{ paddingTop: 62 }}>
+      <main className="max-w-3xl mx-auto px-5 py-16 text-gray-800">
       <Link href="/" className="text-sm text-blue-600 hover:underline mb-8 inline-block">
         ← Back to home
       </Link>
@@ -139,5 +144,8 @@ export default function CookiesPage() {
         </p>
       </div>
     </main>
+      </div>
+      <Footer />
+    </>
   );
 }

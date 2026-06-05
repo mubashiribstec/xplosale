@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = { title: "Privacy Policy — Xplosale" };
 
 export default function PrivacyPage() {
   return (
-    <main className="max-w-3xl mx-auto px-5 py-16 text-gray-800">
+    <>
+      <Navbar />
+      <div style={{ paddingTop: 62 }}>
+      <main className="max-w-3xl mx-auto px-5 py-16 text-gray-800">
       <Link href="/" className="text-sm text-blue-600 hover:underline mb-8 inline-block">
         ← Back to home
       </Link>
@@ -107,5 +112,8 @@ export default function PrivacyPage() {
         </div>
       </section>
     </main>
+      </div>
+      <Footer />
+    </>
   );
 }

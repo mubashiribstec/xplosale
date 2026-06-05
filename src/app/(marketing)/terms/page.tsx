@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = { title: "Terms of Service — Xplosale" };
 
 export default function TermsPage() {
   return (
-    <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,40px)", fontFamily: "var(--body)" }}>
+    <>
+      <Navbar />
+      <main style={{ minHeight: "100vh", background: "var(--paper)", paddingTop: "calc(62px + clamp(24px,4vw,48px))", paddingBottom: "clamp(24px,4vw,48px)", paddingLeft: "clamp(16px,4vw,40px)", paddingRight: "clamp(16px,4vw,40px)", fontFamily: "var(--body)" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-faint)", marginBottom: 8 }}>
           Legal
@@ -75,5 +79,7 @@ export default function TermsPage() {
         </div>
       </div>
     </main>
+      <Footer />
+    </>
   );
 }

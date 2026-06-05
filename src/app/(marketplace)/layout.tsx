@@ -5,7 +5,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
   return (
     <>
       <Navbar />
-      {children}
+      <div style={{ paddingTop: 62 }}>{children}</div>
       <Footer />
     </>
   );

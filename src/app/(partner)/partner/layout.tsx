@@ -20,7 +20,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
     return (
       <>
         <Navbar />
-        {children}
+        <div style={{ paddingTop: 62 }}>{children}</div>
       </>
     );
   }
@@ -37,6 +37,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
     <div
       style={{
         minHeight: "100vh",
+        paddingTop: 62,
         background: "var(--paper)",
         display: "grid",
         gridTemplateColumns: "220px 1fr",
