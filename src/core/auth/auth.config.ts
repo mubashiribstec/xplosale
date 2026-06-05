@@ -1,7 +1,9 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { verifyOtp } from "@/core/auth/otp";
 
 // Map legacy EMPLOYER* roles to PARTNER so old JWT tokens upgrade transparently.
 const LEGACY_EMPLOYER_ROLES = new Set([
@@ -26,6 +28,39 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     })
   );
 }
+
+// Phone OTP credentials provider — always available
+providers.push(
+  Credentials({
+    id: "phone-otp",
+    name: "Phone OTP",
+    credentials: {
+      phone: { label: "Phone", type: "tel" },
+      otp: { label: "OTP", type: "text" },
+    },
+    async authorize(credentials) {
+      const phone = String(credentials?.phone ?? "").trim();
+      const otp = String(credentials?.otp ?? "").trim();
+      if (!phone || !otp) return null;
+
+      const result = await verifyOtp(phone, otp);
+      if (!result.ok) return null;
+
+      let user = await prisma.user.findUnique({ where: { phone } });
+      if (!user) {
+        user = await prisma.user.create({ data: { phone } });
+      }
+
+      return {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+      };
+    },
+  })
+);
 
 const SESSION_MAX_AGE_SECS =
   parseInt(process.env.SESSION_MAX_AGE_DAYS ?? "30") * 24 * 60 * 60;

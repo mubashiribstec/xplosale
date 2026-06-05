@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { role: "ADMIN" },
+      data: {
+        role: "ADMIN",
+        verificationStatus: "VERIFIED",
+        hasVerifiedBadge: true,
+      },
     });
 
     return ok({ ok: true });

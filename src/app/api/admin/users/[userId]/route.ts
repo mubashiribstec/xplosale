@@ -43,7 +43,14 @@ export async function PATCH(
     }
 
     const data: Record<string, unknown> = {};
-    if (body.role !== undefined) data.role = body.role;
+    if (body.role !== undefined) {
+      data.role = body.role;
+      // Admins are automatically fully verified — no document submission needed
+      if (body.role === "ADMIN") {
+        data.verificationStatus = "VERIFIED";
+        data.hasVerifiedBadge = true;
+      }
+    }
     if (body.verificationStatus !== undefined) data.verificationStatus = body.verificationStatus;
     if (body.hasVerifiedBadge !== undefined) data.hasVerifiedBadge = body.hasVerifiedBadge;
     if (body.ban !== undefined) data.bannedAt = body.ban ? new Date() : null;

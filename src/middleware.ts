@@ -39,17 +39,13 @@ export default auth(async function middleware(req) {
     }
   }
 
-  // Admin routes — require ADMIN role
+  // Admin routes — require authenticated session (role check handled by admin layout after JWT refresh)
   if (pathname.startsWith("/admin")) {
     if (!session) {
       const url = req.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(url);
-    }
-    const role = (session.user as { role?: string } | undefined)?.role;
-    if (role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", req.nextUrl));
     }
   }
 

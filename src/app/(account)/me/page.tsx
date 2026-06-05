@@ -47,16 +47,19 @@ export default async function MePage() {
   const accountIsNew = !hasAnyProfile && dbUser?.email && !dbUser?.phone;
   if (accountIsNew) redirect("/me/setup");
 
+  const isAdmin = dbUser?.role === "ADMIN";
+
   const tier = getUserTier({
     role: dbUser?.role,
     isPartner: dbUser?.isPartner ?? false,
-    verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED",
+    verificationStatus: isAdmin ? "VERIFIED" : (dbUser?.verificationStatus ?? "UNVERIFIED"),
     hasVerifiedBadge: dbUser?.hasVerifiedBadge ?? false,
   });
 
   const displayName = dbUser?.name ?? user.name ?? dbUser?.email ?? user.phone ?? "User";
-  const verificationStatus = dbUser?.verificationStatus ?? "UNVERIFIED";
-  const emailVerified = !!dbUser?.emailVerified;
+  // Admins are treated as fully verified platform-wide
+  const verificationStatus = isAdmin ? "VERIFIED" : (dbUser?.verificationStatus ?? "UNVERIFIED");
+  const emailVerified = isAdmin || !!dbUser?.emailVerified;
 
   const trustScore = computeTrustScore({ emailVerified, verificationStatus, listingCount, endorsementCount });
 
@@ -271,10 +274,22 @@ export default async function MePage() {
                   marginBottom: 14,
                 }}
               >
-                CNIC Verification
+                {isAdmin ? "Identity" : "CNIC Verification"}
               </p>
 
-              {verificationStatus === "UNVERIFIED" && (
+              {isAdmin && (
+                <div style={{ textAlign: "center", padding: "8px 0" }}>
+                  <VerificationSeal size={80} />
+                  <div style={{ marginTop: 12 }}>
+                    <VerifiedBadge label="Admin · Verified" size="lg" />
+                  </div>
+                  <p style={{ fontFamily: "var(--body)", fontSize: 13, color: "var(--ink-faint)", marginTop: 10 }}>
+                    Admin accounts are automatically verified.
+                  </p>
+                </div>
+              )}
+
+              {!isAdmin && verificationStatus === "UNVERIFIED" && (
                 <>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
                     {[
@@ -338,7 +353,7 @@ export default async function MePage() {
                 </>
               )}
 
-              {verificationStatus === "PENDING" && (
+              {!isAdmin && verificationStatus === "PENDING" && (
                 <div style={{ textAlign: "center", padding: "16px 0" }}>
                   <VerificationSeal size={80} />
                   <p style={{ fontFamily: "var(--body)", fontSize: 13, color: "var(--ink-soft)", marginTop: 12 }}>
@@ -347,7 +362,7 @@ export default async function MePage() {
                 </div>
               )}
 
-              {verificationStatus === "VERIFIED" && (
+              {!isAdmin && verificationStatus === "VERIFIED" && (
                 <div style={{ textAlign: "center", padding: "8px 0" }}>
                   <VerificationSeal size={80} />
                   <div style={{ marginTop: 12 }}>
@@ -388,7 +403,7 @@ export default async function MePage() {
           >
             Quick Links
           </p>
-          <QuickLinks />
+          <QuickLinks role={dbUser?.role ?? "USER"} />
         </div>
       </div>
     </main>

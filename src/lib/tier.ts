@@ -6,7 +6,7 @@ export function getUserTier(user: {
   verificationStatus: string;
   hasVerifiedBadge?: boolean;
 }): UserTier {
-  if (user.role === "PARTNER" || user.isPartner) return "PARTNER";
+  if (user.role === "ADMIN" || user.role === "PARTNER" || user.isPartner) return "PARTNER";
   if (user.hasVerifiedBadge || user.verificationStatus === "VERIFIED") return "VERIFIED";
   return "BASIC";
 }

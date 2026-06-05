@@ -7,6 +7,7 @@ import { searchClient } from "@/core/search/postgres";
 import { encodeCursor } from "@/core/search/query";
 import type { JobHit } from "@/core/search/postgres";
 import SaveSearchButton from "@/components/shared/SaveSearchButton";
+import { getSession } from "@/core/auth/session";
 
 export const metadata: Metadata = {
   title: "Jobs — Xplosale",
@@ -51,7 +52,9 @@ export default async function JobsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
+  const [sp, session] = await Promise.all([searchParams, getSession()]);
+  const sessionUser = session?.user as { role?: string } | undefined;
+  const canPostJobs = sessionUser?.role === "PARTNER" || sessionUser?.role === "ADMIN";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
   const limit = 20;
 
@@ -154,21 +157,51 @@ export default async function JobsPage({
           >
             Jobs · Verified employers
           </p>
-          <h1
-            style={{
-              fontFamily: "var(--display)",
-              fontWeight: 800,
-              fontSize: 36,
-              color: "var(--ink)",
-              lineHeight: 1.1,
-              margin: 0,
-            }}
-          >
-            Hire. Get hired. Verified.
-          </h1>
-          <p style={{ fontFamily: "var(--body)", fontSize: 15, color: "var(--ink-soft)", marginTop: 8 }}>
-            {total.toLocaleString()} position{total !== 1 ? "s" : ""} from verified employers
-          </p>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h1
+                style={{
+                  fontFamily: "var(--display)",
+                  fontWeight: 800,
+                  fontSize: 36,
+                  color: "var(--ink)",
+                  lineHeight: 1.1,
+                  margin: 0,
+                }}
+              >
+                Hire. Get hired. Verified.
+              </h1>
+              <p style={{ fontFamily: "var(--body)", fontSize: 15, color: "var(--ink-soft)", marginTop: 8 }}>
+                {total.toLocaleString()} position{total !== 1 ? "s" : ""} from verified employers
+              </p>
+            </div>
+            {canPostJobs && (
+              <Link
+                href="/me/employer/jobs/new"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "10px 20px",
+                  background: "var(--clay)",
+                  color: "var(--white)",
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  fontFamily: "var(--body)",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Post a Job
+              </Link>
+            )}
+          </div>
 
           {/* Search + filter bar */}
           <form

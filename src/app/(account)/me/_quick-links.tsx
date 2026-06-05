@@ -14,29 +14,53 @@ const LINKS = [
   { label: "Partner application", href: "/me/partner-application" },
 ];
 
-export default function QuickLinks() {
+const linkStyle: React.CSSProperties = {
+  fontFamily: "var(--body)",
+  fontSize: 13,
+  color: "var(--ink-soft)",
+  textDecoration: "none",
+  borderBottom: "1px solid transparent",
+  transition: "color .15s, border-color .15s",
+};
+
+const adminLinkStyle: React.CSSProperties = {
+  ...linkStyle,
+  color: "var(--clay)",
+  fontWeight: 600,
+};
+
+export default function QuickLinks({ role }: { role?: string }) {
+  const isAdmin = role === "ADMIN";
+
+  function handleMouseOver(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.currentTarget.style.color = "var(--clay)";
+    e.currentTarget.style.borderBottomColor = "var(--clay)";
+  }
+
+  function handleMouseOut(e: React.MouseEvent<HTMLAnchorElement>, isAdminLink = false) {
+    e.currentTarget.style.color = isAdminLink ? "var(--clay)" : "var(--ink-soft)";
+    e.currentTarget.style.borderBottomColor = "transparent";
+  }
+
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px" }}>
+      {isAdmin && (
+        <Link
+          href="/admin"
+          style={adminLinkStyle}
+          onMouseOver={handleMouseOver}
+          onMouseOut={(e) => handleMouseOut(e, true)}
+        >
+          Admin Panel ↗
+        </Link>
+      )}
       {LINKS.map((link) => (
         <Link
           key={link.href}
           href={link.href}
-          style={{
-            fontFamily: "var(--body)",
-            fontSize: 13,
-            color: "var(--ink-soft)",
-            textDecoration: "none",
-            borderBottom: "1px solid transparent",
-            transition: "color .15s, border-color .15s",
-          }}
-          onMouseOver={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "var(--clay)";
-            (e.currentTarget as HTMLAnchorElement).style.borderBottomColor = "var(--clay)";
-          }}
-          onMouseOut={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "var(--ink-soft)";
-            (e.currentTarget as HTMLAnchorElement).style.borderBottomColor = "transparent";
-          }}
+          style={linkStyle}
+          onMouseOver={handleMouseOver}
+          onMouseOut={(e) => handleMouseOut(e, false)}
         >
           {link.label}
         </Link>
