@@ -41,7 +41,7 @@ export default auth(async function middleware(req) {
 
   // Admin routes — /admin/login is public; everything else requires a session
   // (role enforcement is handled by the admin layout with a live DB check)
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && pathname !== "/admin/setup") {
     if (!session) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/login";
