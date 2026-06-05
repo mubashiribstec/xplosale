@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { getSession } from "@/core/auth/session";
 import Navbar from "@/components/layout/Navbar";
 
@@ -11,6 +12,19 @@ const NAV = [
 ];
 
 export default async function PartnerLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") ?? "";
+
+  // /partner/register is accessible to all logged-in users — skip sidebar layout
+  if (pathname === "/partner/register") {
+    return (
+      <>
+        <Navbar />
+        {children}
+      </>
+    );
+  }
+
   const session = await getSession();
   if (!session) redirect("/login?callbackUrl=/partner");
 

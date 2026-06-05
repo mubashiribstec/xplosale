@@ -19,6 +19,7 @@ const navLinks = [
   { href: "/admin/reports", label: "Reports" },
   { href: "/admin/audit", label: "Audit Log" },
   { href: "/admin/companies", label: "Companies" },
+  { href: "/admin/tests", label: "Tests" },
   { href: "/admin/platform", label: "Platform" },
   { href: "/admin/shops", label: "Shops" },
   { href: "/admin/plans", label: "Plans" },
