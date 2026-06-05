@@ -101,6 +101,39 @@ enum PartnerApplicationStatus {
   REJECTED
 }
 
+enum ShopStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+enum ShopImageKind {
+  STOREFRONT_BOARD
+  GENERAL
+}
+
+enum PlanKey {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  NONE
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum AnalyticsEventKind {
+  VIEW
+  PRODUCT_CLICK
+  CONTACT_CLICK
+  WEBSITE_CLICK
+}
+
 enum ProfileVisibility {
   PUBLIC
   CONNECTIONS
@@ -257,6 +290,7 @@ model User {
   sentInvites             InviteToApply[]     @relation("InviteSender")
   receivedInvites         InviteToApply[]     @relation("InviteCandidate")
   doNotContact            CandidateDoNotContact?
+  shops                   Shop[]                @relation("ShopOwner")
 }
 
 model Region {
@@ -276,6 +310,7 @@ model Region {
   listings    Listing[]
   jobPostings JobPosting[]
   companies   Company[]
+  shops       Shop[]    @relation("ShopRegion")
 }
 
 model OtpCode {
@@ -1062,4 +1097,128 @@ model CandidateDoNotContact {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Shops ────────────────────────────────────────────────────────────────────
+
+model Plan {
+  id                  String  @id @default(cuid())
+  key                 PlanKey @unique
+  name                String
+  priceMonthly        Decimal
+  currency            String  @default("PKR")
+  maxShops            Int
+  maxProducts         Int
+  maxImagesPerProduct Int
+  featuredPlacement   Boolean @default(false)
+  analytics           Boolean @default(false)
+  customBanner        Boolean @default(false)
+}
+
+model Shop {
+  id           String     @id @default(cuid())
+  ownerUserId  String
+  name         String
+  slug         String     @unique
+  category     String
+  type         String
+  description  String
+  addressLine  String
+  regionId     String
+  countryCode  String     @default("PK")
+  website      String?
+  contactPhone String?
+  lat          Float?
+  lng          Float?
+  status       ShopStatus @default(DRAFT)
+  verifiedShop Boolean    @default(false)
+  featured     Boolean    @default(false)
+  bannerUrl    String?
+  searchVector Unsupported("tsvector")?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  owner        User                 @relation("ShopOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  region       Region               @relation("ShopRegion", fields: [regionId], references: [id])
+  images       ShopImage[]
+  products     ShopProduct[]
+  subscription Subscription?
+  analytics    ShopAnalyticsEvent[]
+
+  @@index([status, regionId, featured, createdAt])
+  @@index([ownerUserId, status])
+}
+
+model ShopImage {
+  id     String       @id @default(cuid())
+  shopId String
+  url    String
+  kind   ShopImageKind
+  order  Int
+  width  Int
+  height Int
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, kind])
+}
+
+model ShopProduct {
+  id           String   @id @default(cuid())
+  shopId       String
+  name         String
+  description  String?
+  priceMin     Decimal?
+  priceMax     Decimal?
+  currency     String   @default("PKR")
+  order        Int      @default(0)
+  isHidden     Boolean  @default(false)
+  searchVector Unsupported("tsvector")?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shop   Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  images ShopProductImage[]
+
+  @@index([shopId, isHidden, order])
+}
+
+model ShopProductImage {
+  id        String @id @default(cuid())
+  productId String
+  url       String
+  order     Int
+  width     Int
+  height    Int
+
+  product ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  shopId            String             @unique
+  planKey           PlanKey
+  status            SubscriptionStatus @default(NONE)
+  provider          String
+  externalRef       String?
+  startedAt         DateTime?
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+model ShopAnalyticsEvent {
+  id        String             @id @default(cuid())
+  shopId    String
+  kind      AnalyticsEventKind
+  productId String?
+  day       DateTime           @db.Date
+  count     Int                @default(1)
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, day])
 }
