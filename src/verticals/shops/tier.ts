@@ -22,14 +22,18 @@ export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
   const [sub, freePlan] = await Promise.all([
     prisma.subscription.findUnique({
       where: { shopId },
-      select: { planKey: true, status: true },
+      select: { planKey: true, status: true, currentPeriodEnd: true },
     }),
     prisma.plan.findUnique({ where: { key: "FREE" } }),
   ]);
 
   if (!freePlan) throw new Error("Plan table not seeded — run prisma db seed");
 
-  const isPremiumActive = sub?.status === "ACTIVE" && sub.planKey === "PREMIUM";
+  const now = new Date();
+  const isPremiumActive =
+    sub?.status === "ACTIVE" &&
+    sub.planKey === "PREMIUM" &&
+    (sub.currentPeriodEnd == null || sub.currentPeriodEnd > now);
   if (!isPremiumActive) return freePlan as EffectivePlan;
 
   const premiumPlan = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
@@ -38,12 +42,14 @@ export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
 
 /** Returns the effective plan for a user (based on their shops' subscriptions). */
 export async function getEffectivePlanForUser(userId: string): Promise<EffectivePlan> {
+  const now = new Date();
   const [sub, freePlan] = await Promise.all([
     prisma.subscription.findFirst({
       where: {
         shop: { ownerUserId: userId },
         status: "ACTIVE",
         planKey: "PREMIUM",
+        OR: [{ currentPeriodEnd: null }, { currentPeriodEnd: { gt: now } }],
       },
       select: { planKey: true },
     }),

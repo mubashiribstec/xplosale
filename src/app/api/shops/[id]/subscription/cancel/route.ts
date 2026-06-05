@@ -3,7 +3,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getPaymentProvider } from "@/core/adapters/payment";
-import { deactivateSubscription } from "@/verticals/shops/subscription";
+import { scheduleCancelSubscription } from "@/verticals/shops/subscription";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -36,9 +36,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
       await provider.cancelSubscription(sub.externalRef);
     }
 
-    await deactivateSubscription(shopId, "CANCELLED");
+    await scheduleCancelSubscription(shopId);
 
-    return ok({ cancelled: true });
+    return ok({ cancelledAtPeriodEnd: true });
   } catch (e) {
     return parseError(e);
   }

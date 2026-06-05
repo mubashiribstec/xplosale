@@ -1224,3 +1224,12 @@ model ShopAnalyticsEvent {
 
   @@index([shopId, day])
 }
+
+model ProcessedWebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  provider    String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}

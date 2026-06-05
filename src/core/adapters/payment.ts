@@ -11,6 +11,7 @@ export interface CheckoutSession {
 
 export interface WebhookEvent {
   type: "subscription.activated" | "subscription.cancelled" | "subscription.past_due" | "subscription.expired";
+  eventId: string;
   shopId: string;
   externalRef: string;
   periodEnd?: Date;
@@ -43,10 +44,19 @@ export class MockPaymentProvider implements PaymentProvider {
 
   async handleWebhook(rawBody: string, _signature: string): Promise<WebhookEvent | null> {
     try {
-      const data = JSON.parse(rawBody) as { type?: string; shopId?: string; externalRef?: string; periodEnd?: string };
+      const data = JSON.parse(rawBody) as {
+        type?: string;
+        shopId?: string;
+        externalRef?: string;
+        periodEnd?: string;
+        eventId?: string;
+      };
       if (!data.type || !data.shopId || !data.externalRef) return null;
+      // Use provided eventId; fall back to a deterministic hash of type+ref+body length
+      const eventId = data.eventId ?? `mock_${data.type}_${data.externalRef}_${rawBody.length}`;
       return {
         type: data.type as WebhookEvent["type"],
+        eventId,
         shopId: data.shopId,
         externalRef: data.externalRef,
         periodEnd: data.periodEnd ? new Date(data.periodEnd) : undefined,

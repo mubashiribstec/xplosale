@@ -35,7 +35,11 @@ export async function activateSubscription(
   });
 }
 
-/** Cancel or expire a subscription and hide products that exceed the FREE plan limit. */
+/**
+ * Mark a subscription as cancelled/expired by the payment provider webhook.
+ * Hides products that exceed the FREE plan limit immediately.
+ * Do NOT call this for user-initiated cancels — use scheduleCancelSubscription instead.
+ */
 export async function deactivateSubscription(
   shopId: string,
   newStatus: "CANCELLED" | "EXPIRED",
@@ -62,4 +66,17 @@ export async function deactivateSubscription(
       data: { isHidden: true },
     });
   }
+}
+
+/**
+ * User-initiated cancel: marks the subscription to cancel at period end.
+ * The subscription stays ACTIVE until currentPeriodEnd — users keep access for time paid.
+ * The payment provider webhook (subscription.cancelled / subscription.expired) will later
+ * call deactivateSubscription to do the actual downgrade.
+ */
+export async function scheduleCancelSubscription(shopId: string): Promise<void> {
+  await prisma.subscription.updateMany({
+    where: { shopId, status: "ACTIVE" },
+    data: { cancelAtPeriodEnd: true },
+  });
 }
