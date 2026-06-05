@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    exclude: ["**/node_modules/**", "**/e2e/**"],
     setupFiles: ["./src/__tests__/setup.ts"],
     // next-auth's compiled output imports "next/server" without an extension,
     // which Node's ESM resolver can't find inside the pnpm layout. Inlining lets
