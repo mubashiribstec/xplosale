@@ -6,6 +6,7 @@ import Link from "next/link";
 import ShopForm from "@/components/shared/shops/ShopForm";
 import StorefrontBoardUploader from "@/components/shared/shops/StorefrontBoardUploader";
 import ProductsManager from "@/components/shared/shops/ProductsManager";
+import ShopPaymentSettings from "@/components/shared/shops/ShopPaymentSettings";
 
 interface ShopImage {
   id: string;
@@ -28,6 +29,14 @@ interface ShopData {
   slug: string;
   images: ShopImage[];
   subscription: { planKey: string; status: string; currentPeriodEnd: string | null } | null;
+  bankName: string | null;
+  bankAccountTitle: string | null;
+  bankAccountNumber: string | null;
+  jazzcashNumber: string | null;
+  easipaisaNumber: string | null;
+  acceptsCash: boolean;
+  acceptsDelivery: boolean;
+  deliveryNotes: string | null;
 }
 
 interface PlanData {
@@ -40,7 +49,7 @@ export default function EditShopPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [shop, setShop] = useState<ShopData | null>(null);
-  const [plan, setPlan] = useState<PlanData>({ maxProducts: 4, maxImagesPerProduct: 2, key: "FREE" });
+  const [plan, setPlan] = useState<PlanData>({ maxProducts: 2, maxImagesPerProduct: 2, key: "FREE" });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -100,7 +109,11 @@ export default function EditShopPage() {
 
   const canEdit = shop.status === "DRAFT" || shop.status === "REJECTED";
   const canSubmit = shop.status === "DRAFT" || shop.status === "REJECTED";
+  const isActive = shop.status === "ACTIVE";
   const hasStorefront = !!storefrontImage;
+  const isPremium = shop.subscription?.status === "ACTIVE" &&
+    (shop.subscription?.planKey === "PREMIUM" || shop.subscription?.planKey === "PROMOTION");
+  const isPromotion = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PROMOTION";
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
@@ -124,30 +137,57 @@ export default function EditShopPage() {
           </span>
         </div>
         <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: "0 0 36px", fontFamily: "var(--body)" }}>
-          {canEdit ? "Edit your shop details below." : "This shop cannot be edited in its current status."}
+          {isActive ? "Your shop is live. Manage products, orders, and payment settings below." : canEdit ? "Edit your shop details below." : "This shop cannot be edited in its current status."}
         </p>
 
-        {/* Storefront photo */}
-        {canSubmit && (
-          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
-            <StorefrontBoardUploader
-              shopId={shop.id}
-              currentUrl={storefrontImage?.url}
-              currentImageId={storefrontImage?.id}
-              onUpdate={(img) => setStorefrontImage(img)}
-            />
+        {/* Quick links for active shops */}
+        {isActive && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            <Link
+              href={`/shops/manage/${shop.id}/orders`}
+              style={{
+                padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
+                borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              📦 Manage Orders
+            </Link>
+            <Link
+              href={`/shops/${shop.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
+                border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
+                fontWeight: 600, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              🌐 View Shop ↗
+            </Link>
           </div>
         )}
 
-        {/* Shop details form */}
+        {/* Storefront photo */}
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+          <StorefrontBoardUploader
+            shopId={shop.id}
+            currentUrl={storefrontImage?.url}
+            currentImageId={storefrontImage?.id}
+            onUpdate={(img) => setStorefrontImage(img)}
+          />
+        </div>
+
+        {/* Shop details form (DRAFT / REJECTED only) */}
         {canEdit && (
           <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 16 }}>
             <ShopForm initialData={shop} />
           </div>
         )}
 
-        {/* Products */}
-        {canEdit && (
+        {/* Products — shown for DRAFT/REJECTED and ACTIVE shops */}
+        {(canEdit || isActive) && (
           <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
             <ProductsManager
               shopId={shop.id}
@@ -158,15 +198,31 @@ export default function EditShopPage() {
           </div>
         )}
 
+        {/* Payment settings (all statuses) */}
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+          <ShopPaymentSettings
+            shopId={shop.id}
+            initial={{
+              bankName: shop.bankName,
+              bankAccountTitle: shop.bankAccountTitle,
+              bankAccountNumber: shop.bankAccountNumber,
+              jazzcashNumber: shop.jazzcashNumber,
+              easipaisaNumber: shop.easipaisaNumber,
+              acceptsCash: shop.acceptsCash,
+              acceptsDelivery: shop.acceptsDelivery,
+              deliveryNotes: shop.deliveryNotes,
+            }}
+          />
+        </div>
+
         {/* Subscription banner */}
         {(() => {
-          const isPremium = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PREMIUM";
           if (isPremium) {
             const end = shop.subscription?.currentPeriodEnd;
             return (
-              <div style={{ background: "rgba(15,184,126,.05)", border: "1px solid var(--green)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                <p style={{ fontSize: 13, color: "var(--green)", fontWeight: 600, margin: 0 }}>
-                  ✓ Premium plan active{end ? ` · renews ${new Date(end).toLocaleDateString()}` : ""}
+              <div style={{ background: isPromotion ? "rgba(124,58,237,.05)" : "rgba(15,184,126,.05)", border: `1px solid ${isPromotion ? "rgba(124,58,237,.3)" : "var(--green)"}`, borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                <p style={{ fontSize: 13, color: isPromotion ? "#7c3aed" : "var(--green)", fontWeight: 600, margin: 0 }}>
+                  {isPromotion ? "🔥" : "✓"} {isPromotion ? "Promotion" : "Premium"} plan active{end ? ` · renews ${new Date(end).toLocaleDateString()}` : ""}
                 </p>
                 <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "none" }}>Manage →</Link>
               </div>
@@ -175,9 +231,9 @@ export default function EditShopPage() {
           return (
             <div style={{ background: "rgba(160,78,55,.05)", border: "1px solid var(--clay)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>
-                Free plan · 4 products max · 2 images per product
+                Free plan · {plan.maxProducts} products max · {plan.maxImagesPerProduct} images per product
               </p>
-              <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Upgrade to Premium →</Link>
+              <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Upgrade →</Link>
             </div>
           );
         })()}

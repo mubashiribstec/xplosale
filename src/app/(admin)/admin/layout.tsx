@@ -23,6 +23,7 @@ const navLinks = [
   { href: "/admin/tests", label: "Tests" },
   { href: "/admin/platform", label: "Platform" },
   { href: "/admin/shops", label: "Shops" },
+  { href: "/admin/shops/reports", label: "Shop Reports" },
   { href: "/admin/plans", label: "Plans" },
 ];
 

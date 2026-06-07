@@ -12,6 +12,8 @@ interface ShopCardProps {
     images: { url: string }[];
     subscription: { planKey: string; status: string } | null;
     _count: { products: number };
+    averageRating?: number | null;
+    reviewCount?: number;
   };
 }
 
@@ -19,7 +21,9 @@ export default function ShopCard({ shop }: ShopCardProps) {
   const boardImg = shop.images[0]?.url;
   const categoryIcon = getCategoryIcon(shop.category);
   const isPremiumActive =
-    shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PREMIUM";
+    shop.subscription?.status === "ACTIVE" &&
+    (shop.subscription?.planKey === "PREMIUM" || shop.subscription?.planKey === "PROMOTION");
+  const isPromotion = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PROMOTION";
 
   return (
     <Link
@@ -28,7 +32,7 @@ export default function ShopCard({ shop }: ShopCardProps) {
     >
       <div style={{
         background: "var(--white)",
-        border: "1px solid var(--line)",
+        border: `1px solid ${isPromotion ? "rgba(124,58,237,.3)" : "var(--line)"}`,
         borderRadius: 16,
         overflow: "hidden",
         transition: "box-shadow .15s",
@@ -54,8 +58,19 @@ export default function ShopCard({ shop }: ShopCardProps) {
               🏪
             </div>
           )}
+          {/* Promotion badge */}
+          {isPromotion && (
+            <span style={{
+              position: "absolute", top: 8, left: 8,
+              background: "#7c3aed", color: "#fff",
+              fontSize: 10, fontWeight: 700, padding: "2px 7px",
+              borderRadius: 6, letterSpacing: ".04em",
+            }}>
+              🔥 Top
+            </span>
+          )}
           {/* Featured badge */}
-          {shop.featured && isPremiumActive && (
+          {shop.featured && isPremiumActive && !isPromotion && (
             <span style={{
               position: "absolute", top: 8, left: 8,
               background: "#d97706", color: "#fff",
@@ -96,6 +111,17 @@ export default function ShopCard({ shop }: ShopCardProps) {
             <span style={{ fontSize: 13 }}>{categoryIcon}</span>
             {shop.category}
           </span>
+          {/* Rating */}
+          {shop.averageRating != null && shop.averageRating > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ color: "#f59e0b", fontSize: 13 }}>
+                {"★".repeat(Math.round(shop.averageRating))}{"☆".repeat(5 - Math.round(shop.averageRating))}
+              </span>
+              <span style={{ fontSize: 11, color: "var(--ink-faint)" }}>
+                {shop.averageRating.toFixed(1)}{shop.reviewCount ? ` (${shop.reviewCount})` : ""}
+              </span>
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
             <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>
               {shop.region.name}, {shop.region.city}

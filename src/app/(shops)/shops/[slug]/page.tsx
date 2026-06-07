@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSession, getUserId } from "@/core/auth/session";
+import BuyButton from "@/components/shared/shops/BuyButton";
+import MessageShopButton from "@/components/shared/shops/MessageShopButton";
+import ReportShopButton from "@/components/shared/shops/ReportShopButton";
+import ShopReviews from "@/components/shared/shops/ShopReviews";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -23,28 +28,50 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ShopPublicPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const shop = await prisma.shop.findUnique({
-    where: { slug },
-    include: {
-      region: { select: { name: true, city: true, country: true } },
-      images: { orderBy: { order: "asc" } },
-      products: {
-        where: { isHidden: false },
-        include: { images: { orderBy: { order: "asc" }, take: 1 } },
-        orderBy: { order: "asc" },
-        take: 50,
+  const [session, shop] = await Promise.all([
+    getSession(),
+    prisma.shop.findUnique({
+      where: { slug },
+      include: {
+        region: { select: { name: true, city: true, country: true } },
+        images: { orderBy: { order: "asc" } },
+        products: {
+          where: { isHidden: false },
+          include: { images: { orderBy: { order: "asc" }, take: 1 } },
+          orderBy: { order: "asc" },
+          take: 50,
+        },
+        subscription: { select: { planKey: true, status: true } },
+        _count: { select: { reviews: true } },
       },
-      subscription: { select: { planKey: true, status: true } },
-    },
-  });
+    }),
+  ]);
 
   if (!shop || shop.status !== "ACTIVE") notFound();
 
-  const isPremium = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PREMIUM";
+  const isPremium = shop.subscription?.status === "ACTIVE" &&
+    (shop.subscription?.planKey === "PREMIUM" || shop.subscription?.planKey === "PROMOTION");
   const boardImg = shop.images.find((i) => i.kind === "STOREFRONT_BOARD")?.url ?? null;
   const generalImgs = shop.images.filter((i) => i.kind !== "STOREFRONT_BOARD");
 
-  // Fire-and-forget VIEW analytics for PREMIUM shops
+  const currentUserId = session ? getUserId(session) : null;
+  const isOwner = currentUserId === shop.ownerUserId;
+  const isAuthenticated = !!session;
+
+  const capabilities = {
+    acceptsCash: shop.acceptsCash,
+    acceptsDelivery: shop.acceptsDelivery,
+    bankName: shop.bankName,
+    bankAccountTitle: shop.bankAccountTitle,
+    bankAccountNumber: shop.bankAccountNumber,
+    jazzcashNumber: shop.jazzcashNumber,
+    easipaisaNumber: shop.easipaisaNumber,
+    deliveryNotes: shop.deliveryNotes,
+  };
+
+  const hasPayment = shop.acceptsCash || !!shop.bankAccountNumber || !!shop.jazzcashNumber || !!shop.easipaisaNumber;
+
+  // Fire-and-forget VIEW analytics for PREMIUM/PROMOTION shops
   if (isPremium) {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
@@ -58,7 +85,7 @@ export default async function ShopPublicPage({ params }: PageProps) {
       } else {
         await tx.shopAnalyticsEvent.create({ data: { shopId: shop.id, kind: "VIEW", day: today, count: 1 } });
       }
-    }).catch(() => { /* analytics failure is non-fatal */ });
+    }).catch(() => { /* non-fatal */ });
   }
 
   return (
@@ -98,42 +125,52 @@ export default async function ShopPublicPage({ params }: PageProps) {
                   ⭐ Featured
                 </span>
               )}
+              {shop.subscription?.planKey === "PROMOTION" && (
+                <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(124,58,237,.1)", color: "#7c3aed" }}>
+                  🔥 Top Placement
+                </span>
+              )}
             </div>
             <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: 0 }}>
               {shop.category} · {shop.type} · {shop.region.name}, {shop.region.city}
             </p>
           </div>
 
-          {/* Contact CTA */}
-          {(shop.contactPhone || shop.website) && (
-            <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-              {shop.contactPhone && (
-                <a
-                  href={`tel:${shop.contactPhone}`}
-                  style={{
-                    padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
-                    borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none",
-                  }}
-                >
-                  📞 Call
-                </a>
-              )}
-              {shop.website && (
-                <a
-                  href={shop.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
-                    border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
-                    fontWeight: 600, textDecoration: "none",
-                  }}
-                >
-                  🌐 Website
-                </a>
-              )}
-            </div>
-          )}
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
+            {shop.contactPhone && (
+              <a
+                href={`tel:${shop.contactPhone}`}
+                style={{
+                  padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
+                  borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none",
+                }}
+              >
+                📞 Call
+              </a>
+            )}
+            {shop.website && (
+              <a
+                href={shop.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
+                  border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
+                  fontWeight: 600, textDecoration: "none",
+                }}
+              >
+                🌐 Website
+              </a>
+            )}
+            {!isOwner && (
+              <MessageShopButton
+                shopId={shop.id}
+                ownerUserId={shop.ownerUserId}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -145,6 +182,21 @@ export default async function ShopPublicPage({ params }: PageProps) {
             📍 {shop.addressLine}, {shop.region.name}, {shop.region.city}
           </p>
         </div>
+
+        {/* Working hours */}
+        {shop.workingHours && typeof shop.workingHours === "object" && Object.keys(shop.workingHours).length > 0 && (
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 14, padding: "14px 18px", marginBottom: 20 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".04em" }}>Working Hours</p>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 16px" }}>
+              {Object.entries(shop.workingHours as Record<string, string>).map(([day, hours]) => (
+                <>
+                  <span key={`${day}-d`} style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", textTransform: "capitalize" }}>{day}</span>
+                  <span key={`${day}-h`} style={{ fontSize: 13, color: "var(--ink-soft)" }}>{hours}</span>
+                </>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Extra photos */}
         {generalImgs.length > 0 && (
@@ -164,9 +216,27 @@ export default async function ShopPublicPage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Payment info banner */}
+        {hasPayment && (
+          <div style={{
+            background: "rgba(15,184,126,.05)", border: "1px solid rgba(15,184,126,.25)",
+            borderRadius: 14, padding: "12px 16px", marginBottom: 20,
+            display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center",
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--green)" }}>✓ Accepts orders</span>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {shop.acceptsCash && <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(15,184,126,.1)", color: "var(--green)" }}>Cash</span>}
+              {shop.bankAccountNumber && <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(15,184,126,.1)", color: "var(--green)" }}>Bank Transfer</span>}
+              {shop.jazzcashNumber && <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(15,184,126,.1)", color: "var(--green)" }}>JazzCash</span>}
+              {shop.easipaisaNumber && <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(15,184,126,.1)", color: "var(--green)" }}>EasyPaisa</span>}
+              {shop.acceptsDelivery && <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 6, background: "rgba(15,184,126,.1)", color: "var(--green)" }}>Delivery</span>}
+            </div>
+          </div>
+        )}
+
         {/* Products */}
         {shop.products.length > 0 && (
-          <div>
+          <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: ".06em" }}>
               Products ({shop.products.length})
             </p>
@@ -192,12 +262,22 @@ export default async function ShopPublicPage({ params }: PageProps) {
                       borderRadius: 12, overflow: "hidden",
                     }}
                   >
-                    <div style={{ height: 120, background: "var(--paper-2)" }}>
+                    <div style={{ height: 120, background: "var(--paper-2)", position: "relative" }}>
                       {img ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🛍️</div>
+                      )}
+                      {!product.inStock && (
+                        <div style={{
+                          position: "absolute", inset: 0, background: "rgba(0,0,0,.4)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.6)", padding: "3px 10px", borderRadius: 99 }}>
+                            Out of Stock
+                          </span>
+                        </div>
                       )}
                     </div>
                     <div style={{ padding: "10px 12px" }}>
@@ -212,6 +292,18 @@ export default async function ShopPublicPage({ params }: PageProps) {
                           {product.description}
                         </p>
                       )}
+                      {hasPayment && !isOwner && product.inStock && (
+                        <BuyButton
+                          shopId={shop.id}
+                          product={{
+                            id: product.id,
+                            name: product.name,
+                            priceMin: product.priceMin ? Number(product.priceMin) : null,
+                          }}
+                          capabilities={capabilities}
+                          isAuthenticated={isAuthenticated}
+                        />
+                      )}
                     </div>
                   </div>
                 );
@@ -219,6 +311,22 @@ export default async function ShopPublicPage({ params }: PageProps) {
             </div>
           </div>
         )}
+
+        {/* Reviews section */}
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, padding: "20px 22px", marginBottom: 20 }}>
+          <ShopReviews shopId={shop.id} currentUserId={currentUserId} />
+        </div>
+
+        {/* Report + meta */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>
+            Listed on Xplosale Shops
+          </p>
+          {!isOwner && (
+            <ReportShopButton shopId={shop.id} isAuthenticated={isAuthenticated} />
+          )}
+        </div>
+
       </div>
     </main>
   );

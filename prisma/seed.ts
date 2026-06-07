@@ -331,14 +331,14 @@ async function main() {
   // ── Plans ──
   await prisma.plan.upsert({
     where: { key: "FREE" },
-    update: {},
+    update: { maxProducts: 2 },
     create: {
       key: "FREE",
       name: "Free",
       priceMonthly: 0,
       currency: "PKR",
       maxShops: 1,
-      maxProducts: 4,
+      maxProducts: 2,
       maxImagesPerProduct: 2,
       featuredPlacement: false,
       analytics: false,
@@ -363,7 +363,24 @@ async function main() {
     },
   });
 
-  console.log("Seeded FREE + PREMIUM plans");
+  await prisma.plan.upsert({
+    where: { key: "PROMOTION" },
+    update: {},
+    create: {
+      key: "PROMOTION",
+      name: "Promotion",
+      priceMonthly: 2500,
+      currency: "PKR",
+      maxShops: 5,
+      maxProducts: 50,
+      maxImagesPerProduct: 8,
+      featuredPlacement: true,
+      analytics: true,
+      customBanner: true,
+    },
+  });
+
+  console.log("Seeded FREE + PREMIUM + PROMOTION plans");
   console.log("Seed complete!");
 }
 

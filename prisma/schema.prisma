@@ -117,6 +117,7 @@ enum ShopImageKind {
 enum PlanKey {
   FREE
   PREMIUM
+  PROMOTION
 }
 
 enum SubscriptionStatus {
@@ -125,6 +126,44 @@ enum SubscriptionStatus {
   PAST_DUE
   CANCELLED
   EXPIRED
+}
+
+enum OrderDelivery {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderPayment {
+  CASH
+  BANK_TRANSFER
+  JAZZCASH
+  EASYPAISA
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_SUBMITTED
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum ShopReportReason {
+  FRAUD
+  FAKE_PRODUCTS
+  MISLEADING
+  INAPPROPRIATE
+  SPAM
+  OTHER
+}
+
+enum ShopReportStatus {
+  OPEN
+  INVESTIGATING
+  CLOSED_ACTION
+  CLOSED_NO_ACTION
 }
 
 enum AnalyticsEventKind {
@@ -144,6 +183,7 @@ enum ChatContext {
   JOB_APPLICATION
   NETWORK_DM
   ADMIN_DM
+  SHOP_INQUIRY
 }
 
 enum MessageKind {
@@ -293,6 +333,10 @@ model User {
   receivedInvites         InviteToApply[]     @relation("InviteCandidate")
   doNotContact            CandidateDoNotContact?
   shops                   Shop[]                @relation("ShopOwner")
+  shopOrders              ShopOrder[]           @relation("CustomerOrders")
+  shopReports             ShopReport[]          @relation("ShopReporter")
+  shopReviews             ShopReview[]          @relation("ShopReviewer")
+  shopFavourites          ShopFavourite[]       @relation("ShopFavourites")
 }
 
 model Region {
@@ -1140,12 +1184,27 @@ model Shop {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  // Payment & ordering
+  bankName          String?
+  bankAccountTitle  String?
+  bankAccountNumber String?
+  jazzcashNumber    String?
+  easipaisaNumber   String?
+  acceptsCash       Boolean  @default(false)
+  acceptsDelivery   Boolean  @default(false)
+  deliveryNotes     String?
+  workingHours      Json?
+
   owner        User                 @relation("ShopOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
   region       Region               @relation("ShopRegion", fields: [regionId], references: [id])
   images       ShopImage[]
   products     ShopProduct[]
   subscription Subscription?
   analytics    ShopAnalyticsEvent[]
+  orders       ShopOrder[]
+  reports      ShopReport[]
+  reviews      ShopReview[]
+  favourites   ShopFavourite[]
 
   @@index([status, regionId, featured, createdAt])
   @@index([ownerUserId, status])
@@ -1179,8 +1238,12 @@ model ShopProduct {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  shop   Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  images ShopProductImage[]
+  inStock      Boolean  @default(true)
+  stockCount   Int?
+
+  shop       Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  images     ShopProductImage[]
+  orderItems ShopOrderItem[]
 
   @@index([shopId, isHidden, order])
 }
@@ -1232,6 +1295,88 @@ model ProcessedWebhookEvent {
   processedAt DateTime @default(now())
 
   @@index([processedAt])
+}
+
+// ─── Shop commerce ────────────────────────────────────────────────────────────
+
+model ShopOrder {
+  id              String        @id @default(cuid())
+  shopId          String
+  customerId      String
+  deliveryType    OrderDelivery
+  paymentMethod   OrderPayment
+  deliveryAddress String?
+  customerNote    String?
+  screenshotUrl   String?
+  status          OrderStatus   @default(PENDING)
+  totalAmount     Decimal
+  currency        String        @default("PKR")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  shop     Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer User            @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  items    ShopOrderItem[]
+
+  @@index([shopId, status, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model ShopOrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  name          String
+  priceSnapshot Decimal
+  quantity      Int      @default(1)
+
+  order   ShopOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product ShopProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+model ShopReport {
+  id         String           @id @default(cuid())
+  shopId     String
+  reporterId String
+  reason     ShopReportReason
+  details    String?
+  status     ShopReportStatus @default(OPEN)
+  createdAt  DateTime         @default(now())
+
+  shop     Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  reporter User @relation("ShopReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, status])
+  @@index([status, createdAt])
+}
+
+model ShopReview {
+  id        String   @id @default(cuid())
+  shopId    String
+  authorId  String
+  orderId   String?
+  rating    Int
+  body      String?
+  createdAt DateTime @default(now())
+
+  shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  author User @relation("ShopReviewer", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, authorId])
+  @@index([shopId, createdAt])
+}
+
+model ShopFavourite {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User @relation("ShopFavourites", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([userId, createdAt])
 }
 
 // ─── Error capture ────────────────────────────────────────────────────────────

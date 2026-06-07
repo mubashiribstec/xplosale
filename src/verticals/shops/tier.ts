@@ -15,6 +15,7 @@ export interface EffectivePlan {
   featuredPlacement: boolean;
   analytics: boolean;
   customBanner: boolean;
+  isPromotion: boolean;
 }
 
 /** Returns the active plan for a shop, defaulting to FREE if no active subscription. */
@@ -30,14 +31,14 @@ export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
   if (!freePlan) throw new Error("Plan table not seeded — run prisma db seed");
 
   const now = new Date();
-  const isPremiumActive =
+  const isPaidActive =
     sub?.status === "ACTIVE" &&
-    sub.planKey === "PREMIUM" &&
+    (sub.planKey === "PREMIUM" || sub.planKey === "PROMOTION") &&
     (sub.currentPeriodEnd == null || sub.currentPeriodEnd > now);
-  if (!isPremiumActive) return freePlan as EffectivePlan;
+  if (!isPaidActive) return { ...freePlan, isPromotion: false } as EffectivePlan;
 
-  const premiumPlan = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
-  return (premiumPlan ?? freePlan) as EffectivePlan;
+  const paidPlan = await prisma.plan.findUnique({ where: { key: sub!.planKey } });
+  return { ...(paidPlan ?? freePlan), isPromotion: sub!.planKey === "PROMOTION" } as EffectivePlan;
 }
 
 /** Returns the effective plan for a user (based on their shops' subscriptions). */
@@ -48,7 +49,7 @@ export async function getEffectivePlanForUser(userId: string): Promise<Effective
       where: {
         shop: { ownerUserId: userId },
         status: "ACTIVE",
-        planKey: "PREMIUM",
+        planKey: { in: ["PREMIUM", "PROMOTION"] },
         OR: [{ currentPeriodEnd: null }, { currentPeriodEnd: { gt: now } }],
       },
       select: { planKey: true },
@@ -58,10 +59,10 @@ export async function getEffectivePlanForUser(userId: string): Promise<Effective
 
   if (!freePlan) throw new Error("Plan table not seeded — run prisma db seed");
 
-  if (!sub) return freePlan as EffectivePlan;
+  if (!sub) return { ...freePlan, isPromotion: false } as EffectivePlan;
 
-  const premiumPlan = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
-  return (premiumPlan ?? freePlan) as EffectivePlan;
+  const paidPlan = await prisma.plan.findUnique({ where: { key: sub.planKey } });
+  return { ...(paidPlan ?? freePlan), isPromotion: sub.planKey === "PROMOTION" } as EffectivePlan;
 }
 
 /** Count shops owned by a user that count against the maxShops limit. */
