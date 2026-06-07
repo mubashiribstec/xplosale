@@ -13,6 +13,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
     "healthcheck": "tsx scripts/healthcheck.ts",
+    "errors:export": "tsx scripts/errors-export.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "docker:dev": "docker compose up",
     "docker:build": "docker build -t xplosale .",
