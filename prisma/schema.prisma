@@ -1233,3 +1233,52 @@ model ProcessedWebhookEvent {
 
   @@index([processedAt])
 }
+
+// ─── Error capture ────────────────────────────────────────────────────────────
+
+enum ErrorSource {
+  CLIENT
+  SERVER
+}
+
+enum ErrorLevel {
+  ERROR
+  WARN
+  DEAD_CLICK
+}
+
+enum ErrorStatus {
+  OPEN
+  RESOLVED
+  IGNORED
+}
+
+model ErrorLog {
+  id              String      @id @default(cuid())
+  fingerprint     String      @unique
+  source          ErrorSource
+  level           ErrorLevel  @default(ERROR)
+  message         String
+  stack           String?
+  route           String?
+  httpMethod      String?
+  httpStatus      Int?
+  requestPath     String?
+  component       String?
+  elementLabel    String?
+  elementSelector String?
+  userRole        String?
+  sessionHash     String?
+  breadcrumbs     Json?
+  userAgent       String?
+  appVersion      String?
+  count           Int         @default(1)
+  firstSeenAt     DateTime    @default(now())
+  lastSeenAt      DateTime    @default(now())
+  status          ErrorStatus @default(OPEN)
+  createdAt       DateTime    @default(now())
+
+  @@index([status, level, lastSeenAt(sort: Desc)])
+  @@index([route])
+  @@index([lastSeenAt(sort: Desc)])
+}

@@ -64,6 +64,13 @@ const envSchema = z.object({
 
   // App URL
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+
+  // Error capture + logging
+  LOG_DIR: z.string().default("./logs"),
+  EXPORT_DIR: z.string().default("./exports"),
+  LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(14),
+  LOG_MAX_DIR_MB: z.coerce.number().int().positive().default(500),
+  ERRORLOG_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;
