@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ShopCard from "@/components/shared/shops/ShopCard";
 import ShopsFilterBar from "@/components/shared/shops/ShopsFilterBar";
+import CategoryGrid from "@/components/shared/shops/CategoryGrid";
 
 export const metadata: Metadata = {
   title: "Shops Directory — Xplosale",
@@ -45,6 +46,19 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
         }
       : {}),
   };
+
+  // Category counts for browse grid (only fetch when no filters applied)
+  const showCategoryGrid = !q && !category && !country && !city && !regionId && page === 1;
+  const categoryCountsRaw = showCategoryGrid
+    ? await prisma.shop.groupBy({
+        by: ["category"],
+        where: { status: "ACTIVE" },
+        _count: { _all: true },
+      })
+    : [];
+  const categoryCounts: Record<string, number> = Object.fromEntries(
+    categoryCountsRaw.map((g) => [g.category, g._count._all])
+  );
 
   const [shops, total] = await Promise.all([
     prisma.shop.findMany({
@@ -92,6 +106,19 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
             {total > 0 ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""}` : "No shops found"} in your search
           </p>
         </div>
+
+        {/* Category browse grid — shown only on the unfiltered landing view */}
+        {showCategoryGrid && (
+          <div style={{ marginBottom: 36 }}>
+            <h2 style={{
+              fontFamily: "var(--body)", fontWeight: 700, fontSize: 16,
+              color: "var(--ink-soft)", margin: "0 0 14px", letterSpacing: ".01em",
+            }}>
+              Browse by Category
+            </h2>
+            <CategoryGrid counts={categoryCounts} />
+          </div>
+        )}
 
         {/* Filters */}
         <div style={{ marginBottom: 28 }}>

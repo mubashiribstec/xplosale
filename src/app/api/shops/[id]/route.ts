@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { isValidCategory, isValidType } from "@/lib/shop-categories";
 
 const updateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -70,6 +71,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
     const { regionId, website, ...rest } = parsed.data;
+    const { category, type } = rest;
+    if (category && !isValidCategory(category)) return err("Invalid category", 422);
+    if (type && category && !isValidType(category, type)) return err("Invalid type for this category", 422);
 
     if (regionId) {
       const region = await prisma.region.findUnique({ where: { id: regionId }, select: { id: true } });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCategoryIcon } from "@/lib/shop-categories";
 
 interface ShopCardProps {
   shop: {
@@ -16,6 +17,7 @@ interface ShopCardProps {
 
 export default function ShopCard({ shop }: ShopCardProps) {
   const boardImg = shop.images[0]?.url;
+  const categoryIcon = getCategoryIcon(shop.category);
   const isPremiumActive =
     shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PREMIUM";
 
@@ -89,7 +91,9 @@ export default function ShopCard({ shop }: ShopCardProps) {
             fontSize: 11, fontWeight: 600, color: "var(--clay)",
             background: "rgba(160,78,55,.08)", padding: "2px 8px",
             borderRadius: 6, alignSelf: "flex-start",
+            display: "inline-flex", alignItems: "center", gap: 4,
           }}>
+            <span style={{ fontSize: 13 }}>{categoryIcon}</span>
             {shop.category}
           </span>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>

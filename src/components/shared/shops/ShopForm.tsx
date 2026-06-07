@@ -3,42 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import GeoCascadeFilter from "./GeoCascadeFilter";
-
-const SHOP_CATEGORIES = [
-  "Clothing & Fashion",
-  "Food & Groceries",
-  "Electronics",
-  "Mobile Phones & Accessories",
-  "Furniture & Home Decor",
-  "Jewellery & Accessories",
-  "Sports & Fitness",
-  "Books & Stationery",
-  "Health & Beauty",
-  "Toys & Games",
-  "Hardware & Tools",
-  "Auto Parts",
-  "Bakery & Confectionery",
-  "Pharmacy & Medical",
-  "Other",
-];
-
-const SHOP_TYPES: Record<string, string[]> = {
-  "Clothing & Fashion": ["Retail Store", "Boutique", "Tailor", "Wholesale"],
-  "Food & Groceries": ["Grocery Store", "Supermarket", "Kiryana Store", "Organic", "Wholesale"],
-  "Electronics": ["Retail", "Wholesale", "Repair & Service"],
-  "Mobile Phones & Accessories": ["Retail", "Repair & Service", "Wholesale"],
-  "Furniture & Home Decor": ["Showroom", "Workshop", "Retail"],
-  "Jewellery & Accessories": ["Jewellery Shop", "Artificial Jewellery", "Gold & Silver"],
-  "Sports & Fitness": ["Sports Shop", "Gym Equipment", "Outdoor & Adventure"],
-  "Books & Stationery": ["Bookshop", "Stationery", "Office Supplies"],
-  "Health & Beauty": ["Salon", "Pharmacy", "Skincare", "Cosmetics"],
-  "Toys & Games": ["Toy Shop", "Hobby Shop", "Games"],
-  "Hardware & Tools": ["Hardware Store", "Tool Rental", "Wholesale"],
-  "Auto Parts": ["Auto Parts Store", "Tyre Shop", "Lubricants"],
-  "Bakery & Confectionery": ["Bakery", "Mithai Shop", "Cake Shop"],
-  "Pharmacy & Medical": ["Pharmacy", "Medical Supplies", "Optical"],
-  "Other": ["General Store", "Other"],
-};
+import { CATEGORIES, getTypesForCategory } from "@/lib/shop-categories";
 
 interface ShopFormProps {
   initialData?: {
@@ -101,7 +66,7 @@ export default function ShopForm({ initialData }: ShopFormProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const availableTypes = category ? (SHOP_TYPES[category] ?? SHOP_TYPES["Other"]) : [];
+  const availableTypes = category ? getTypesForCategory(category) : [];
 
   function handleCategoryChange(cat: string) {
     setCategory(cat);
@@ -189,7 +154,7 @@ export default function ShopForm({ initialData }: ShopFormProps) {
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
           >
             <option value="">Select category…</option>
-            {SHOP_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CATEGORIES.map((c) => <option key={c.label} value={c.label}>{c.icon} {c.label}</option>)}
           </select>
         </label>
 

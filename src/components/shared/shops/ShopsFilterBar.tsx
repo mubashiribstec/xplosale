@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-
-const SHOP_CATEGORIES = [
-  "Clothing & Fashion", "Food & Groceries", "Electronics", "Mobile Phones & Accessories",
-  "Furniture & Home Decor", "Jewellery & Accessories", "Sports & Fitness",
-  "Books & Stationery", "Health & Beauty", "Toys & Games", "Hardware & Tools",
-  "Auto Parts", "Bakery & Confectionery", "Pharmacy & Medical", "Other",
-];
+import { CATEGORIES } from "@/lib/shop-categories";
 
 interface Props {
   initialParams: {
@@ -143,7 +137,7 @@ export default function ShopsFilterBar({ initialParams }: Props) {
           style={selectStyle}
         >
           <option value="">All categories</option>
-          {SHOP_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {CATEGORIES.map((c) => <option key={c.label} value={c.label}>{c.icon} {c.label}</option>)}
         </select>
 
         {/* Country */}

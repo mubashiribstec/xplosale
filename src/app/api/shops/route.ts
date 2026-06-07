@@ -4,6 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePlanForUser, countActiveShopsForUser, generateSlug } from "@/verticals/shops/tier";
+import { isValidCategory, isValidType } from "@/lib/shop-categories";
 
 const createSchema = z.object({
   name: z.string().min(2).max(100),
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
     const { name, category, type, description, addressLine, regionId, website, contactPhone } = parsed.data;
+
+    if (!isValidCategory(category)) return err("Invalid category", 422);
+    if (!isValidType(category, type)) return err("Invalid type for this category", 422);
 
     // Verify region exists
     const region = await prisma.region.findUnique({ where: { id: regionId }, select: { id: true, country: true } });
