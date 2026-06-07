@@ -15,6 +15,10 @@
 /e2e/.auth/
 /e2e/report/
 
+# error capture — logs and exports are VPS-local, never committed
+/logs/
+/exports/
+
 # next.js
 /.next/
 /out/

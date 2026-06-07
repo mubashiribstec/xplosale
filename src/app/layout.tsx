@@ -8,6 +8,8 @@ import { getLocale, getMessages } from "next-intl/server";
 import ServiceWorkerRegistration from "@/components/shared/ServiceWorkerRegistration";
 import SupportButton from "@/components/shared/SupportButton";
 import CookieBanner from "@/components/shared/CookieBanner";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
+import ClientErrorSetup from "@/components/shared/ClientErrorSetup";
 import { RTL_LOCALES } from "@/i18n/request";
 import "./globals.css";
 
@@ -85,10 +87,13 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--body)" }}>
         <NextIntlClientProvider messages={messages}>
           <AuthSessionProvider>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
             <CookieBanner />
             <SupportButton />
             <ServiceWorkerRegistration />
+            <ClientErrorSetup />
           </AuthSessionProvider>
         </NextIntlClientProvider>
       </body>
