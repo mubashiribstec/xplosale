@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import { searchClient } from "@/core/search/postgres";
 import { encodeCursor } from "@/core/search/query";
+import { getSession } from "@/core/auth/session";
 import type { ListingHit } from "@/core/search/postgres";
 import ListingCard from "@/components/shared/ListingCard";
 import MarketplaceShell from "./_components/MarketplaceShell";
@@ -59,7 +61,7 @@ async function resolveRegionId(slug: string | undefined): Promise<string | undef
 }
 
 export default async function MarketplacePage({ searchParams }: PageProps) {
-  const sp = await searchParams;
+  const [sp, session] = await Promise.all([searchParams, getSession()]);
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
 
   // Map URL sort param to search engine sort values
@@ -125,15 +127,46 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     sellerProfile: { agentTier: hit.sellerAgentTier ?? "NONE" },
   }));
 
+  const noFilters = !sp.q && !sp.category && !sp.region && page === 1;
+
   return (
-    <MarketplaceShell
-      categories={CATEGORIES}
-      listings={serialisedListings}
-      total={total}
-      pages={pages}
-      currentPage={page}
-      currentSort={urlSort}
-      searchParams={sp as Record<string, string>}
-    />
+    <>
+      {noFilters && (
+        <div style={{
+          maxWidth: 1200, margin: "0 auto",
+          padding: "16px clamp(16px,4vw,32px) 0",
+        }}>
+          <div style={{
+            background: "linear-gradient(135deg, #f0f9ff, #fff)",
+            border: "1.5px solid #e0f2fe",
+            borderRadius: 16, padding: "16px 20px",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+          }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#0369a1", margin: 0, fontFamily: "var(--body)" }}>
+              📦 Got something to sell? List it for free in minutes.
+            </p>
+            <Link
+              href={session ? "/me/listings/new" : "/login?redirect=/me/listings/new"}
+              style={{
+                padding: "9px 18px", background: "#0369a1", color: "#fff",
+                borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none",
+                fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              Post a listing →
+            </Link>
+          </div>
+        </div>
+      )}
+      <MarketplaceShell
+        categories={CATEGORIES}
+        listings={serialisedListings}
+        total={total}
+        pages={pages}
+        currentPage={page}
+        currentSort={urlSort}
+        searchParams={sp as Record<string, string>}
+      />
+    </>
   );
 }

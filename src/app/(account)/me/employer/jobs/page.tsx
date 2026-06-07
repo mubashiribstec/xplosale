@@ -22,27 +22,55 @@ export default async function EmployerJobsPage() {
 
   if (!employerProfile) redirect("/me/employer");
 
-  const jobs = await prisma.jobPosting.findMany({
-    where: { companyId: employerProfile.companyId },
-    include: {
-      _count: { select: { applications: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const company = employerProfile.company;
+  const isExpired =
+    company.jobPlanKey === "MONTHLY" &&
+    company.jobPlanExpiresAt != null &&
+    company.jobPlanExpiresAt < new Date();
+  const effectivePlanKey = isExpired ? "FREE" : company.jobPlanKey;
+  const effectiveLimit = isExpired ? 3 : company.jobPostLimit;
+
+  const [jobs, activeCount] = await Promise.all([
+    prisma.jobPosting.findMany({
+      where: { companyId: employerProfile.companyId },
+      include: { _count: { select: { applications: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.jobPosting.count({
+      where: {
+        companyId: employerProfile.companyId,
+        status: { in: ["ACTIVE", "DRAFT"] },
+      },
+    }),
+  ]);
+
+  const usagePct = effectiveLimit > 0 ? (activeCount / effectiveLimit) * 100 : 100;
+  const usagePillClass =
+    usagePct >= 100
+      ? "bg-red-100 text-red-700"
+      : usagePct >= 70
+        ? "bg-amber-100 text-amber-700"
+        : "bg-green-100 text-green-700";
+  const atLimit = activeCount >= effectiveLimit && company.jobPostCredits === 0;
 
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <Link href="/me" className="text-sm text-gray-400 hover:text-gray-600">
               Back
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 mt-1">
-              Job Postings — {employerProfile.company.name}
+              Job Postings — {company.name}
             </h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${usagePillClass}`}>
+              {activeCount} / {effectiveLimit} posts used
+              {effectivePlanKey === "MONTHLY" ? " · Monthly" : " · Free"}
+              {company.jobPostCredits > 0 ? ` · +${company.jobPostCredits} credits` : ""}
+            </span>
             <Link
               href={`/employer/${employerProfile.companyId}/pipeline-settings`}
               className="px-3 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:border-gray-300 transition-colors"
@@ -57,6 +85,38 @@ export default async function EmployerJobsPage() {
             </Link>
           </div>
         </div>
+
+        {atLimit && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-3">
+            <p className="font-semibold text-amber-800">
+              You have reached your job posting limit ({effectiveLimit} active posts on the{" "}
+              {effectivePlanKey === "MONTHLY" ? "Monthly" : "Free"} plan).
+            </p>
+            <p className="text-sm text-amber-700">
+              To post more jobs, you can:
+            </p>
+            <ul className="text-sm text-amber-700 list-disc list-inside space-y-1">
+              <li>
+                <strong>Upgrade to Monthly Plan</strong> — 10 active posts/month. Contact us to
+                arrange payment (JazzCash / EasyPaisa / bank transfer).
+              </li>
+              <li>
+                <strong>Buy extra post credits</strong> — each credit allows one additional post
+                beyond your plan limit. Contact admin to purchase.
+              </li>
+              <li>
+                Close or delete an existing posting to free up a slot.
+              </li>
+            </ul>
+            <p className="text-sm text-amber-700">
+              To upgrade, visit your{" "}
+              <Link href="/me/employer" className="underline font-medium">
+                employer profile
+              </Link>{" "}
+              and contact admin via support chat.
+            </p>
+          </div>
+        )}
 
         {jobs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400">

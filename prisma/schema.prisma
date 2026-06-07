@@ -294,6 +294,9 @@ model User {
   banReason          String?
   bannedUntil        DateTime?
   tokenVersion       Int                @default(0)
+  bannedSections             String[]
+  bannedMarketplaceCategories String[]
+  bannedJobCategories         String[]
   username           String?            @unique
   passwordHash       String?
   lastSeenAt         DateTime?
@@ -532,6 +535,10 @@ model Company {
   logoUrl          String?
   regionId         String
   verifiedEmployer Boolean  @default(false)
+  jobPlanKey       String   @default("FREE")
+  jobPostLimit     Int      @default(3)
+  jobPlanExpiresAt DateTime?
+  jobPostCredits   Int      @default(0)
   createdAt        DateTime @default(now())
   searchVector     Unsupported("tsvector")?
 

@@ -121,9 +121,14 @@ export async function POST(req: NextRequest) {
 
     const [sellerProfile, dbUser] = await Promise.all([
       prisma.sellerProfile.findUnique({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true, bannedSections: true, bannedMarketplaceCategories: true } }),
     ]);
     if (!sellerProfile) return err("SellerProfile not found", 404);
+
+    // Section/category ban check
+    if (dbUser?.bannedSections.includes("MARKETPLACE")) return err("You are not allowed to post in the marketplace.", 403);
+    const category = parsed.data.category;
+    if (dbUser?.bannedMarketplaceCategories.includes(category)) return err(`You are not allowed to post in the ${category} category.`, 403);
 
     const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
     const limit = LISTING_LIMITS[tier] ?? 5;

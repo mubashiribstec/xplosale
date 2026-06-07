@@ -85,8 +85,38 @@ export async function POST(req: NextRequest) {
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const employerProfile = await prisma.employerProfile.findUnique({ where: { userId } });
+    const [employerProfile, dbUser] = await Promise.all([
+      prisma.employerProfile.findUnique({ where: { userId }, include: { company: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { bannedSections: true, bannedJobCategories: true } }),
+    ]);
     if (!employerProfile) return err("Employer profile not found", 404);
+
+    // Section/category ban check
+    if (dbUser?.bannedSections.includes("JOBS")) return err("You are not allowed to post jobs.", 403);
+
+    // Job post limit enforcement
+    const company = employerProfile.company;
+    const isExpired = company.jobPlanKey === "MONTHLY" && company.jobPlanExpiresAt && company.jobPlanExpiresAt < new Date();
+    const effectivePlanKey = isExpired ? "FREE" : company.jobPlanKey;
+    const effectiveLimit = isExpired ? 3 : company.jobPostLimit;
+
+    const activeCount = await prisma.jobPosting.count({
+      where: { companyId: company.id, status: { in: ["ACTIVE", "DRAFT"] } },
+    });
+
+    if (activeCount >= effectiveLimit) {
+      if (company.jobPostCredits > 0) {
+        await prisma.company.update({ where: { id: company.id }, data: { jobPostCredits: { decrement: 1 } } });
+      } else {
+        return err(
+          effectivePlanKey === "FREE"
+            ? `Free plan allows ${effectiveLimit} active posts. Upgrade to Monthly plan or contact admin to purchase extra credits.`
+            : `Monthly plan limit (${effectiveLimit} posts) reached. Contact admin to add extra post credits.`,
+          422,
+          { activeCount, limit: effectiveLimit, planKey: effectivePlanKey }
+        );
+      }
+    }
 
     // Resolve regionId — for REMOTE jobs, fall back to the worldwide region
     let regionId = parsed.data.regionId;

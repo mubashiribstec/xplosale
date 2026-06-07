@@ -35,6 +35,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         name: true,
         role: true,
         verificationStatus: true,
+        bannedAt: true,
         createdAt: true,
         sellerProfile: { select: { id: true } },
         networkProfile: { select: { handle: true } },
@@ -51,7 +52,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
       <AdminUsersTable
-        users={users.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))}
+        users={users.map((u) => ({ ...u, bannedAt: u.bannedAt?.toISOString() ?? null, createdAt: u.createdAt.toISOString() }))}
         total={total}
         page={page}
         pages={pages}

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getPublicUrl } from "@/core/adapters/storage";
 import OfferButton from "@/components/shared/OfferButton";
 import EscrowWidget from "@/components/shared/EscrowWidget";
+import MessageSellerButton from "@/components/shared/marketplace/MessageSellerButton";
+import ShareButton from "@/components/shared/ShareButton";
 import { serializeJsonLd } from "@/lib/json-ld";
 
 interface PageProps {
@@ -230,11 +232,17 @@ export default async function ListingDetailPage({ params }: PageProps) {
               )}
 
               {listing.status === "ACTIVE" && userId && !isOwner && (
-                <OfferButton
-                  listingId={listing.id}
-                  sellerName={listing.sellerProfile.user.name ?? "Seller"}
-                  currency={listing.currency}
-                />
+                <>
+                  <OfferButton
+                    listingId={listing.id}
+                    sellerName={listing.sellerProfile.user.name ?? "Seller"}
+                    currency={listing.currency}
+                  />
+                  <MessageSellerButton
+                    listingId={listing.id}
+                    sellerUserId={listing.sellerProfile.user.id}
+                  />
+                </>
               )}
 
               {!userId && listing.status === "ACTIVE" && (
@@ -245,6 +253,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
                   Sign in to make an offer
                 </a>
               )}
+
+              <div className="flex justify-center pt-1">
+                <ShareButton url={`/m/${listing.id}`} title={listing.title} text={`${listing.currency} ${price} — ${listing.title}`} />
+              </div>
 
               {listing.status === "ACTIVE" && (
                 <EscrowWidget

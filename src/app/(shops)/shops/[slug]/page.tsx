@@ -7,6 +7,7 @@ import BuyButton from "@/components/shared/shops/BuyButton";
 import MessageShopButton from "@/components/shared/shops/MessageShopButton";
 import ReportShopButton from "@/components/shared/shops/ReportShopButton";
 import ShopReviews from "@/components/shared/shops/ShopReviews";
+import ShareButton from "@/components/shared/ShareButton";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -170,6 +171,7 @@ export default async function ShopPublicPage({ params }: PageProps) {
                 isAuthenticated={isAuthenticated}
               />
             )}
+            <ShareButton url={`/shops/${shop.slug}`} title={shop.name} text={`Check out ${shop.name} on Xplosale`} />
           </div>
         </div>
 

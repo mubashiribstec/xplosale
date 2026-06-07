@@ -6,11 +6,13 @@ import { AuthSessionProvider } from "@/components/shared/session-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import ServiceWorkerRegistration from "@/components/shared/ServiceWorkerRegistration";
-import SupportButton from "@/components/shared/SupportButton";
+import SupportChatWidget from "@/components/shared/SupportChatWidget";
+import ScrollLoginPrompt from "@/components/shared/ScrollLoginPrompt";
 import CookieBanner from "@/components/shared/CookieBanner";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import ClientErrorSetup from "@/components/shared/ClientErrorSetup";
 import { RTL_LOCALES } from "@/i18n/request";
+import { getSession } from "@/core/auth/session";
 import "./globals.css";
 
 const zodiak = localFont({
@@ -58,10 +60,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const [locale, messages, session, cookieStore] = await Promise.all([
+    getLocale(),
+    getMessages(),
+    getSession(),
+    cookies(),
+  ]);
+  const isAuthenticated = !!session;
   const isRTL = RTL_LOCALES.includes(locale);
-  const cookieStore = await cookies();
   const themeCookie = cookieStore.get("xplosale-theme")?.value;
   const theme = themeCookie === "light" || themeCookie === "dark" ? themeCookie : undefined;
 
@@ -91,7 +97,8 @@ export default async function RootLayout({
               {children}
             </ErrorBoundary>
             <CookieBanner />
-            <SupportButton />
+            <SupportChatWidget />
+            <ScrollLoginPrompt isAuthenticated={isAuthenticated} />
             <ServiceWorkerRegistration />
             <ClientErrorSetup />
           </AuthSessionProvider>

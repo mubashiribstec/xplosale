@@ -13,6 +13,10 @@ const bodySchema = z.object({
   verificationStatus: z.enum(["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"]).optional(),
   hasVerifiedBadge: z.boolean().optional(),
   ban: z.boolean().optional(),
+  bannedUntil: z.string().datetime().optional(),
+  bannedSections: z.array(z.string()).optional(),
+  bannedMarketplaceCategories: z.array(z.string()).optional(),
+  bannedJobCategories: z.array(z.string()).optional(),
   forceLogout: z.boolean().optional(),
   reason: z.string().optional(),
 });
@@ -53,7 +57,21 @@ export async function PATCH(
     }
     if (body.verificationStatus !== undefined) data.verificationStatus = body.verificationStatus;
     if (body.hasVerifiedBadge !== undefined) data.hasVerifiedBadge = body.hasVerifiedBadge;
-    if (body.ban !== undefined) data.bannedAt = body.ban ? new Date() : null;
+    if (body.ban !== undefined) {
+      data.bannedAt = body.ban ? new Date() : null;
+      if (!body.ban) {
+        data.banReason = null;
+        data.bannedUntil = null;
+        data.bannedSections = [];
+        data.bannedMarketplaceCategories = [];
+        data.bannedJobCategories = [];
+      }
+    }
+    if (body.ban && body.bannedUntil) data.bannedUntil = new Date(body.bannedUntil);
+    if (body.ban && body.reason) data.banReason = body.reason;
+    if (body.bannedSections !== undefined) data.bannedSections = body.bannedSections;
+    if (body.bannedMarketplaceCategories !== undefined) data.bannedMarketplaceCategories = body.bannedMarketplaceCategories;
+    if (body.bannedJobCategories !== undefined) data.bannedJobCategories = body.bannedJobCategories;
     if (body.forceLogout) data.tokenVersion = { increment: 1 };
 
     const actions: string[] = [];

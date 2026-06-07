@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSession, getUserId } from "@/core/auth/session";
 import ShopCard from "@/components/shared/shops/ShopCard";
 import ShopsFilterBar from "@/components/shared/shops/ShopsFilterBar";
 import CategoryGrid from "@/components/shared/shops/CategoryGrid";
@@ -17,7 +18,7 @@ interface PageProps {
 }
 
 export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
-  const sp = await searchParams;
+  const [sp, session] = await Promise.all([searchParams, getSession()]);
   const q = sp.q?.trim() ?? "";
   const category = sp.category ?? "";
   const country = sp.country ?? "";
@@ -59,6 +60,12 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
   const categoryCounts: Record<string, number> = Object.fromEntries(
     categoryCountsRaw.map((g) => [g.category, g._count._all])
   );
+
+  const userId = session ? getUserId(session) : null;
+  const userShopCount = userId && showCategoryGrid
+    ? await prisma.shop.count({ where: { ownerUserId: userId, status: { in: ["DRAFT", "PENDING_REVIEW", "ACTIVE"] } } })
+    : 0;
+  const showShopkeeperCta = showCategoryGrid && userShopCount === 0;
 
   const [shops, total] = await Promise.all([
     prisma.shop.findMany({
@@ -121,6 +128,35 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
               Browse by Category
             </h2>
             <CategoryGrid counts={categoryCounts} />
+          </div>
+        )}
+
+        {/* Become a Shopkeeper CTA */}
+        {showShopkeeperCta && (
+          <div style={{
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--clay) 8%, var(--white)), var(--white))",
+            border: "1.5px solid color-mix(in srgb, var(--clay) 20%, var(--line))",
+            borderRadius: 16, padding: "18px 22px", marginBottom: 28,
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+          }}>
+            <div>
+              <p style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 17, color: "var(--ink)", margin: "0 0 4px" }}>
+                🏪 Want to sell on Xplosale?
+              </p>
+              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
+                Set up your shop in minutes. Reach thousands of buyers in your city.
+              </p>
+            </div>
+            <Link
+              href={session ? "/shops/manage/new" : "/login?redirect=/shops/manage/new"}
+              style={{
+                padding: "10px 20px", background: "var(--clay)", color: "var(--white)",
+                borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none",
+                fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              Open a Shop →
+            </Link>
           </div>
         )}
 

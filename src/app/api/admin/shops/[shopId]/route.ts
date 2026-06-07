@@ -53,3 +53,37 @@ export async function POST(req: NextRequest, { params }: Params) {
     return parseError(e);
   }
 }
+
+/** DELETE /api/admin/shops/[shopId] — suspend a shop (preserves order history) */
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    const session = await getSession();
+    if (!session) return err("Unauthorized", 401);
+    if ((session.user as { role?: string }).role !== "ADMIN") return err("Forbidden", 403);
+    const adminId = getUserId(session);
+
+    const { shopId } = await params;
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId },
+      select: { id: true, name: true, _count: { select: { orders: true } } },
+    });
+    if (!shop) return err("Shop not found", 404);
+
+    await prisma.$transaction([
+      prisma.shop.update({ where: { id: shopId }, data: { status: "SUSPENDED" } }),
+      prisma.adminActionLog.create({
+        data: {
+          adminId,
+          action: "SHOP_DELETED",
+          targetType: "Shop",
+          targetId: shopId,
+          reason: `Suspended shop: ${shop.name}`,
+        },
+      }),
+    ]);
+
+    return ok({ suspended: true });
+  } catch (e) {
+    return parseError(e);
+  }
+}
