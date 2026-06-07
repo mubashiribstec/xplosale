@@ -45,7 +45,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         subscription: { select: { planKey: true, status: true } },
         _count:       { select: { products: { where: { isHidden: false } } } },
       },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      orderBy: [
+        { subscription: { planKey: "desc" } }, // PROMOTION → PREMIUM → FREE (alpha desc)
+        { featured: "desc" },
+        { createdAt: "desc" },
+      ],
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
     }),

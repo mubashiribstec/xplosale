@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateRoom, publishMessage } from "@/core/messaging/rooms";
 
 const itemSchema = z.object({
   productId: z.string().cuid(),
@@ -102,6 +103,25 @@ export async function POST(req: NextRequest, { params }: Params) {
       },
       include: { items: true },
     });
+
+    // Fire-and-forget: send a SYSTEM message to the SHOP_INQUIRY chat thread
+    void (async () => {
+      try {
+        const [pA, pB] = [customerId, shop.ownerUserId].sort();
+        const room = await getOrCreateRoom("SHOP_INQUIRY", shopId, pA, pB);
+        const PM: Record<string, string> = { CASH: "Cash", BANK_TRANSFER: "Bank Transfer", JAZZCASH: "JazzCash", EASYPAISA: "EasyPaisa" };
+        const DT: Record<string, string> = { PICKUP: "Pickup", DELIVERY: "Delivery" };
+        const lines = orderItems.map((i) => `• ${i.quantity}× ${i.name} — PKR ${(Number(i.priceSnapshot) * i.quantity).toLocaleString()}`).join("\n");
+        const body = `🛒 New order placed!\n${lines}\nDelivery: ${DT[deliveryType] ?? deliveryType} · Payment: ${PM[paymentMethod] ?? paymentMethod}\nTotal: PKR ${totalAmount.toLocaleString()}\nOrder ID: ${order.id}`;
+        const msg = await prisma.message.create({
+          data: { roomId: room.id, senderId: customerId, body, kind: "SYSTEM" },
+          include: { sender: { select: { id: true, name: true } } },
+        });
+        await publishMessage(room.id, msg);
+      } catch {
+        // Non-fatal — order is created regardless
+      }
+    })();
 
     return ok(order, 201);
   } catch (e) {

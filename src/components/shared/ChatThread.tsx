@@ -12,9 +12,10 @@ interface ChatThreadProps {
   initialMessages: MessageWithSender[];
   currentUserId: string;
   contextType?: string;
+  contextLabel?: string;
 }
 
-export function ChatThread({ roomId, initialMessages, currentUserId, contextType }: ChatThreadProps) {
+export function ChatThread({ roomId, initialMessages, currentUserId, contextType, contextLabel }: ChatThreadProps) {
   const [messages, setMessages] = useState<MessageWithSender[]>(
     [...initialMessages].reverse()
   );
@@ -23,6 +24,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
   const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const isSupport = contextType === "ADMIN_DM";
+  const isShopInquiry = contextType === "SHOP_INQUIRY";
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,6 +106,13 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
 
   return (
     <div className="flex flex-col h-full">
+      {/* SHOP_INQUIRY header */}
+      {isShopInquiry && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 text-center font-medium">
+          🏪 {contextLabel ? `Chat with ${contextLabel}` : "Shop Inquiry"}
+        </div>
+      )}
+      {/* Support header */}
       {isSupport && messages.length === 0 && (
         <div className="mb-4 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-500 text-center">
           Send us a message and our support team will reply as soon as possible.
@@ -117,6 +126,19 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
       <div className="flex-1 overflow-y-auto space-y-2 pb-4">
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUserId;
+          const isSystem = msg.kind === "SYSTEM";
+
+          // System messages render centered without a bubble
+          if (isSystem) {
+            return (
+              <div key={msg.id} className="flex justify-center">
+                <div className="max-w-sm px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-500 whitespace-pre-wrap text-center">
+                  {msg.body}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={msg.id}
