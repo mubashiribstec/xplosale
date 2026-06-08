@@ -13,7 +13,10 @@ export async function POST(
 
     const session = await getSession();
     const userId = session ? getUserId(session) : null;
-    const ip = req.headers.get("x-forwarded-for") ?? "anon";
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "anon";
 
     const rateLimitKey = `listing:view:${listingId}:${userId ?? ip}`;
     const result = await rateLimit(rateLimitKey, 1, 86400);

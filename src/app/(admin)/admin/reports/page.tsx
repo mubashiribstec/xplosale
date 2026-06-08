@@ -8,7 +8,7 @@ const REASON_LABEL: Record<string, string> = {
   SPAM: "Spam",
   FRAUD: "Fraud / Scam",
   MISLEADING: "Misleading Info",
-  INAPPROPRIATE: "Inappropriate Content",
+  PROHIBITED: "Prohibited Item",
   DUPLICATE: "Duplicate Listing",
   OTHER: "Other",
 };

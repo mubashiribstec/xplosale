@@ -41,8 +41,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
-# Uploads directory for local file storage
-RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
+# Uploads + runtime writable directories
+RUN mkdir -p /app/uploads /app/logs /app/exports \
+    && chown nextjs:nodejs /app/uploads /app/logs /app/exports
 
 # Next.js standalone output includes all traced node_modules (incl. prisma)
 COPY --from=builder /app/public ./public

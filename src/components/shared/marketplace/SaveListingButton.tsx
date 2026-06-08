@@ -32,7 +32,7 @@ export default function SaveListingButton({
     }
 
     const nextSaved = !saved;
-    const nextCount = nextSaved ? count + 1 : count - 1;
+    const nextCount = nextSaved ? count + 1 : Math.max(0, count - 1);
 
     // Optimistic update
     setSaved(nextSaved);

@@ -64,6 +64,8 @@ services:
     env_file: .env
     volumes:
       - uploads_data:/app/uploads
+      - logs_data:/app/logs
+      - exports_data:/app/exports
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,5 +108,7 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  logs_data:
+  exports_data:
   certbot_conf:
   certbot_www:

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 const LINKS = [
   { label: "My Profile", href: "/profile" },
+  { label: "Saved Listings", href: "/me/saved-listings" },
   { label: "My Shops", href: "/shops/manage" },
   { label: "Job seeker settings", href: "/me/job-seeker" },
   { label: "Listings", href: "/me/listings" },

@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function GET(
   _req: NextRequest,
@@ -72,26 +73,22 @@ export async function DELETE(
 
     const { listingId } = await params;
 
-    const existing = await prisma.savedListing.findUnique({
-      where: { userId_listingId: { userId, listingId } },
-    });
-
-    if (existing) {
-      await prisma.savedListing.delete({
-        where: { userId_listingId: { userId, listingId } },
-      });
-
-      // Clamp savedCount to 0
-      const listing = await prisma.listing.findUnique({
-        where: { id: listingId },
-        select: { savedCount: true },
-      });
-      if (listing && listing.savedCount > 0) {
-        await prisma.listing.update({
+    try {
+      await prisma.$transaction([
+        prisma.savedListing.delete({
+          where: { userId_listingId: { userId, listingId } },
+        }),
+        prisma.listing.update({
           where: { id: listingId },
           data: { savedCount: { decrement: 1 } },
-        });
+        }),
+      ]);
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        // Already unsaved — idempotent
+        return ok({ saved: false });
       }
+      throw e;
     }
 
     return ok({ saved: false });

@@ -13,6 +13,7 @@ import SaveListingButton from "@/components/shared/marketplace/SaveListingButton
 import ReportListingButton from "@/components/shared/marketplace/ReportListingButton";
 import ListingQA from "@/components/shared/marketplace/ListingQA";
 import SimilarListings from "@/components/shared/marketplace/SimilarListings";
+import ViewTracker from "@/components/shared/marketplace/ViewTracker";
 import { serializeJsonLd } from "@/lib/json-ld";
 
 interface PageProps {
@@ -472,15 +473,3 @@ export default async function ListingDetailPage({ params }: PageProps) {
   );
 }
 
-// Lightweight client island — fires POST /api/listings/[id]/view on mount
-function ViewTracker({ listingId }: { listingId: string }) {
-  // Using a script tag approach to avoid adding a client boundary just for analytics
-  // The actual view tracking is done via the API from the client
-  return (
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `(function(){fetch('/api/listings/${listingId}/view',{method:'POST',credentials:'same-origin'}).catch(()=>{});})();`,
-      }}
-    />
-  );
-}
