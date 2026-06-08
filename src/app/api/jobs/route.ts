@@ -14,6 +14,10 @@ const createSchema = z.object({
   salaryMin: z.number().int().positive().optional(),
   salaryMax: z.number().int().positive().optional(),
   currency: z.string().default("USD"),
+  country: z.string().max(100).optional(),
+  city: z.string().max(100).optional(),
+  postCode: z.string().max(20).optional(),
+  companyAddress: z.string().max(300).optional(),
   requiredSkills: skillsArray,
   niceToHaveSkills: skillsArray,
   requiredKeywords: skillsArray,
@@ -138,11 +142,15 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
 
-    const { regionId: _r, ...restData } = parsed.data;
+    const { regionId: _r, country, city, postCode, companyAddress, ...restData } = parsed.data;
     const job = await prisma.jobPosting.create({
       data: {
         ...restData,
         regionId,
+        ...(country ? { country } : {}),
+        ...(city ? { city } : {}),
+        ...(postCode ? { postCode } : {}),
+        ...(companyAddress ? { companyAddress } : {}),
         companyId: employerProfile.companyId,
         postedByUserId: userId,
         status: "DRAFT",
