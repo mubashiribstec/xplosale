@@ -214,6 +214,7 @@ enum NotificationKind {
   JOB_RECOMMENDED
   INVITE_TO_APPLY
   SAVED_SEARCH_DIGEST
+  PRICE_DROP
 }
 
 enum TestKind {
@@ -271,6 +272,16 @@ enum EmailSendStatus {
 enum EmailSendProvider {
   RESEND
   CONSOLE
+  SMTP
+}
+
+enum ReportReason {
+  SPAM
+  FRAUD
+  MISLEADING
+  PROHIBITED
+  DUPLICATE
+  OTHER
 }
 
 // ─── Core ────────────────────────────────────────────────────────────────────
@@ -340,6 +351,10 @@ model User {
   shopReports             ShopReport[]          @relation("ShopReporter")
   shopReviews             ShopReview[]          @relation("ShopReviewer")
   shopFavourites          ShopFavourite[]       @relation("ShopFavourites")
+  savedListings           SavedListing[]
+  listingReports          ListingReport[]       @relation("ListingReporter")
+  sellerReviewsWritten    SellerReview[]        @relation("SellerReviewAuthor")
+  listingQuestionsAsked   ListingQuestion[]     @relation("QuestionAsker")
 }
 
 model Region {
@@ -435,14 +450,20 @@ model Notification {
 // ─── Marketplace ─────────────────────────────────────────────────────────────
 
 model SellerProfile {
-  id           String    @id @default(cuid())
-  userId       String    @unique
-  agentTier    AgentTier @default(NONE)
-  bio          String?
-  areasServed  Json?
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  agentTier         AgentTier @default(NONE)
+  bio               String?
+  areasServed       Json?
+  sellerRatingAvg   Float     @default(0)
+  sellerRatingCount Int       @default(0)
+  responseRate      Float?
+  lastActiveAt      DateTime?
+  badges            String[]
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings Listing[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings      Listing[]
+  sellerReviews SellerReview[]
 }
 
 model Listing {
@@ -467,18 +488,34 @@ model Listing {
   fbrValuationMin   Decimal?
   fbrValuationMax   Decimal?
   videoUrl          String?
+  condition         String?
+  negotiable        Boolean       @default(true)
+  urgent            Boolean       @default(false)
+  sellerType        String        @default("PRIVATE")
+  deliveryAvailable Boolean       @default(false)
+  deliveryCost      Decimal?
+  viewCount         Int           @default(0)
+  savedCount        Int           @default(0)
+  contactCount      Int           @default(0)
+  renewedAt         DateTime?
+  bumpedAt          DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   searchVector      Unsupported("tsvector")?
 
-  sellerProfile      SellerProfile       @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
-  region             Region              @relation(fields: [regionId], references: [id])
+  sellerProfile      SellerProfile         @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  region             Region                @relation(fields: [regionId], references: [id])
   images             ListingImage[]
   escrowTransactions EscrowTransaction[]
   reviews            ListingReview[]
+  savedBy            SavedListing[]
+  questions          ListingQuestion[]
+  reports            ListingReport[]
+  priceHistory       ListingPriceHistory[]
 
   @@index([status, regionId, createdAt])
   @@index([status, featured])
+  @@index([status, bumpedAt])
 }
 
 model ListingImage {
@@ -521,6 +558,77 @@ model ListingReview {
   author  User    @relation("ReviewAuthor", fields: [authorId], references: [id])
 
   @@unique([listingId, authorId])
+}
+
+model SellerReview {
+  id              String   @id @default(cuid())
+  sellerProfileId String
+  authorId        String
+  rating          Int
+  body            String?  @db.VarChar(1000)
+  transactionRef  String?
+  createdAt       DateTime @default(now())
+
+  sellerProfile SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  author        User          @relation("SellerReviewAuthor", fields: [authorId], references: [id])
+
+  @@unique([sellerProfileId, authorId, transactionRef])
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  savedAt   DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId, savedAt])
+}
+
+model ListingQuestion {
+  id         String    @id @default(cuid())
+  listingId  String
+  askerId    String
+  question   String    @db.VarChar(500)
+  answer     String?   @db.VarChar(1000)
+  answeredAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  asker   User    @relation("QuestionAsker", fields: [askerId], references: [id])
+
+  @@index([listingId, createdAt])
+}
+
+model ListingReport {
+  id         String       @id @default(cuid())
+  listingId  String
+  reporterId String
+  reason     ReportReason
+  details    String?      @db.VarChar(500)
+  resolved   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporter User    @relation("ListingReporter", fields: [reporterId], references: [id])
+
+  @@unique([listingId, reporterId])
+  @@index([resolved, createdAt])
+}
+
+model ListingPriceHistory {
+  id        String   @id @default(cuid())
+  listingId String
+  oldPrice  Decimal
+  newPrice  Decimal
+  changedAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, changedAt])
 }
 
 // ─── Jobs ────────────────────────────────────────────────────────────────────

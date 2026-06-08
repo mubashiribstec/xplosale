@@ -22,6 +22,12 @@ const createSchema = z.object({
   areaUnit: z.string().max(20).optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  condition: z.enum(["NEW", "USED", "REFURBISHED"]).optional(),
+  negotiable: z.boolean().default(true),
+  urgent: z.boolean().default(false),
+  sellerType: z.enum(["PRIVATE", "BUSINESS"]).default("PRIVATE"),
+  deliveryAvailable: z.boolean().default(false),
+  deliveryCost: z.number().nonnegative().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -144,13 +150,14 @@ export async function POST(req: NextRequest) {
       if (usedCount >= limit) return err(`Listing limit (${limit}) reached for ${tier} accounts. Verify your identity to post more.`, 403);
     }
 
-    const { price, ...rest } = parsed.data;
+    const { price, deliveryCost, ...rest } = parsed.data;
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
     const listing = await prisma.listing.create({
       data: {
         ...rest,
         price: new Prisma.Decimal(price),
+        ...(deliveryCost !== undefined ? { deliveryCost: new Prisma.Decimal(deliveryCost) } : {}),
         sellerProfileId: sellerProfile.id,
         status: "DRAFT",
         expiresAt,

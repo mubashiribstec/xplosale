@@ -1,30 +1,31 @@
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import ReportActionsCell from "@/components/shared/ReportActionsCell";
 
 export const dynamic = "force-dynamic";
 
-interface PageProps {
-  searchParams: Promise<{ page?: string }>;
-}
+const REASON_LABEL: Record<string, string> = {
+  SPAM: "Spam",
+  FRAUD: "Fraud / Scam",
+  MISLEADING: "Misleading Info",
+  INAPPROPRIATE: "Inappropriate Content",
+  DUPLICATE: "Duplicate Listing",
+  OTHER: "Other",
+};
 
-const PAGE_SIZE = 40;
-
-export default async function AdminReportsPage({ searchParams }: PageProps) {
-  const { page: pageStr = "1" } = await searchParams;
-  const page = Math.max(1, parseInt(pageStr, 10));
-
-  const [total, logs] = await Promise.all([
-    prisma.adminActionLog.count({ where: { targetType: "report" } }),
-    prisma.adminActionLog.findMany({
-      where: { targetType: "report" },
-      include: { admin: { select: { name: true } } },
+export default async function AdminReportsPage() {
+  const [reports, unresolvedCount] = await Promise.all([
+    prisma.listingReport.findMany({
+      where: { resolved: false },
       orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      take: 50,
+      include: {
+        listing: { select: { id: true, title: true, status: true } },
+        reporter: { select: { id: true, name: true, email: true } },
+      },
     }),
+    prisma.listingReport.count({ where: { resolved: false } }),
   ]);
-
-  const pages = Math.ceil(total / PAGE_SIZE);
 
   // Platform-wide content counts for at-a-glance moderation health
   const [pendingListings, activeListings, pendingPartners, pendingVerifications] = await Promise.all([
@@ -37,8 +38,15 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports & Moderation</h1>
-        <p className="text-sm text-gray-500 mt-1">Platform moderation health and content queue snapshot.</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Listing Reports
+          {unresolvedCount > 0 && (
+            <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-sm font-bold bg-red-100 text-red-700 rounded-full">
+              {unresolvedCount}
+            </span>
+          )}
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">Unresolved user-submitted listing reports.</p>
       </div>
 
       {/* Moderation health */}
@@ -60,6 +68,60 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
         ))}
       </div>
 
+      {/* Unresolved listing reports table */}
+      {reports.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500">
+          No unresolved reports. All clear.
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Listing</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Reason</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Reporter</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {reports.map((report) => (
+                <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 max-w-[200px]">
+                    <Link
+                      href={`/m/${report.listing.id}`}
+                      className="text-blue-600 hover:underline font-medium line-clamp-2 leading-snug"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {report.listing.title}
+                    </Link>
+                    <p className="text-xs text-gray-400 mt-0.5">{report.listing.status.replace("_", " ")}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {REASON_LABEL[report.reason] ?? report.reason}
+                    {report.details && (
+                      <p className="text-xs text-gray-400 mt-0.5 max-w-[160px] line-clamp-2">{report.details}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">
+                    <span className="font-medium">{report.reporter.name ?? "—"}</span>
+                    <p className="text-xs text-gray-400 mt-0.5">{report.reporter.email ?? `ID: ${report.reporter.id.slice(0, 8)}`}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">
+                    {new Date(report.createdAt).toLocaleString("en-PK", { dateStyle: "short", timeStyle: "short" })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <ReportActionsCell reportId={report.id} listingId={report.listing.id} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Moderation quick links */}
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Moderation Queues</h2>
@@ -69,7 +131,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
             { href: "/admin/verifications", label: "Identity Verifications" },
             { href: "/admin/partners", label: "Partner Applications" },
             { href: "/admin/escrow", label: "Disputed Escrow" },
-            { href: "/admin/jobs", label: "Job Moderation" },
+            { href: "/admin/shops/reports", label: "Shop Reports" },
           ].map((link) => (
             <Link
               key={link.href}
@@ -80,62 +142,6 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
             </Link>
           ))}
         </div>
-      </section>
-
-      {/* Report action log */}
-      <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">
-          Report Action Log{" "}
-          <span className="text-sm font-normal text-gray-400">({total})</span>
-        </h2>
-        {logs.length === 0 ? (
-          <p className="text-sm text-gray-400">No report actions logged yet.</p>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Time</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Admin</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Action</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Target</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Reason</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">
-                      {new Date(log.createdAt).toLocaleString("en-PK", { dateStyle: "short", timeStyle: "short" })}
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">{log.admin.name ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-700">{log.action}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{log.targetId.slice(0, 12)}…</td>
-                    <td className="px-4 py-3 text-gray-500 max-w-[200px] truncate">{log.reason ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {pages > 1 && (
-          <div className="flex items-center gap-2 justify-center mt-4">
-            {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-              <Link
-                key={p}
-                href={`?page=${p}`}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  p === page
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {p}
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
     </div>
   );

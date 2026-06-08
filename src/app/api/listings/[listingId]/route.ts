@@ -18,6 +18,13 @@ const patchSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
   regionId: z.string().cuid().optional(),
+  condition: z.enum(["NEW", "USED", "REFURBISHED"]).optional(),
+  negotiable: z.boolean().optional(),
+  urgent: z.boolean().optional(),
+  sellerType: z.enum(["PRIVATE", "BUSINESS"]).optional(),
+  deliveryAvailable: z.boolean().optional(),
+  deliveryCost: z.number().nonnegative().optional(),
+  action: z.enum(["renew", "bump"]).optional(),
 });
 
 export async function GET(
@@ -36,7 +43,11 @@ export async function GET(
           select: {
             id: true,
             agentTier: true,
-            user: { select: { id: true, name: true } },
+            sellerRatingAvg: true,
+            sellerRatingCount: true,
+            responseRate: true,
+            badges: true,
+            user: { select: { id: true, name: true, image: true, verificationStatus: true } },
           },
         },
         reviews: {
@@ -78,25 +89,76 @@ export async function PATCH(
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    const { price, status, ...rest } = parsed.data;
+    const { price, status, action, deliveryCost, ...rest } = parsed.data;
+
+    // Handle special actions
+    if (action === "renew") {
+      if (!["ACTIVE", "EXPIRED"].includes(listing.status)) return err("Only ACTIVE or EXPIRED listings can be renewed", 422);
+      const renewed = await prisma.listing.update({
+        where: { id: listingId },
+        data: { expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), renewedAt: new Date() },
+      });
+      return ok(renewed);
+    }
+
+    if (action === "bump") {
+      if (listing.status !== "ACTIVE") return err("Only ACTIVE listings can be bumped", 422);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      if (listing.bumpedAt && listing.bumpedAt > sevenDaysAgo && !isAdmin) {
+        return err("You can only bump a listing once every 7 days", 429);
+      }
+      const bumped = await prisma.listing.update({ where: { id: listingId }, data: { bumpedAt: new Date() } });
+      return ok(bumped);
+    }
 
     if (status && !isAdmin) {
       const allowed =
         (listing.status === "DRAFT" && status === "PENDING_REVIEW") ||
         (listing.status === "REJECTED" && status === "DRAFT");
-      if (!allowed) {
-        return err("Invalid status transition", 422);
+      if (!allowed) return err("Invalid status transition", 422);
+    }
+
+    // Record price history + notify saved-listing users when price drops
+    const extraOps: Prisma.PrismaPromise<unknown>[] = [];
+    if (price !== undefined && listing.price.toNumber() > price) {
+      const oldPrice = listing.price;
+      extraOps.push(
+        prisma.listingPriceHistory.create({
+          data: { listingId, oldPrice, newPrice: new Prisma.Decimal(price) },
+        })
+      );
+      const savers = await prisma.savedListing.findMany({ where: { listingId }, select: { userId: true } });
+      for (const { userId: saverId } of savers) {
+        extraOps.push(
+          prisma.notification.create({
+            data: {
+              userId: saverId,
+              kind: "PRICE_DROP",
+              payload: {
+                listingId,
+                title: listing.title,
+                oldPrice: oldPrice.toNumber(),
+                newPrice: price,
+                currency: listing.currency,
+              },
+            },
+          })
+        );
       }
     }
 
-    const updated = await prisma.listing.update({
-      where: { id: listingId },
-      data: {
-        ...rest,
-        ...(price !== undefined ? { price: new Prisma.Decimal(price) } : {}),
-        ...(status !== undefined ? { status } : {}),
-      },
-    });
+    const [updated] = await prisma.$transaction([
+      prisma.listing.update({
+        where: { id: listingId },
+        data: {
+          ...rest,
+          ...(price !== undefined ? { price: new Prisma.Decimal(price) } : {}),
+          ...(status !== undefined ? { status } : {}),
+          ...(deliveryCost !== undefined ? { deliveryCost: new Prisma.Decimal(deliveryCost) } : {}),
+        },
+      }),
+      ...extraOps,
+    ]);
 
     return ok(updated);
   } catch (e) {
