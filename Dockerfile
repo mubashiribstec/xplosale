@@ -15,7 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time placeholders — satisfy env validation during `pnpm build`.
-# These ARGs are NOT baked into the image; real values come from .env at runtime.
+# ARG values are NOT baked into image layers; real values come from .env at runtime.
 ARG DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ARG DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ARG UPSTASH_REDIS_URL="redis://localhost:6379"
@@ -51,6 +51,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # messages/*.json use a runtime dynamic import — Next.js file tracer misses them
 COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
+# @prisma/adapter-pg and pg use pnpm symlinks that NFT doesn't dereference;
+# copy them explicitly so the standalone runner can find them at runtime.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
 
 USER nextjs
 EXPOSE 3000

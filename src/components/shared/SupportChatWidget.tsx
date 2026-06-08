@@ -20,6 +20,7 @@ export default function SupportChatWidget() {
 
   const user = session?.user as { id?: string; name?: string; role?: string } | undefined;
 
+  // All hooks must run before any early return (React rules of hooks)
   useEffect(() => {
     if (!open) return;
     function handleKey(e: KeyboardEvent) {

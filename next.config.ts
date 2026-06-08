@@ -5,8 +5,8 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  // pg and its adapter are not statically traceable by NFT; mark them external
-  // so the standalone output includes them from node_modules rather than bundling.
+  // pg and @prisma/adapter-pg use pnpm symlinks that NFT doesn't dereference;
+  // mark them external so the standalone tracer copies them into node_modules.
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   // Type-checking runs separately (tsc --noEmit in CI). Skipping in-build TS
   // pass avoids the memory-heavy duplicate check on small (512MB) hosts.
