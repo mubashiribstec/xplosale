@@ -45,7 +45,7 @@ services:
     build:
       context: .
       target: builder         # full node_modules + prisma CLI available here
-    command: npx prisma db push --accept-data-loss
+    command: sh -c "npx prisma db push --accept-data-loss && npx prisma db seed || echo '[migrate] Seed step failed or already run — continuing'"
     env_file: .env
     depends_on:
       postgres:
