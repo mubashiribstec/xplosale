@@ -54,6 +54,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
 # @prisma/adapter-pg and pg use pnpm symlinks that NFT doesn't dereference;
 # copy them explicitly so the standalone runner can find them at runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/driver-adapter-utils ./node_modules/@prisma/driver-adapter-utils
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
 
 USER nextjs

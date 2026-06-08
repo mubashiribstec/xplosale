@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // pg and @prisma/adapter-pg use pnpm symlinks that NFT doesn't dereference;
   // mark them external so the standalone tracer copies them into node_modules.
-  serverExternalPackages: ["pg", "@prisma/adapter-pg"],
+  serverExternalPackages: ["pg", "@prisma/adapter-pg", "@prisma/driver-adapter-utils"],
   // Type-checking runs separately (tsc --noEmit in CI). Skipping in-build TS
   // pass avoids the memory-heavy duplicate check on small (512MB) hosts.
   typescript: { ignoreBuildErrors: true },
