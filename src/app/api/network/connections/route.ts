@@ -2,9 +2,9 @@ import { type NextRequest } from "next/server";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { findConnection } from "@/core/network/connectionGuard";
 import { createNotification } from "@/core/messaging/rooms";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 const userSelect = {
   select: {
@@ -50,14 +50,31 @@ export async function POST(req: NextRequest) {
 
     if (recipientId === userId) return err("Cannot connect with yourself", 422);
 
-    const existing = await findConnection(userId, recipientId);
-    if (existing && existing.status !== "REJECTED") {
-      return err("Connection already exists", 422);
+    let connection;
+    try {
+      connection = await prisma.$transaction(async (tx) => {
+        const existing = await tx.connection.findFirst({
+          where: {
+            OR: [
+              { requesterId: userId, recipientId },
+              { requesterId: recipientId, recipientId: userId },
+            ],
+          },
+        });
+        if (existing && existing.status !== "REJECTED") {
+          throw Object.assign(new Error("CONNECTION_EXISTS"), { code: "CONNECTION_EXISTS" });
+        }
+        return tx.connection.create({ data: { requesterId: userId, recipientId } });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (e) {
+      if (e instanceof Error && (e as { code?: string }).code === "CONNECTION_EXISTS") {
+        return err("Connection already exists", 422);
+      }
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return err("Connection already exists", 422);
+      }
+      throw e;
     }
-
-    const connection = await prisma.connection.create({
-      data: { requesterId: userId, recipientId },
-    });
 
     await createNotification(recipientId, "CONNECTION_REQ", {
       requesterId: userId,

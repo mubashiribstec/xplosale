@@ -24,13 +24,13 @@ export async function POST(
 
     const [jobSeekerId_profile, dbUser] = await Promise.all([
       prisma.jobSeekerProfile.findUnique({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { verificationStatus: true, isPartner: true, role: true, hasVerifiedBadge: true } }),
     ]);
     if (!jobSeekerId_profile) return err("Create a job seeker profile first", 422);
 
     if (!jobSeekerId_profile.resumeUrl) return err("Upload a resume first", 422);
 
-    const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
+    const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED", role: dbUser?.role, hasVerifiedBadge: dbUser?.hasVerifiedBadge ?? false });
     if (tier === "BASIC") {
       const dayStart = new Date();
       dayStart.setHours(0, 0, 0, 0);
@@ -56,7 +56,7 @@ export async function POST(
       where: { jobPostingId_jobSeekerId: { jobPostingId: jobId, jobSeekerId: jobSeekerId_profile.id } },
       select: { status: true },
     });
-    if (existingApplication && ["SHORTLISTED", "INTERVIEWED", "OFFERED", "HIRED"].includes(existingApplication.status)) {
+    if (existingApplication && ["SHORTLISTED", "HIRED"].includes(existingApplication.status)) {
       return err("Your application has already progressed and cannot be re-submitted", 409);
     }
 

@@ -14,17 +14,17 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env: satisfy validation (min-length, URL format).
-# Real values come from .env at runtime via docker-compose env_file.
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV UPSTASH_REDIS_URL="redis://localhost:6379"
-ENV NEXTAUTH_SECRET="build-time-placeholder-secret-xxxxxxxxxxxxxxxx"
-ENV NEXTAUTH_URL="http://localhost:3000"
-ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
-ENV CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
-ENV STORAGE_MODE="local"
-ENV NEXT_PUBLIC_STORAGE_MODE="local"
+# Build-time placeholders — satisfy env validation during `pnpm build`.
+# These ARGs are NOT baked into the image; real values come from .env at runtime.
+ARG DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG UPSTASH_REDIS_URL="redis://localhost:6379"
+ARG NEXTAUTH_SECRET="build-time-placeholder-secret-xxxxxxxxxxxxxxxx"
+ARG NEXTAUTH_URL="http://localhost:3000"
+ARG NEXT_PUBLIC_APP_URL="http://localhost:3000"
+ARG CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
+ARG STORAGE_MODE="local"
+ARG NEXT_PUBLIC_STORAGE_MODE="local"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate prisma client now that schema.prisma is available, then build

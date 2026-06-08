@@ -44,15 +44,15 @@ class ResendEmailClient implements EmailClient {
       });
 
       if (!res.ok) {
-        const err = await res.text();
-        console.error("[EmailClient/Resend] send failed:", err);
+        const errText = await res.text();
+        process.stderr.write(`[EmailClient/Resend] send failed: ${errText}\n`);
         return { status: "FAILED", provider: "RESEND" };
       }
 
       const data = (await res.json()) as { id?: string };
       return { status: "SENT", provider: "RESEND", messageId: data.id };
     } catch (e) {
-      console.error("[EmailClient/Resend] error:", e);
+      process.stderr.write(`[EmailClient/Resend] error: ${String(e)}\n`);
       return { status: "FAILED", provider: "RESEND" };
     }
   }
@@ -60,11 +60,9 @@ class ResendEmailClient implements EmailClient {
 
 class ConsoleEmailClient implements EmailClient {
   async send(input: EmailInput): Promise<EmailResult> {
-    console.log("[EmailClient/Console] mock send:", {
-      to: input.to,
-      subject: input.subject,
-      html: input.html.slice(0, 100) + "…",
-    });
+    process.stdout.write(
+      `[EmailClient/Console] mock send: to=${input.to} subject=${input.subject}\n`
+    );
     return { status: "MOCKED", provider: "CONSOLE" };
   }
 }
