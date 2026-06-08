@@ -19,6 +19,16 @@ export default function SupportChatWidget() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user as { id?: string; name?: string; role?: string } | undefined;
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
   if (!user || user.role === "ADMIN") return null;
 
   async function openWidget() {
@@ -46,15 +56,6 @@ export default function SupportChatWidget() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open]);
 
   return (
     <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
