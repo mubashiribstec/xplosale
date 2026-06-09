@@ -31,7 +31,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN pnpm build
 
-# ── Stage 3: production runner (lean — standalone output only) ────────────────
+# ── Stage 3: production runner ────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -41,21 +41,21 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
-# Uploads + runtime writable directories
+# Create runtime-writable directories and give nextjs user ownership of /app
+# so that next start can write .next/cache entries at runtime.
 RUN mkdir -p /app/uploads /app/logs /app/exports \
-    && chown nextjs:nodejs /app/uploads /app/logs /app/exports
+    && chown -R nextjs:nodejs /app
 
-# Next.js standalone output includes all traced node_modules (incl. prisma)
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy built output and full node_modules (non-standalone: all deps stay in node_modules)
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # messages/*.json use a runtime dynamic import — Next.js file tracer misses them
 COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
-# @prisma/adapter-pg and pg use pnpm symlinks that NFT doesn't dereference;
-# copy them explicitly so the standalone runner can find them at runtime.
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/adapter-pg ./node_modules/@prisma/adapter-pg
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/driver-adapter-utils ./node_modules/@prisma/driver-adapter-utils
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
 
 USER nextjs
 EXPOSE 3000
@@ -65,4 +65,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget -qO- http://localhost:3000/api/healthcheck || exit 1
 
-CMD ["node", "server.js"]
+CMD ["npx", "next", "start"]
