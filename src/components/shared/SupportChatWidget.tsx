@@ -19,7 +19,6 @@ export default function SupportChatWidget() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user as { id?: string; name?: string; role?: string } | undefined;
-  if (!user || user.role === "ADMIN") return null;
 
   async function openWidget() {
     setOpen(true);
@@ -36,9 +35,9 @@ export default function SupportChatWidget() {
       const rid = json.data!.roomId!;
       setRoomId(rid);
       const msgRes = await fetch(`/api/chat/rooms/${rid}/messages`);
-      const msgJson = (await msgRes.json()) as { ok: boolean; data?: { messages: MessageWithSender[] } };
+      const msgJson = (await msgRes.json()) as { ok: boolean; data?: MessageWithSender[] };
       if (msgJson.ok && msgJson.data) {
-        setMessages([...msgJson.data.messages].reverse());
+        setMessages([...msgJson.data].reverse());
       }
     } catch {
       setError("Network error. Please try again.");
@@ -55,6 +54,8 @@ export default function SupportChatWidget() {
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
+
+  if (!user || user.role === "ADMIN") return null;
 
   return (
     <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
