@@ -601,7 +601,11 @@ export default function MarketplaceShell({
                   margin: 0,
                 }}
               >
-                Try adjusting your filters or search terms.
+                Try adjusting your filters or search terms, or{" "}
+                <Link href="/m" style={{ color: "var(--clay)", textDecoration: "none", fontWeight: 600 }}>
+                  clear all
+                </Link>
+                .
               </p>
             </div>
           ) : (

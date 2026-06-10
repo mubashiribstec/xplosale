@@ -123,7 +123,27 @@ export function NotificationBell() {
                 }`}
                 onClick={() => { if (!n.readAt) void markOneRead(n.id); }}
               >
-                <p className="text-sm text-gray-800 font-medium">{n.kind.replace(/_/g, " ")}</p>
+                {n.kind === "ADMIN_BROADCAST" ? (
+                  <>
+                    <p className="text-sm text-gray-800 font-medium">
+                      {(n.payload as { title?: string }).title ?? "Announcement"}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
+                      {(n.payload as { body?: string }).body ?? ""}
+                    </p>
+                    {(n.payload as { linkUrl?: string }).linkUrl && (
+                      <a
+                        href={(n.payload as { linkUrl: string }).linkUrl}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-blue-600 hover:underline mt-0.5 inline-block"
+                      >
+                        View
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-800 font-medium">{n.kind.replace(/_/g, " ")}</p>
+                )}
                 <p className="text-xs text-gray-500 mt-0.5">
                   {new Date(n.createdAt).toLocaleString()}
                 </p>

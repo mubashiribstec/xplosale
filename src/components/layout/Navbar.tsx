@@ -160,6 +160,10 @@ export default function Navbar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   const user = session?.user as { name?: string; image?: string; role?: string } | undefined;
 
   return (

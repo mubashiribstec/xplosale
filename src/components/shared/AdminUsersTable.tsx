@@ -66,6 +66,10 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
   const [saving, setSaving] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [banModal, setBanModal] = useState<BanModalState | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkBanModal, setBulkBanModal] = useState<{ reason: string; duration: number; loading: boolean; error: string } | null>(null);
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -172,8 +176,80 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
     return arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item];
   }
 
+  const selectableUsers = users.filter((u) => u.role !== "ADMIN");
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelected((prev) =>
+      selectableUsers.length > 0 && selectableUsers.every((u) => prev.has(u.id))
+        ? new Set()
+        : new Set(selectableUsers.map((u) => u.id))
+    );
+  }
+
+  async function bulkUnban() {
+    const userIds = Array.from(selected);
+    if (userIds.length === 0) return;
+    setBulkLoading(true);
+    setBulkError(null);
+    try {
+      const res = await fetch("/api/admin/users/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds, action: "unban" }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (json.ok) {
+        setSelected(new Set());
+        router.refresh();
+      } else {
+        setBulkError(json.error ?? "Failed");
+      }
+    } catch {
+      setBulkError("Network error");
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function submitBulkBan() {
+    if (!bulkBanModal || !bulkBanModal.reason.trim()) {
+      setBulkBanModal((p) => p ? { ...p, error: "Reason is required." } : null);
+      return;
+    }
+    const userIds = Array.from(selected);
+    setBulkBanModal((p) => p ? { ...p, loading: true, error: "" } : null);
+    const bannedUntil = bulkBanModal.duration > 0
+      ? new Date(Date.now() + bulkBanModal.duration * 60 * 60 * 1000).toISOString()
+      : undefined;
+    try {
+      const res = await fetch("/api/admin/users/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds, action: "ban", reason: bulkBanModal.reason, bannedUntil }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (json.ok) {
+        setBulkBanModal(null);
+        setSelected(new Set());
+        router.refresh();
+      } else {
+        setBulkBanModal((p) => p ? { ...p, loading: false, error: json.error ?? "Failed" } : null);
+      }
+    } catch {
+      setBulkBanModal((p) => p ? { ...p, loading: false, error: "Network error" } : null);
+    }
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-16">
       {/* Ban modal */}
       {banModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -299,6 +375,71 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
         </div>
       )}
 
+      {/* Bulk ban modal */}
+      {bulkBanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-900">Ban {selected.size} user{selected.size !== 1 ? "s" : ""}</h2>
+              <button onClick={() => setBulkBanModal(null)} className="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Reason (required)</label>
+              <textarea
+                value={bulkBanModal.reason}
+                onChange={(e) => setBulkBanModal((p) => p ? { ...p, reason: e.target.value } : null)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
+                rows={2}
+                placeholder="Explain the reason for this ban…"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Duration</label>
+              <div className="flex flex-wrap gap-2">
+                {DURATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setBulkBanModal((p) => p ? { ...p, duration: opt.hours } : null)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      bulkBanModal.duration === opt.hours
+                        ? "bg-red-600 text-white border-red-600"
+                        : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {bulkBanModal.error && (
+              <p className="text-xs text-red-600">{bulkBanModal.error}</p>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setBulkBanModal(null)}
+                className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitBulkBan()}
+                disabled={bulkBanModal.loading}
+                className="flex-1 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkBanModal.loading ? "Banning…" : `Ban ${selected.size} User${selected.size !== 1 ? "s" : ""}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3 items-center">
         <input
           type="search"
@@ -335,6 +476,14 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 w-8">
+                <input
+                  type="checkbox"
+                  checked={selectableUsers.length > 0 && selectableUsers.every((u) => selected.has(u.id))}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all users"
+                />
+              </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Phone</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
@@ -346,13 +495,23 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
           <tbody className="divide-y divide-gray-100">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">No users found.</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">No users found.</td>
               </tr>
             ) : (
               users.map((user) => {
                 const isBanned = !!user.bannedAt;
                 return (
                   <tr key={user.id} className={`hover:bg-gray-50 transition-colors ${isBanned ? "bg-red-50/40" : ""}`}>
+                    <td className="px-4 py-3">
+                      {user.role !== "ADMIN" && (
+                        <input
+                          type="checkbox"
+                          checked={selected.has(user.id)}
+                          onChange={() => toggleSelect(user.id)}
+                          aria-label={`Select ${user.name ?? "user"}`}
+                        />
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {user.name ?? "—"}
                       {user.networkProfile && (
@@ -443,6 +602,37 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
               {p}
             </Link>
           ))}
+        </div>
+      )}
+
+      {selected.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-xl px-4 py-3 flex items-center gap-3 flex-wrap justify-center">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          {bulkError && <span className="text-xs text-red-400">{bulkError}</span>}
+          <button
+            type="button"
+            onClick={() => { setBulkBanModal({ reason: "", duration: 168, loading: false, error: "" }); setBulkError(null); }}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            Ban Selected
+          </button>
+          <button
+            type="button"
+            onClick={() => void bulkUnban()}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {bulkLoading ? "Working…" : "Unban Selected"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            disabled={bulkLoading}
+            className="px-3 py-1.5 border border-gray-600 text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Clear
+          </button>
         </div>
       )}
     </div>

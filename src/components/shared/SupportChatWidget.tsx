@@ -47,9 +47,9 @@ export default function SupportChatWidget() {
       const rid = json.data!.roomId!;
       setRoomId(rid);
       const msgRes = await fetch(`/api/chat/rooms/${rid}/messages`);
-      const msgJson = (await msgRes.json()) as { ok: boolean; data?: { messages: MessageWithSender[] } };
+      const msgJson = (await msgRes.json()) as { ok: boolean; data?: MessageWithSender[] };
       if (msgJson.ok && msgJson.data) {
-        setMessages([...msgJson.data.messages].reverse());
+        setMessages([...msgJson.data].reverse());
       }
     } catch {
       setError("Network error. Please try again.");

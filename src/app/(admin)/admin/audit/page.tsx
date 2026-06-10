@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 interface PageProps {
-  searchParams: Promise<{ adminId?: string; targetType?: string; page?: string }>;
+  searchParams: Promise<{ adminId?: string; targetType?: string; from?: string; to?: string; page?: string }>;
 }
 
 const TARGET_TYPES = ["user", "listing", "verification", "job", "company"];
@@ -11,14 +11,21 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
   const {
     adminId = "",
     targetType = "",
+    from = "",
+    to = "",
     page: pageStr = "1",
   } = await searchParams;
   const page = Math.max(1, parseInt(pageStr, 10));
   const limit = 50;
 
-  const where: { adminId?: string; targetType?: string } = {};
+  const where: { adminId?: string; targetType?: string; createdAt?: { gte?: Date; lte?: Date } } = {};
   if (adminId) where.adminId = adminId;
   if (targetType) where.targetType = targetType;
+  if (from || to) {
+    where.createdAt = {};
+    if (from) where.createdAt.gte = new Date(`${from}T00:00:00.000Z`);
+    if (to) where.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
+  }
 
   const [total, logs, admins] = await Promise.all([
     prisma.adminActionLog.count({ where }),
@@ -42,67 +49,106 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
     const params = new URLSearchParams({
       ...(adminId ? { adminId } : {}),
       ...(targetType ? { targetType } : {}),
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
       page: "1",
       ...overrides,
     });
     return `?${params.toString()}`;
   }
 
+  const exportHref = `/api/admin/audit/export?${new URLSearchParams({
+    ...(adminId ? { adminId } : {}),
+    ...(targetType ? { targetType } : {}),
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+  }).toString()}`;
+
+  const hasFilters = !!(adminId || targetType || from || to);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
-
-      <div className="flex flex-wrap gap-3 items-center">
-        <select
-          defaultValue={adminId}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
+        <a
+          href={exportHref}
+          className="px-3 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors"
         >
-          <option value="">All admins</option>
-          {admins.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+          Export CSV
+        </a>
+      </div>
 
-        <select
-          defaultValue={targetType}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All types</option>
-          {TARGET_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex flex-wrap gap-2 text-sm">
-          {admins.map((a) => (
-            <Link
-              key={a.id}
-              href={buildHref({ adminId: a.id })}
-              className={`px-2 py-1 rounded border text-xs transition-colors ${
-                adminId === a.id
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {a.name}
-            </Link>
-          ))}
-          {adminId && (
-            <Link
-              href={buildHref({ adminId: "" })}
-              className="px-2 py-1 rounded border border-gray-300 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
-            >
-              Clear
-            </Link>
-          )}
+      <form method="GET" className="flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Admin</label>
+          <select
+            name="adminId"
+            defaultValue={adminId}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All admins</option>
+            {admins.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <span className="text-sm text-gray-500 ml-auto">{total} entries</span>
-      </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+          <select
+            name="targetType"
+            defaultValue={targetType}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All types</option>
+            {TARGET_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
+          <input
+            type="date"
+            name="from"
+            defaultValue={from}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
+          <input
+            type="date"
+            name="to"
+            defaultValue={to}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Filter
+        </button>
+
+        {hasFilters && (
+          <Link
+            href="/admin/audit"
+            className="px-4 py-2 border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Clear
+          </Link>
+        )}
+
+        <span className="text-sm text-gray-500 ml-auto self-center">{total} entries</span>
+      </form>
 
       <div className="flex flex-wrap gap-2">
         {TARGET_TYPES.map((t) => (
