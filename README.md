@@ -1,17 +1,40 @@
 # Xplosale
 
-Pakistan's trust-first multi-vertical marketplace — real estate listings, jobs, and professional networking.
+Pakistan's trust-first multi-vertical marketplace — real estate listings, jobs, shops, and professional networking.
+
+## About
+
+Xplosale is a multi-vertical platform built around verified, trustworthy
+transactions:
+
+- **Marketplace** (`/m`) — property, vehicle, and goods listings with
+  escrow-protected payments and FBR valuation guidance.
+- **Jobs** (`/jobs`) — job postings, an ATS-style application/hiring
+  pipeline, and company profiles for employers.
+- **Shops** (`/shops`) — storefronts for partners and sellers to list
+  products and manage orders.
+- **Network** (`/n`) — professional profiles, feed, connections, and
+  endorsements.
+
+Trust and safety features run across all verticals: CNIC-based identity
+verification, an escrow flow for marketplace transactions, a partner
+program for verified businesses, and an admin moderation suite (listing
+review queue, user/partner management, audit log, reports, and bulk
+actions).
 
 ## Verticals
 
 - **Marketplace** `/m` — property listings with FBR valuation, offer flow, escrow
 - **Jobs** `/jobs` — job postings, applications, company profiles
+- **Shops** `/shops` — partner/seller storefronts, products, and orders
 - **Network** `/n` — professional profiles, feed, connections, endorsements
 
 ## Stack
 
 - Next.js 16 (App Router, standalone output)
-- Prisma 7 + PostgreSQL
+- Prisma 7 + PostgreSQL via the `@prisma/adapter-pg` driver adapter
+  (`src/lib/prisma.ts`) — `DATABASE_URL`/`DIRECT_URL` must be standard
+  `postgresql://` connection strings
 - NextAuth v5 (phone OTP)
 - Upstash Redis (rate limiting, pub/sub)
 - Supabase S3 (object storage) or local filesystem
@@ -45,6 +68,12 @@ pnpm prisma:seed
 # 5. Start dev server
 pnpm dev
 ```
+
+The bundled `postgres` service in `docker-compose.yml` is configured via
+`POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` (defaults:
+`xplosale` / `xplosale2024` / `xplosale`, see `.env.example`). If you
+override these, update `DATABASE_URL`/`DIRECT_URL` to match
+(`postgresql://<user>:<password>@postgres:5432/<db>`).
 
 ### Environment
 
