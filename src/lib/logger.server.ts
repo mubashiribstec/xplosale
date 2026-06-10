@@ -61,9 +61,16 @@ export async function initLogger(): Promise<pino.Logger> {
   // Schedule daily eviction (runs while the process is alive)
   setInterval(evictOldLogs, 24 * 60 * 60 * 1000).unref();
 
-  // pino-roll creates a daily-rotating write stream
-  const { roll } = await import("pino-roll");
-  const fileStream = await roll(join(LOG_DIR, "errors-{date}.jsonl"), {
+  // pino-roll creates a daily-rotating write stream (CJS module, exported as `default` via dynamic import)
+  type RollFn = (options: {
+    file: string;
+    frequency?: string;
+    mkdir?: boolean;
+    size?: string;
+  }) => Promise<NodeJS.WritableStream>;
+  const { default: roll } = (await import("pino-roll")) as unknown as { default: RollFn };
+  const fileStream = await roll({
+    file: join(LOG_DIR, "errors-{date}.jsonl"),
     frequency: "daily",
     mkdir: true,
     // 50 MB per file — total dir capped separately

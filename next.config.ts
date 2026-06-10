@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   // Type-checking runs separately (tsc --noEmit in CI). Skipping in-build TS
   // pass avoids the memory-heavy duplicate check on small (512MB) hosts.
   typescript: { ignoreBuildErrors: true },
+  // Prisma's @prisma/adapter-pg pulls in @prisma/driver-adapter-utils and pg
+  // as transitive deps; the standalone-output file tracer can miss them,
+  // so exclude them from bundling/tracing and rely on node_modules at runtime.
+  serverExternalPackages: ["pg", "@prisma/adapter-pg", "@prisma/driver-adapter-utils"],
   images: {
     formats: ["image/webp"],
     remotePatterns: [
