@@ -92,7 +92,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--body)" }}>
         <NextIntlClientProvider messages={messages}>
-          <AuthSessionProvider>
+          <AuthSessionProvider session={session}>
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
