@@ -301,6 +301,7 @@ model User {
   docType            IdentityDocType?
   isPartner          Boolean            @default(false)
   partnerType        PartnerType?
+  partnerSuspendedAt DateTime?
   bannedAt           DateTime?
   banReason          String?
   bannedUntil        DateTime?

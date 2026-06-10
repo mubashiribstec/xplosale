@@ -18,6 +18,7 @@ const navLinks = [
   { href: "/admin/security", label: "Security" },
   { href: "/admin/reports", label: "Reports" },
   { href: "/admin/audit",  label: "Audit Log" },
+  { href: "/admin/notifications", label: "Announcements" },
   { href: "/admin/errors", label: "Errors" },
   { href: "/admin/companies", label: "Companies" },
   { href: "/admin/tests", label: "Tests" },
