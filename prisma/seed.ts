@@ -136,31 +136,36 @@ async function main() {
     },
   ];
 
-  for (const l of listingData) {
-    await prisma.listing.create({
-      data: {
-        sellerProfileId: sellerProfile.id,
-        category: l.category,
-        title: l.title,
-        description: l.description,
-        price: l.price,
-        currency: "PKR",
-        regionId: createdRegions[l.regionSlug],
-        lat: l.lat,
-        lng: l.lng,
-        status: "ACTIVE",
-        propertyType: l.propertyType,
-        beds: (l as { beds?: number }).beds,
-        baths: (l as { baths?: number }).baths,
-        areaValue: l.areaValue,
-        areaUnit: l.areaUnit,
-        fbrValuationMin: l.price * 0.85,
-        fbrValuationMax: l.price * 1.15,
-        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-      },
-    });
+  const existingListingCount = await prisma.listing.count({ where: { sellerProfileId: sellerProfile.id } });
+  if (existingListingCount === 0) {
+    for (const l of listingData) {
+      await prisma.listing.create({
+        data: {
+          sellerProfileId: sellerProfile.id,
+          category: l.category,
+          title: l.title,
+          description: l.description,
+          price: l.price,
+          currency: "PKR",
+          regionId: createdRegions[l.regionSlug],
+          lat: l.lat,
+          lng: l.lng,
+          status: "ACTIVE",
+          propertyType: l.propertyType,
+          beds: (l as { beds?: number }).beds,
+          baths: (l as { baths?: number }).baths,
+          areaValue: l.areaValue,
+          areaUnit: l.areaUnit,
+          fbrValuationMin: l.price * 0.85,
+          fbrValuationMax: l.price * 1.15,
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+    console.log(`Created 4 listings`);
+  } else {
+    console.log(`Skipped listings — already seeded`);
   }
-  console.log(`Created 4 listings`);
 
   // Verified employer + company + job postings
   const employerUser = await prisma.user.upsert({
@@ -176,17 +181,20 @@ async function main() {
     },
   });
 
-  const company = await prisma.company.create({
-    data: {
-      ownerId: employerUser.id,
-      name: "TechPakistan Pvt. Ltd.",
-      industry: "Technology",
-      size: "50-200",
-      websiteUrl: "https://techpakistan.example",
-      regionId: createdRegions["lahore-cantt"],
-      verifiedEmployer: true,
-    },
-  });
+  let company = await prisma.company.findFirst({ where: { ownerId: employerUser.id } });
+  if (!company) {
+    company = await prisma.company.create({
+      data: {
+        ownerId: employerUser.id,
+        name: "TechPakistan Pvt. Ltd.",
+        industry: "Technology",
+        size: "50-200",
+        websiteUrl: "https://techpakistan.example",
+        regionId: createdRegions["lahore-cantt"],
+        verifiedEmployer: true,
+      },
+    });
+  }
 
   await prisma.employerProfile.upsert({
     where: { userId: employerUser.id },
@@ -198,36 +206,39 @@ async function main() {
     },
   });
 
-  await prisma.jobPosting.createMany({
-    data: [
-      {
-        companyId: company.id,
-        postedByUserId: employerUser.id,
-        title: "Senior Full-Stack Engineer",
-        description: "We are looking for a senior engineer with 5+ years of experience in Node.js and React.",
-        regionId: createdRegions["lahore-cantt"],
-        remoteType: "HYBRID",
-        salaryMin: 200000,
-        salaryMax: 350000,
-        currency: "PKR",
-        status: "ACTIVE",
-        expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      },
-      {
-        companyId: company.id,
-        postedByUserId: employerUser.id,
-        title: "UI/UX Designer",
-        description: "Creative designer to lead product design. Figma expert, portfolio required.",
-        regionId: createdRegions["lahore-cantt"],
-        remoteType: "ONSITE",
-        salaryMin: 120000,
-        salaryMax: 200000,
-        currency: "PKR",
-        status: "ACTIVE",
-        expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      },
-    ],
-  });
+  const existingJobCount = await prisma.jobPosting.count({ where: { companyId: company.id } });
+  if (existingJobCount === 0) {
+    await prisma.jobPosting.createMany({
+      data: [
+        {
+          companyId: company.id,
+          postedByUserId: employerUser.id,
+          title: "Senior Full-Stack Engineer",
+          description: "We are looking for a senior engineer with 5+ years of experience in Node.js and React.",
+          regionId: createdRegions["lahore-cantt"],
+          remoteType: "HYBRID",
+          salaryMin: 200000,
+          salaryMax: 350000,
+          currency: "PKR",
+          status: "ACTIVE",
+          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        },
+        {
+          companyId: company.id,
+          postedByUserId: employerUser.id,
+          title: "UI/UX Designer",
+          description: "Creative designer to lead product design. Figma expert, portfolio required.",
+          regionId: createdRegions["lahore-cantt"],
+          remoteType: "ONSITE",
+          salaryMin: 120000,
+          salaryMax: 200000,
+          currency: "PKR",
+          status: "ACTIVE",
+          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        },
+      ],
+    });
+  }
   console.log(`Created employer + company + 2 job postings`);
 
   // Verified network profile
@@ -260,18 +271,21 @@ async function main() {
   });
 
   // 2 posts
-  await prisma.post.createMany({
-    data: [
-      {
-        authorProfileId: networkProfile.id,
-        body: "Excited to join Xplosale as a verified professional! Pakistan's tech scene is growing fast",
-      },
-      {
-        authorProfileId: networkProfile.id,
-        body: "Great talk at LUMS today on building scalable APIs. Key takeaway: measure before optimizing.",
-      },
-    ],
-  });
+  const existingPostCount = await prisma.post.count({ where: { authorProfileId: networkProfile.id } });
+  if (existingPostCount === 0) {
+    await prisma.post.createMany({
+      data: [
+        {
+          authorProfileId: networkProfile.id,
+          body: "Excited to join Xplosale as a verified professional! Pakistan's tech scene is growing fast",
+        },
+        {
+          authorProfileId: networkProfile.id,
+          body: "Great talk at LUMS today on building scalable APIs. Key takeaway: measure before optimizing.",
+        },
+      ],
+    });
+  }
 
   // 5 connection users
   const connectionNames = ["Aisha Malik", "Usman Tariq", "Fatima Noor", "Hamza Shah", "Zainab Qureshi"];

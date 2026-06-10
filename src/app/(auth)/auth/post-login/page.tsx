@@ -10,5 +10,5 @@ export default async function PostLoginPage() {
   const role = (session.user as { role?: string } | undefined)?.role;
   if (role === "ADMIN") redirect("/admin");
   if (role === "PARTNER") redirect("/partner");
-  redirect("/profile");
+  redirect("/me");
 }

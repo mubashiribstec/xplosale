@@ -14,24 +14,24 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env: satisfy validation (min-length, URL format).
-# Real values come from .env at runtime via docker-compose env_file.
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-ENV UPSTASH_REDIS_URL="redis://localhost:6379"
-ENV NEXTAUTH_SECRET="build-time-placeholder-secret-xxxxxxxxxxxxxxxx"
-ENV NEXTAUTH_URL="http://localhost:3000"
-ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
-ENV CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
-ENV STORAGE_MODE="local"
-ENV NEXT_PUBLIC_STORAGE_MODE="local"
+# Build-time placeholders — satisfy env validation during `pnpm build`.
+# ARG values are NOT baked into image layers; real values come from .env at runtime.
+ARG DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG UPSTASH_REDIS_URL="redis://localhost:6379"
+ARG NEXTAUTH_SECRET="build-time-placeholder-secret-xxxxxxxxxxxxxxxx"
+ARG NEXTAUTH_URL="http://localhost:3000"
+ARG NEXT_PUBLIC_APP_URL="http://localhost:3000"
+ARG CNIC_HASH_SALT="build-time-placeholder-salt-xxxxxxxxxxxxxxxxxxxx"
+ARG STORAGE_MODE="local"
+ARG NEXT_PUBLIC_STORAGE_MODE="local"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate prisma client now that schema.prisma is available, then build
 RUN npx prisma generate
 RUN pnpm build
 
-# ── Stage 3: production runner (lean — standalone output only) ────────────────
+# ── Stage 3: production runner ────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -41,14 +41,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
-# Uploads + runtime writable directories
+# Create runtime-writable directories and give nextjs user ownership of /app
+# so that next start can write .next/cache entries at runtime.
 RUN mkdir -p /app/uploads /app/logs /app/exports \
-    && chown nextjs:nodejs /app/uploads /app/logs /app/exports
+    && chown -R nextjs:nodejs /app
 
-# Next.js standalone output includes all traced node_modules (incl. prisma)
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy built output and full node_modules (non-standalone: all deps stay in node_modules)
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # messages/*.json use a runtime dynamic import — Next.js file tracer misses them
 COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
 
@@ -60,4 +65,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget -qO- http://localhost:3000/api/healthcheck || exit 1
 
-CMD ["node", "server.js"]
+CMD ["npx", "next", "start"]

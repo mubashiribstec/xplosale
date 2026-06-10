@@ -1,15 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SkillsChipInput from "@/components/shared/SkillsChipInput";
-
-interface Region {
-  id: string;
-  name: string;
-  slug: string;
-  city: string;
-}
+import JobLocationPicker, { type JobLocation } from "@/components/shared/jobs/JobLocationPicker";
 
 const REMOTE_TYPES = [
   { value: "ONSITE", label: "On-site" },
@@ -17,31 +11,31 @@ const REMOTE_TYPES = [
   { value: "REMOTE", label: "Remote" },
 ] as const;
 
+const EMPTY_LOCATION: JobLocation = {
+  country: "",
+  city: "",
+  postCode: "",
+  companyAddress: "",
+};
+
 export default function NewJobPage() {
   const router = useRouter();
-  const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    regionId: "",
     remoteType: "ONSITE",
     salaryMin: "",
     salaryMax: "",
     currency: "USD",
   });
 
+  const [location, setLocation] = useState<JobLocation>(EMPTY_LOCATION);
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>([]);
   const [requiredKeywords, setRequiredKeywords] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetch("/api/regions")
-      .then((r) => r.json())
-      .then(({ data }) => { if (data) setRegions(data as Region[]); });
-  }, []);
 
   function set(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -61,9 +55,12 @@ export default function NewJobPage() {
       niceToHaveSkills,
       requiredKeywords,
     };
-    if (form.regionId) body.regionId = form.regionId;
     if (form.salaryMin) body.salaryMin = parseInt(form.salaryMin, 10);
     if (form.salaryMax) body.salaryMax = parseInt(form.salaryMax, 10);
+    if (location.country) body.country = location.country;
+    if (location.city) body.city = location.city;
+    if (location.postCode) body.postCode = location.postCode;
+    if (location.companyAddress) body.companyAddress = location.companyAddress;
 
     const res = await fetch("/api/jobs", {
       method: "POST",
@@ -132,7 +129,7 @@ export default function NewJobPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Work type</label>
               <select
                 value={form.remoteType}
-                onChange={(e) => { set("remoteType", e.target.value); if (e.target.value === "REMOTE") set("regionId", ""); }}
+                onChange={(e) => set("remoteType", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {REMOTE_TYPES.map((rt) => (
@@ -140,30 +137,21 @@ export default function NewJobPage() {
                 ))}
               </select>
             </div>
+          </section>
 
-            {form.remoteType !== "REMOTE" ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                <select
-                  value={form.regionId}
-                  onChange={(e) => set("regionId", e.target.value)}
-                  required={form.remoteType !== "REMOTE"}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select a region</option>
-                  {regions.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.city ? `${r.city} — ` : ""}{r.name}
-                    </option>
-                  ))}
-                </select>
-                {regions.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-1">No regions available yet — choose &quot;Remote&quot; as work type or contact support.</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">Location: <strong>Remote / Worldwide</strong></p>
-            )}
+          {/* Location */}
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">Location</h2>
+              {form.remoteType !== "REMOTE" && (
+                <p className="text-xs text-gray-400 mt-0.5">Select country and city where this role is based.</p>
+              )}
+            </div>
+            <JobLocationPicker
+              value={location}
+              onChange={setLocation}
+              remoteType={form.remoteType}
+            />
           </section>
 
           <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">

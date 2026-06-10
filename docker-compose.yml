@@ -6,7 +6,7 @@ services:
     env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-xplosale}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xplosale2024}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_DB: ${POSTGRES_DB:-xplosale}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -46,7 +46,7 @@ services:
     build:
       context: .
       target: builder         # full node_modules + prisma CLI available here
-    command: npx prisma db push --accept-data-loss
+    command: sh -c "npx prisma db push --accept-data-loss && npx prisma db seed || echo '[migrate] Seed step failed or already run — continuing'"
     env_file: .env
     depends_on:
       postgres:

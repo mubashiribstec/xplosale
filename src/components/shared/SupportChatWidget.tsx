@@ -20,6 +20,18 @@ export default function SupportChatWidget() {
 
   const user = session?.user as { id?: string; name?: string; role?: string } | undefined;
 
+  // All hooks must run before any early return (React rules of hooks)
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  if (!user || user.role === "ADMIN") return null;
+
   async function openWidget() {
     setOpen(true);
     if (roomId) return;
@@ -45,17 +57,6 @@ export default function SupportChatWidget() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [open]);
-
-  if (!user || user.role === "ADMIN") return null;
 
   return (
     <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>

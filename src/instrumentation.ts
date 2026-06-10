@@ -8,8 +8,12 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
-  const { initLogger } = await import("@/lib/logger.server");
-  await initLogger();
+  try {
+    const { initLogger } = await import("@/lib/logger.server");
+    await initLogger();
+  } catch {
+    // Logger init must never prevent the server from starting
+  }
 
   const { logError } = await import("@/lib/log-error");
 

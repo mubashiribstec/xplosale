@@ -718,6 +718,10 @@ model JobPosting {
   salaryMin         Int?
   salaryMax         Int?
   currency          String     @default("PKR")
+  country           String?
+  city              String?
+  postCode          String?
+  companyAddress    String?
   status            JobStatus  @default(DRAFT)
   expiresAt         DateTime?
   requiredSkills    Json       @default("[]")

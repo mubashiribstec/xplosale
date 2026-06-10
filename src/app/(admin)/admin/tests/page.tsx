@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import UnpublishButton from "./_unpublish-button";
 
 export default async function AdminTestsPage({
   searchParams,
@@ -97,27 +98,7 @@ export default async function AdminTestsPage({
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  {t.isPublished && (
-                    <form
-                      action={`/api/admin/tests/${t.id}`}
-                      method="POST"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        fetch(`/api/admin/tests/${t.id}`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ action: "unpublish" }),
-                        }).then(() => window.location.reload());
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="text-xs text-red-600 hover:underline"
-                      >
-                        Unpublish
-                      </button>
-                    </form>
-                  )}
+                  {t.isPublished && <UnpublishButton testId={t.id} />}
                 </td>
               </tr>
             ))}

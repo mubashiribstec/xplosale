@@ -3,13 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import SkillsChipInput from "@/components/shared/SkillsChipInput";
-
-interface Region {
-  id: string;
-  name: string;
-  slug: string;
-  city: string;
-}
+import JobLocationPicker, { type JobLocation } from "@/components/shared/jobs/JobLocationPicker";
 
 interface JobData {
   id: string;
@@ -21,6 +15,10 @@ interface JobData {
   salaryMax: number | null;
   currency: string;
   status: string;
+  country?: string | null;
+  city?: string | null;
+  postCode?: string | null;
+  companyAddress?: string | null;
   requiredSkills?: string[];
   niceToHaveSkills?: string[];
   requiredKeywords?: string[];
@@ -55,11 +53,12 @@ const STATUS_COLORS: Record<string, string> = {
   HIRED: "bg-purple-100 text-purple-700",
 };
 
+const EMPTY_LOCATION: JobLocation = { country: "", city: "", postCode: "", companyAddress: "" };
+
 export default function EditJobPage({ params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = use(params);
   const router = useRouter();
   const [job, setJob] = useState<JobData | null>(null);
-  const [regions, setRegions] = useState<Region[]>([]);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,13 +67,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
   const [form, setForm] = useState({
     title: "",
     description: "",
-    regionId: "",
     remoteType: "ONSITE",
     salaryMin: "",
     salaryMax: "",
     currency: "PKR",
   });
 
+  const [location, setLocation] = useState<JobLocation>(EMPTY_LOCATION);
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>([]);
   const [requiredKeywords, setRequiredKeywords] = useState<string[]>([]);
@@ -82,26 +81,29 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
   useEffect(() => {
     Promise.all([
       fetch(`/api/jobs/${jobId}`).then((r) => r.json()),
-      fetch("/api/regions").then((r) => r.json()),
       fetch(`/api/jobs/${jobId}/applications`).then((r) => r.json()),
-    ]).then(([jobRes, regionsRes, appsRes]) => {
+    ]).then(([jobRes, appsRes]) => {
       if (jobRes.data) {
         const d = jobRes.data as JobData;
         setJob(d);
         setForm({
           title: d.title,
           description: d.description,
-          regionId: d.regionId,
           remoteType: d.remoteType,
           salaryMin: d.salaryMin != null ? String(d.salaryMin) : "",
           salaryMax: d.salaryMax != null ? String(d.salaryMax) : "",
           currency: d.currency,
         });
+        setLocation({
+          country: d.country ?? "",
+          city: d.city ?? "",
+          postCode: d.postCode ?? "",
+          companyAddress: d.companyAddress ?? "",
+        });
         setRequiredSkills(d.requiredSkills ?? []);
         setNiceToHaveSkills(d.niceToHaveSkills ?? []);
         setRequiredKeywords(d.requiredKeywords ?? []);
       }
-      if (regionsRes.data) setRegions(regionsRes.data as Region[]);
       if (appsRes.data) setApplicants(appsRes.data as Applicant[]);
     });
   }, [jobId]);
@@ -119,9 +121,12 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
     const body: Record<string, unknown> = {
       title: form.title,
       description: form.description,
-      regionId: form.regionId,
       remoteType: form.remoteType,
       currency: form.currency,
+      country: location.country || null,
+      city: location.city || null,
+      postCode: location.postCode || null,
+      companyAddress: location.companyAddress || null,
       requiredSkills,
       niceToHaveSkills,
       requiredKeywords,
@@ -236,23 +241,6 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-              <select
-                value={form.regionId}
-                onChange={(e) => setField("regionId", e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a region</option>
-                {regions.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.city ? `${r.city} — ` : ""}{r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Work type</label>
               <select
                 value={form.remoteType}
@@ -264,7 +252,21 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 ))}
               </select>
             </div>
+          </section>
 
+          {/* Location */}
+          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">Location</h2>
+              {form.remoteType !== "REMOTE" && (
+                <p className="text-xs text-gray-400 mt-0.5">Country and city where this role is based.</p>
+              )}
+            </div>
+            <JobLocationPicker
+              value={location}
+              onChange={setLocation}
+              remoteType={form.remoteType}
+            />
           </section>
 
           <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">

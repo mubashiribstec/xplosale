@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
           }
         : {}),
       ...(role
-        ? { role: role as "USER" | "EMPLOYER" | "PARTNER" | "ADMIN" }
+        ? { role: role as "USER" | "PARTNER" | "ADMIN" }
         : {}),
       ...(verificationStatus
         ? {
