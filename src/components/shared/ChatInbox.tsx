@@ -17,7 +17,12 @@ interface ChatInboxProps {
 export function ChatInbox({ rooms, userId }: ChatInboxProps) {
   if (rooms.length === 0) {
     return (
-      <p className="text-gray-500 text-sm">No conversations yet.</p>
+      <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
+        <p className="text-gray-500 text-sm">No conversations yet.</p>
+        <Link href="/m" className="mt-2 inline-block text-sm font-medium text-blue-600 hover:underline">
+          Browse the marketplace
+        </Link>
+      </div>
     );
   }
 
