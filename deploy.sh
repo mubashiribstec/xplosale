@@ -31,7 +31,7 @@ docker compose up -d postgres redis adminer app
 # First deploy: no SSL certificate exists yet, so bootstrap Let's Encrypt.
 # Subsequent deploys: cert already in the certbot_conf volume, just start nginx.
 if docker compose run --rm --entrypoint \
-     "test -f /etc/letsencrypt/live/app.xplosole.com/fullchain.pem" certbot; then
+     "test -f /etc/letsencrypt/live/app.xplosale.com/fullchain.pem" certbot; then
   echo "SSL certificate found — starting nginx + certbot..."
   docker compose up -d nginx certbot
 else
@@ -42,7 +42,7 @@ fi
 
 echo ""
 echo "=== Deploy complete ==="
-echo "App running at: https://app.xplosole.com"
+echo "App running at: https://app.xplosale.com"
 echo ""
 echo "Useful commands:"
 echo "  docker compose logs -f app     # view app logs"

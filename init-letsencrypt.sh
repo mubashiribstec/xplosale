@@ -1,6 +1,6 @@
 #!/bin/bash
 ## ── Bootstrap Let's Encrypt SSL for the Dockerized nginx ──────────────────────
-## Run ONCE after DNS points app.xplosole.com -> this server.
+## Run ONCE after DNS points app.xplosale.com -> this server.
 ## It creates a temporary self-signed cert so nginx can boot, then swaps in a
 ## real Let's Encrypt cert via the HTTP-01 (webroot) challenge.
 ##
@@ -9,7 +9,7 @@
 ## Re-running is safe (it force-renews the cert).
 set -e
 
-domain="app.xplosole.com"
+domain="app.xplosale.com"
 email="mubashir.ibstec@gmail.com"   # used by Let's Encrypt for expiry notices
 staging=0                            # set to 1 while testing to dodge rate limits
 
