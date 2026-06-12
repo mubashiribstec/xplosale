@@ -7,8 +7,14 @@ import ShopsFilterBar from "@/components/shared/shops/ShopsFilterBar";
 import CategoryGrid from "@/components/shared/shops/CategoryGrid";
 
 export const metadata: Metadata = {
-  title: "Shops Directory — Xplosale",
-  description: "Browse local shops in your city. Find clothing, electronics, groceries, and more.",
+  title: "Shops Directory — Local Shops Near You | Xplosale",
+  description: "Discover local shops in your city across Pakistan. Browse clothing, electronics, groceries and more — order online, pay cash, JazzCash or EasyPaisa.",
+  alternates: { canonical: "/shops" },
+  openGraph: {
+    title: "Shops Directory — Local Shops Near You | Xplosale",
+    description: "Discover local shops in your city across Pakistan. Order online, pay cash, JazzCash or EasyPaisa.",
+    type: "website",
+  },
 };
 
 const PAGE_SIZE = 20;
@@ -62,12 +68,8 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
   );
 
   const userId = session ? getUserId(session) : null;
-  const userShopCount = userId && showCategoryGrid
-    ? await prisma.shop.count({ where: { ownerUserId: userId, status: { in: ["DRAFT", "PENDING_REVIEW", "ACTIVE"] } } })
-    : 0;
-  const showShopkeeperCta = showCategoryGrid && userShopCount === 0;
 
-  const [shops, total] = await Promise.all([
+  const [shops, total, favourites] = await Promise.all([
     prisma.shop.findMany({
       where,
       include: {
@@ -85,7 +87,12 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
       skip: (page - 1) * PAGE_SIZE,
     }),
     prisma.shop.count({ where }),
+    userId
+      ? prisma.shopFavourite.findMany({ where: { userId }, select: { shopId: true } })
+      : Promise.resolve([]),
   ]);
+
+  const favouriteIds = new Set(favourites.map((f) => f.shopId));
 
   const pages = Math.ceil(total / PAGE_SIZE) || 1;
 
@@ -105,17 +112,36 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
-        {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", margin: "0 0 6px" }}>
-            Shops
-          </p>
-          <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(26px,4vw,40px)", color: "var(--ink)", margin: "0 0 6px", lineHeight: 1.1 }}>
-            Shop Directory
-          </h1>
-          <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
-            {total > 0 ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""}` : "No shops found"} in your search
-          </p>
+        {/* Hero */}
+        <div className="reveal" style={{
+          background: "linear-gradient(135deg, var(--paper-2), var(--paper-3))",
+          border: "1px solid var(--line)",
+          borderRadius: 20,
+          padding: "clamp(24px,5vw,40px) clamp(20px,4vw,36px)",
+          marginBottom: 28,
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap",
+        }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", margin: "0 0 6px" }}>
+              Shops
+            </p>
+            <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(26px,4vw,40px)", color: "var(--ink)", margin: "0 0 6px", lineHeight: 1.1 }}>
+              Discover local shops near you
+            </h1>
+            <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
+              {total > 0 ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""}` : "No shops"} {q || category || country || city || regionId ? "match your search" : "open for business"} · order online, pay your way
+            </p>
+          </div>
+          <Link
+            href={session ? "/shops/manage/new" : "/login?redirect=/shops/manage/new"}
+            style={{
+              padding: "11px 22px", background: "var(--clay)", color: "var(--white)",
+              borderRadius: 11, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            List your shop free →
+          </Link>
         </div>
 
         {/* Category browse grid — shown only on the unfiltered landing view */}
@@ -128,35 +154,6 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
               Browse by Category
             </h2>
             <CategoryGrid counts={categoryCounts} />
-          </div>
-        )}
-
-        {/* Become a Shopkeeper CTA */}
-        {showShopkeeperCta && (
-          <div style={{
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--clay) 8%, var(--white)), var(--white))",
-            border: "1.5px solid color-mix(in srgb, var(--clay) 20%, var(--line))",
-            borderRadius: 16, padding: "18px 22px", marginBottom: 28,
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
-          }}>
-            <div>
-              <p style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 17, color: "var(--ink)", margin: "0 0 4px" }}>
-                🏪 Want to sell on Xplosale?
-              </p>
-              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
-                Set up your shop in minutes. Reach thousands of buyers in your city.
-              </p>
-            </div>
-            <Link
-              href={session ? "/shops/manage/new" : "/login?redirect=/shops/manage/new"}
-              style={{
-                padding: "10px 20px", background: "var(--clay)", color: "var(--white)",
-                borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none",
-                fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
-              }}
-            >
-              Open a Shop →
-            </Link>
           </div>
         )}
 
@@ -175,14 +172,20 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
             <p style={{ fontSize: 14, color: "var(--ink-faint)" }}>Try adjusting your filters or search term.</p>
           </div>
         ) : (
-          <div style={{
+          <div className="stagger" style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
             gap: 16,
             marginBottom: 36,
           }}>
             {shops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                shopId={shop.id}
+                isFavourite={favouriteIds.has(shop.id)}
+                isAuthenticated={!!session}
+              />
             ))}
           </div>
         )}

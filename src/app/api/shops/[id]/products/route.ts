@@ -11,6 +11,8 @@ const createSchema = z.object({
   priceMin: z.number().positive().optional(),
   priceMax: z.number().positive().optional(),
   currency: z.string().length(3).default("PKR"),
+  inStock: z.boolean().optional(),
+  stockCount: z.number().int().min(0).nullable().optional(),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       );
     }
 
-    const { name, description, priceMin, priceMax, currency } = parsed.data;
+    const { name, description, priceMin, priceMax, currency, inStock, stockCount } = parsed.data;
 
     const product = await prisma.shopProduct.create({
       data: {
@@ -88,6 +90,8 @@ export async function POST(req: NextRequest, { params }: Params) {
         priceMax: priceMax != null ? priceMax : null,
         currency,
         order: productCount,
+        ...(inStock !== undefined ? { inStock } : {}),
+        ...(stockCount !== undefined ? { stockCount } : {}),
       },
       include: { images: true },
     });

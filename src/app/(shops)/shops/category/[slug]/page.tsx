@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSession, getUserId } from "@/core/auth/session";
 import { CATEGORY_BY_SLUG } from "@/lib/shop-categories";
 import ShopCard from "@/components/shared/shops/ShopCard";
 
@@ -16,9 +17,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const cat = CATEGORY_BY_SLUG[slug];
   if (!cat) return {};
+  const title = `${cat.label} Shops — Xplosale`;
+  const description = `${cat.description} Browse verified ${cat.label.toLowerCase()} shops near you.`;
   return {
-    title: `${cat.label} Shops — Xplosale`,
-    description: `${cat.description} Browse verified ${cat.label.toLowerCase()} shops near you.`,
+    title,
+    description,
+    alternates: { canonical: `/shops/category/${slug}` },
+    openGraph: { title, description, type: "website" },
   };
 }
 
@@ -36,7 +41,10 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     category: cat.label,
   };
 
-  const [shops, total] = await Promise.all([
+  const session = await getSession();
+  const userId = session ? getUserId(session) : null;
+
+  const [shops, total, favourites] = await Promise.all([
     prisma.shop.findMany({
       where,
       include: {
@@ -54,7 +62,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       skip: (page - 1) * PAGE_SIZE,
     }),
     prisma.shop.count({ where }),
+    userId
+      ? prisma.shopFavourite.findMany({ where: { userId }, select: { shopId: true } })
+      : Promise.resolve([]),
   ]);
+
+  const favouriteIds = new Set(favourites.map((f) => f.shopId));
 
   const pages = Math.ceil(total / PAGE_SIZE) || 1;
 
@@ -134,14 +147,20 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             </Link>
           </div>
         ) : (
-          <div style={{
+          <div className="stagger" style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
             gap: 16,
             marginBottom: 36,
           }}>
             {shops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                shopId={shop.id}
+                isFavourite={favouriteIds.has(shop.id)}
+                isAuthenticated={!!session}
+              />
             ))}
           </div>
         )}

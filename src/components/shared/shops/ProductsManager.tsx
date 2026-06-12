@@ -16,6 +16,8 @@ interface Product {
   priceMax: number | null;
   currency: string;
   isHidden: boolean;
+  inStock: boolean;
+  stockCount: number | null;
   images: ProductImage[];
 }
 
@@ -145,6 +147,7 @@ function AddProductForm({
   const [description, setDescription] = useState("");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [stockCount, setStockCount] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -153,6 +156,7 @@ function AddProductForm({
     setSaving(true);
     setError("");
     try {
+      const stock = stockCount === "" ? undefined : parseInt(stockCount, 10);
       const res = await fetch(`/api/shops/${shopId}/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,6 +166,9 @@ function AddProductForm({
           priceMin: priceMin ? parseFloat(priceMin) : undefined,
           priceMax: priceMax ? parseFloat(priceMax) : undefined,
           currency: "PKR",
+          ...(stock !== undefined && !Number.isNaN(stock)
+            ? { stockCount: stock, inStock: stock > 0 }
+            : {}),
         }),
       });
       const json = await res.json() as { ok: boolean; data?: Product; error?: string };
@@ -209,6 +216,11 @@ function AddProductForm({
           style={inputStyle}
         />
       </div>
+      <input
+        type="number" value={stockCount} onChange={(e) => setStockCount(e.target.value)}
+        placeholder="Stock quantity (optional — leave blank if not tracked)" min="0" step="1"
+        style={inputStyle}
+      />
       {error && <p style={{ fontSize: 12, color: "var(--clay)", margin: 0 }}>{error}</p>}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" disabled={saving || !name.trim()} style={primaryBtnStyle}>
@@ -288,9 +300,16 @@ function ProductCard({
           <p style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {product.name}
           </p>
-          {priceLabel && (
-            <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>{priceLabel}</p>
-          )}
+          <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0, display: "flex", gap: 8, alignItems: "center" }}>
+            {priceLabel && <span>{priceLabel}</span>}
+            {!product.inStock ? (
+              <span style={{ color: "var(--clay)", fontWeight: 700 }}>Out of stock</span>
+            ) : product.stockCount != null ? (
+              <span style={{ color: product.stockCount <= 5 ? "#d97706" : "var(--green)", fontWeight: 600 }}>
+                {product.stockCount} in stock
+              </span>
+            ) : null}
+          </p>
         </div>
         <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
           {product.images.length} img{product.images.length !== 1 ? "s" : ""} · {expanded ? "▲" : "▼"}
@@ -464,6 +483,8 @@ function EditProductForm({
   const [description, setDescription] = useState(product.description ?? "");
   const [priceMin, setPriceMin] = useState(product.priceMin?.toString() ?? "");
   const [priceMax, setPriceMax] = useState(product.priceMax?.toString() ?? "");
+  const [inStock, setInStock] = useState(product.inStock);
+  const [stockCount, setStockCount] = useState(product.stockCount?.toString() ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -472,6 +493,7 @@ function EditProductForm({
     setSaving(true);
     setError("");
     try {
+      const stock = stockCount === "" ? null : parseInt(stockCount, 10);
       const res = await fetch(`/api/shops/${shopId}/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -480,6 +502,8 @@ function EditProductForm({
           description: description.trim() || null,
           priceMin: priceMin ? parseFloat(priceMin) : null,
           priceMax: priceMax ? parseFloat(priceMax) : null,
+          inStock,
+          stockCount: stock !== null && Number.isNaN(stock) ? null : stock,
         }),
       });
       const json = await res.json() as { ok: boolean; data?: Product; error?: string };
@@ -516,6 +540,22 @@ function EditProductForm({
         <input
           type="number" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
           placeholder="Max price (PKR)" min="0" step="any" style={inputStyle}
+        />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink-soft)", cursor: "pointer", fontWeight: 600 }}>
+          <input
+            type="checkbox"
+            checked={inStock}
+            onChange={(e) => setInStock(e.target.checked)}
+            style={{ accentColor: "var(--green)" }}
+          />
+          In stock
+        </label>
+        <input
+          type="number" value={stockCount} onChange={(e) => setStockCount(e.target.value)}
+          placeholder="Quantity (optional)" min="0" step="1"
+          style={{ ...inputStyle, width: 180 }}
         />
       </div>
       {error && <p style={{ fontSize: 12, color: "var(--clay)", margin: 0 }}>{error}</p>}

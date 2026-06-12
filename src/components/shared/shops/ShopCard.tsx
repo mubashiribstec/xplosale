@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCategoryIcon } from "@/lib/shop-categories";
+import FavouriteButton from "./FavouriteButton";
 
 interface ShopCardProps {
   shop: {
@@ -15,9 +16,12 @@ interface ShopCardProps {
     averageRating?: number | null;
     reviewCount?: number;
   };
+  shopId?: string;
+  isFavourite?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export default function ShopCard({ shop }: ShopCardProps) {
+export default function ShopCard({ shop, shopId, isFavourite, isAuthenticated }: ShopCardProps) {
   const boardImg = shop.images[0]?.url;
   const categoryIcon = getCategoryIcon(shop.category);
   const isPremiumActive =
@@ -30,12 +34,11 @@ export default function ShopCard({ shop }: ShopCardProps) {
       href={`/shops/${shop.slug}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
-      <div style={{
+      <div className="card-hover" style={{
         background: "var(--white)",
         border: `1px solid ${isPromotion ? "rgba(124,58,237,.3)" : "var(--line)"}`,
         borderRadius: 16,
         overflow: "hidden",
-        transition: "box-shadow .15s",
         fontFamily: "var(--body)",
         height: "100%",
         display: "flex",
@@ -89,6 +92,17 @@ export default function ShopCard({ shop }: ShopCardProps) {
               borderRadius: 6, letterSpacing: ".04em",
             }}>
               ✓ Verified
+            </span>
+          )}
+          {/* Favourite heart */}
+          {shopId && (
+            <span style={{ position: "absolute", bottom: 8, right: 8 }}>
+              <FavouriteButton
+                shopId={shopId}
+                initialFavourited={!!isFavourite}
+                isAuthenticated={!!isAuthenticated}
+                size="sm"
+              />
             </span>
           )}
         </div>

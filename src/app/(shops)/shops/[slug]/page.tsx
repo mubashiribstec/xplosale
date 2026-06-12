@@ -3,10 +3,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession, getUserId } from "@/core/auth/session";
+import { serializeJsonLd } from "@/lib/json-ld";
 import BuyButton from "@/components/shared/shops/BuyButton";
 import MessageShopButton from "@/components/shared/shops/MessageShopButton";
 import ReportShopButton from "@/components/shared/shops/ReportShopButton";
 import ShopReviews from "@/components/shared/shops/ShopReviews";
+import ShopContactActions from "@/components/shared/shops/ShopContactActions";
+import FavouriteButton from "@/components/shared/shops/FavouriteButton";
 import ShareButton from "@/components/shared/ShareButton";
 
 interface PageProps {
@@ -17,12 +20,35 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const shop = await prisma.shop.findUnique({
     where: { slug },
-    select: { name: true, description: true, category: true },
+    select: {
+      name: true,
+      description: true,
+      category: true,
+      region: { select: { city: true } },
+      images: { where: { kind: "STOREFRONT_BOARD" }, take: 1, select: { url: true } },
+    },
   });
   if (!shop) return { title: "Shop not found" };
+
+  const title = `${shop.name} — ${shop.category} in ${shop.region.city} | Xplosale Shops`;
+  const description = shop.description.slice(0, 160);
+  const boardImg = shop.images[0]?.url;
+
   return {
-    title: `${shop.name} — Xplosale Shops`,
-    description: shop.description.slice(0, 160),
+    title,
+    description,
+    alternates: { canonical: `/shops/${slug}` },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: boardImg ? [boardImg] : undefined,
+    },
+    twitter: {
+      card: boardImg ? "summary_large_image" : "summary",
+      title,
+      description,
+    },
   };
 }
 
@@ -59,6 +85,20 @@ export default async function ShopPublicPage({ params }: PageProps) {
   const isOwner = currentUserId === shop.ownerUserId;
   const isAuthenticated = !!session;
 
+  const [favourite, reviewAgg] = await Promise.all([
+    currentUserId
+      ? prisma.shopFavourite.findUnique({
+          where: { shopId_userId: { shopId: shop.id, userId: currentUserId } },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    prisma.shopReview.aggregate({
+      where: { shopId: shop.id },
+      _avg: { rating: true },
+      _count: true,
+    }),
+  ]);
+
   const capabilities = {
     acceptsCash: shop.acceptsCash,
     acceptsDelivery: shop.acceptsDelivery,
@@ -89,8 +129,58 @@ export default async function ShopPublicPage({ params }: PageProps) {
     }).catch(() => { /* non-fatal */ });
   }
 
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.xplosale.com";
+  const shopUrl = `${base}/shops/${shop.slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: shop.name,
+    description: shop.description.slice(0, 300),
+    url: shopUrl,
+    ...(boardImg ? { image: boardImg } : {}),
+    ...(shop.contactPhone ? { telephone: shop.contactPhone } : {}),
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: shop.addressLine,
+      addressLocality: shop.region.city,
+      addressCountry: "PK",
+    },
+    ...(shop.lat != null && shop.lng != null
+      ? { geo: { "@type": "GeoCoordinates", latitude: shop.lat, longitude: shop.lng } }
+      : {}),
+    ...(shop.workingHours && typeof shop.workingHours === "object" && Object.keys(shop.workingHours).length > 0
+      ? {
+          openingHours: Object.entries(shop.workingHours as Record<string, string>)
+            .filter(([, h]) => h && h !== "Closed")
+            .map(([day, h]) => `${day.slice(0, 2)} ${h}`),
+        }
+      : {}),
+    ...(reviewAgg._count > 0 && reviewAgg._avg.rating != null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: Math.round(reviewAgg._avg.rating * 10) / 10,
+            reviewCount: reviewAgg._count,
+          },
+        }
+      : {}),
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Shops", item: `${base}/shops` },
+      { "@type": "ListItem", position: 2, name: shop.category, item: `${base}/shops` },
+      { "@type": "ListItem", position: 3, name: shop.name, item: shopUrl },
+    ],
+  };
+
   return (
-    <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(20px,4vw,48px) clamp(16px,4vw,32px)", fontFamily: "var(--body)" }}>
+    <main className="shop-page" style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(20px,4vw,48px) clamp(16px,4vw,32px)", fontFamily: "var(--body)" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbLd) }} />
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
 
         {/* Breadcrumb */}
@@ -139,35 +229,23 @@ export default async function ShopPublicPage({ params }: PageProps) {
 
           {/* Action buttons */}
           <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
-            {shop.contactPhone && (
-              <a
-                href={`tel:${shop.contactPhone}`}
-                style={{
-                  padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
-                  borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none",
-                }}
-              >
-                📞 Call
-              </a>
-            )}
-            {shop.website && (
-              <a
-                href={shop.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
-                  border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
-                  fontWeight: 600, textDecoration: "none",
-                }}
-              >
-                🌐 Website
-              </a>
-            )}
+            <ShopContactActions
+              shopId={shop.id}
+              shopName={shop.name}
+              contactPhone={shop.contactPhone}
+              website={shop.website}
+            />
             {!isOwner && (
               <MessageShopButton
                 shopId={shop.id}
                 ownerUserId={shop.ownerUserId}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
+            {!isOwner && (
+              <FavouriteButton
+                shopId={shop.id}
+                initialFavourited={!!favourite}
                 isAuthenticated={isAuthenticated}
               />
             )}
@@ -259,41 +337,46 @@ export default async function ShopPublicPage({ params }: PageProps) {
                 return (
                   <div
                     key={product.id}
+                    className="card-hover"
                     style={{
                       background: "var(--white)", border: "1px solid var(--line)",
                       borderRadius: 12, overflow: "hidden",
                     }}
                   >
-                    <div style={{ height: 120, background: "var(--paper-2)", position: "relative" }}>
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🛍️</div>
-                      )}
-                      {!product.inStock && (
-                        <div style={{
-                          position: "absolute", inset: 0, background: "rgba(0,0,0,.4)",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.6)", padding: "3px 10px", borderRadius: 99 }}>
-                            Out of Stock
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ padding: "10px 12px" }}>
-                      <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", margin: "0 0 4px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-                        {product.name}
-                      </p>
-                      {priceLabel && (
-                        <p style={{ fontSize: 12, color: "var(--clay)", fontWeight: 600, margin: 0 }}>{priceLabel}</p>
-                      )}
-                      {product.description && (
-                        <p style={{ fontSize: 11, color: "var(--ink-faint)", margin: "4px 0 0", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {product.description}
+                    <Link href={`/shops/${shop.slug}/p/${product.id}`} style={{ textDecoration: "none", display: "block" }}>
+                      <div style={{ height: 120, background: "var(--paper-2)", position: "relative" }}>
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🛍️</div>
+                        )}
+                        {!product.inStock && (
+                          <div style={{
+                            position: "absolute", inset: 0, background: "rgba(0,0,0,.4)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,.6)", padding: "3px 10px", borderRadius: 99 }}>
+                              Out of Stock
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ padding: "10px 12px 0" }}>
+                        <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", margin: "0 0 4px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                          {product.name}
                         </p>
-                      )}
+                        {priceLabel && (
+                          <p style={{ fontSize: 12, color: "var(--clay)", fontWeight: 600, margin: 0 }}>{priceLabel}</p>
+                        )}
+                        {product.description && (
+                          <p style={{ fontSize: 11, color: "var(--ink-faint)", margin: "4px 0 0", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                            {product.description}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                    <div style={{ padding: "0 12px 10px" }}>
                       {hasPayment && !isOwner && product.inStock && (
                         <BuyButton
                           shopId={shop.id}
@@ -330,6 +413,36 @@ export default async function ShopPublicPage({ params }: PageProps) {
         </div>
 
       </div>
+
+      {/* Mobile sticky action bar (visitors only) */}
+      {!isOwner && (shop.contactPhone || shop.website) && (
+        <div
+          className="shop-sticky-bar"
+          style={{
+            display: "none",
+            position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90,
+            padding: "10px 14px calc(10px + env(safe-area-inset-bottom))",
+            background: "var(--white)", borderTop: "1px solid var(--line)",
+            boxShadow: "0 -4px 20px rgba(28,24,21,.08)",
+            gap: 8,
+          }}
+        >
+          <ShopContactActions
+            shopId={shop.id}
+            shopName={shop.name}
+            contactPhone={shop.contactPhone}
+            website={shop.website}
+            compact
+          />
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 720px) {
+          .shop-sticky-bar { display: flex !important; }
+          .shop-page { padding-bottom: 90px !important; }
+        }
+      `}</style>
     </main>
   );
 }

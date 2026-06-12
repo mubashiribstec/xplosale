@@ -11,6 +11,8 @@ const updateSchema = z.object({
   priceMax: z.number().positive().nullable().optional(),
   currency: z.string().length(3).optional(),
   isHidden: z.boolean().optional(),
+  inStock: z.boolean().optional(),
+  stockCount: z.number().int().min(0).nullable().optional(),
 });
 
 type Params = { params: Promise<{ id: string; productId: string }> };
@@ -49,6 +51,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ...(parsed.data.priceMax !== undefined && { priceMax: parsed.data.priceMax }),
         ...(parsed.data.currency !== undefined && { currency: parsed.data.currency }),
         ...(parsed.data.isHidden !== undefined && { isHidden: parsed.data.isHidden }),
+        ...(parsed.data.inStock !== undefined && { inStock: parsed.data.inStock }),
+        ...(parsed.data.stockCount !== undefined && { stockCount: parsed.data.stockCount }),
       },
       include: { images: { orderBy: { order: "asc" } } },
     });
