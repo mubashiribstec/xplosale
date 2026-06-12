@@ -227,6 +227,38 @@ export default async function ShopsManagePage() {
             })}
           </div>
         )}
+
+        {/* Invite shopkeepers */}
+        <div style={{
+          marginTop: 28,
+          background: "linear-gradient(135deg, var(--paper-2), var(--paper-3))",
+          border: "1px solid var(--line)",
+          borderRadius: 16,
+          padding: "18px 22px",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+          fontFamily: "var(--body)",
+        }}>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: "0 0 4px" }}>
+              🤝 Know a shopkeeper?
+            </p>
+            <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
+              Help your local market get online — invite them to list their shop free.
+            </p>
+          </div>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`List your shop free on Xplosale and get orders online — ${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.xplosale.com"}/shops/manage/new`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "10px 20px", background: "#25D366", color: "#fff",
+              borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none",
+              whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            💬 Invite on WhatsApp
+          </a>
+        </div>
       </div>
     </main>
   );
