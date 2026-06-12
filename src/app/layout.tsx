@@ -37,6 +37,7 @@ const notoArabic = Noto_Sans_Arabic({ variable: "--font-noto-arabic", subsets: [
 const notoDevanagari = Noto_Sans_Devanagari({ variable: "--font-noto-devanagari", subsets: ["devanagari"], display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://app.xplosale.com"),
   title: "Xplosale — Sell. Hire. Connect. Verified.",
   description:
     "Xplosale is Pakistan's verified marketplace and jobs platform. Buy and sell property, vehicles, and goods with escrow protection. Find verified jobs and hire trusted talent.",

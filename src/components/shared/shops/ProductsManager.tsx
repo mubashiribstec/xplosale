@@ -24,6 +24,7 @@ interface ProductsManagerProps {
   maxProducts: number;
   maxImagesPerProduct: number;
   planKey: string;
+  onProductsChange?: (count: number) => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -33,6 +34,7 @@ export default function ProductsManager({
   maxProducts,
   maxImagesPerProduct,
   planKey,
+  onProductsChange,
 }: ProductsManagerProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,10 @@ export default function ProductsManager({
   }, [shopId]);
 
   useEffect(() => { void fetchProducts(); }, [fetchProducts]);
+
+  useEffect(() => {
+    if (!loading) onProductsChange?.(products.length);
+  }, [products.length, loading, onProductsChange]);
 
   const atLimit = products.length >= maxProducts;
 

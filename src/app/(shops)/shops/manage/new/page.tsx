@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getUserId } from "@/core/auth/session";
 import { getEffectivePlanForUser, countActiveShopsForUser } from "@/verticals/shops/tier";
-import ShopForm from "@/components/shared/shops/ShopForm";
+import ShopWizard from "@/components/shared/shops/ShopWizard";
 import UpgradePrompt from "@/components/shared/shops/UpgradePrompt";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -34,7 +34,7 @@ export default async function NewShopPage() {
           Create a Shop
         </h1>
         <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: "0 0 36px", fontFamily: "var(--body)" }}>
-          Fill in your shop details. You can save as a draft and add photos before submitting for review.
+          Set up your shop in 4 quick steps — it takes about 3 minutes. Your progress is saved automatically.
         </p>
 
         {atLimit ? (
@@ -54,7 +54,7 @@ export default async function NewShopPage() {
               padding: "clamp(24px,4vw,40px)",
             }}
           >
-            <ShopForm />
+            <ShopWizard />
           </div>
         )}
       </div>

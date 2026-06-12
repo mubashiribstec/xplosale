@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import GeoCascadeFilter from "./GeoCascadeFilter";
 import { CATEGORIES, getTypesForCategory } from "@/lib/shop-categories";
+import { inputStyle, selectStyle, labelStyle, labelTextStyle } from "./formStyles";
 
 interface ShopFormProps {
   initialData?: {
@@ -18,37 +19,6 @@ interface ShopFormProps {
     contactPhone?: string | null;
   };
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "11px 14px",
-  border: "1.5px solid var(--line)",
-  borderRadius: 11,
-  fontSize: 15,
-  fontFamily: "var(--body)",
-  color: "var(--ink)",
-  background: "var(--paper)",
-  outline: "none",
-  boxSizing: "border-box",
-};
-
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  appearance: "none",
-  cursor: "pointer",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-};
-
-const labelTextStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 600,
-  color: "var(--ink-soft)",
-};
 
 export default function ShopForm({ initialData }: ShopFormProps) {
   const router = useRouter();

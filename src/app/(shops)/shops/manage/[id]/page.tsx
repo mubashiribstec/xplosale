@@ -7,6 +7,8 @@ import ShopForm from "@/components/shared/shops/ShopForm";
 import StorefrontBoardUploader from "@/components/shared/shops/StorefrontBoardUploader";
 import ProductsManager from "@/components/shared/shops/ProductsManager";
 import ShopPaymentSettings from "@/components/shared/shops/ShopPaymentSettings";
+import ShopSetupChecklist from "@/components/shared/shops/ShopSetupChecklist";
+import WorkingHoursEditor from "@/components/shared/shops/WorkingHoursEditor";
 
 interface ShopImage {
   id: string;
@@ -37,6 +39,8 @@ interface ShopData {
   acceptsCash: boolean;
   acceptsDelivery: boolean;
   deliveryNotes: string | null;
+  workingHours: Record<string, string> | null;
+  _count?: { products: number };
 }
 
 interface PlanData {
@@ -55,6 +59,11 @@ export default function EditShopPage() {
   const [submitError, setSubmitError] = useState("");
   const [submitDone, setSubmitDone] = useState(false);
   const [storefrontImage, setStorefrontImage] = useState<{ id: string; url: string } | null>(null);
+  const [productCount, setProductCount] = useState(0);
+  const [hours, setHours] = useState<Record<string, string>>({});
+  const [hoursOpen, setHoursOpen] = useState(false);
+  const [hoursSaving, setHoursSaving] = useState(false);
+  const [hoursSaved, setHoursSaved] = useState(false);
 
   const fetchShop = useCallback(async () => {
     setLoading(true);
@@ -68,6 +77,8 @@ export default function EditShopPage() {
       setShop(shopJson.data);
       const board = shopJson.data.images?.find((i) => i.kind === "STOREFRONT_BOARD") ?? null;
       setStorefrontImage(board);
+      setProductCount(shopJson.data._count?.products ?? 0);
+      setHours(shopJson.data.workingHours ?? {});
 
       if (planRes.ok) {
         const planJson = await planRes.json() as { data: PlanData };
@@ -94,6 +105,26 @@ export default function EditShopPage() {
       setSubmitError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleSaveHours() {
+    if (!shop) return;
+    setHoursSaving(true);
+    setHoursSaved(false);
+    try {
+      const cleaned = Object.fromEntries(Object.entries(hours).filter(([, v]) => v.trim() !== ""));
+      const res = await fetch(`/api/shops/${shop.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workingHours: Object.keys(cleaned).length > 0 ? cleaned : null }),
+      });
+      if (res.ok) {
+        setHoursSaved(true);
+        setTimeout(() => setHoursSaved(false), 2500);
+      }
+    } finally {
+      setHoursSaving(false);
     }
   }
 
@@ -154,6 +185,28 @@ export default function EditShopPage() {
               📦 Manage Orders
             </Link>
             <Link
+              href={`/shops/manage/${shop.id}/analytics`}
+              style={{
+                padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
+                border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
+                fontWeight: 600, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              📊 Analytics
+            </Link>
+            <Link
+              href={`/shops/manage/${shop.id}/poster`}
+              style={{
+                padding: "9px 18px", background: "transparent", color: "var(--ink-soft)",
+                border: "1px solid var(--line)", borderRadius: 10, fontSize: 13,
+                fontWeight: 600, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              🖨 QR Poster
+            </Link>
+            <Link
               href={`/shops/${shop.slug}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -169,8 +222,17 @@ export default function EditShopPage() {
           </div>
         )}
 
+        {/* Setup checklist (DRAFT / REJECTED) */}
+        <ShopSetupChecklist
+          status={shop.status}
+          hasStorefront={hasStorefront}
+          productCount={productCount}
+          hasPayment={shop.acceptsCash || !!shop.bankAccountNumber || !!shop.jazzcashNumber || !!shop.easipaisaNumber}
+          hasWorkingHours={Object.values(hours).some((v) => v.trim() !== "")}
+        />
+
         {/* Storefront photo */}
-        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+        <div id="storefront" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
           <StorefrontBoardUploader
             shopId={shop.id}
             currentUrl={storefrontImage?.url}
@@ -181,25 +243,66 @@ export default function EditShopPage() {
 
         {/* Shop details form (DRAFT / REJECTED only) */}
         {canEdit && (
-          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 16 }}>
+          <div id="details" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 16 }}>
             <ShopForm initialData={shop} />
           </div>
         )}
 
+        {/* Working hours (all statuses) */}
+        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+          <button
+            type="button"
+            onClick={() => setHoursOpen((v) => !v)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+              background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "var(--body)",
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}>
+              🕐 Working Hours{" "}
+              <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>
+                {Object.values(hours).some((v) => v.trim()) ? "" : "(not set)"}
+              </span>
+            </span>
+            <span style={{ fontSize: 13, color: "var(--ink-faint)", transform: hoursOpen ? "rotate(90deg)" : "none", transition: "transform .15s" }}>▸</span>
+          </button>
+          {hoursOpen && (
+            <div style={{ marginTop: 16 }}>
+              <WorkingHoursEditor value={hours} onChange={setHours} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveHours()}
+                  disabled={hoursSaving}
+                  style={{
+                    padding: "9px 22px", background: "var(--clay)", color: "var(--white)", border: "none",
+                    borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: "var(--body)",
+                    cursor: hoursSaving ? "not-allowed" : "pointer", opacity: hoursSaving ? 0.6 : 1,
+                  }}
+                >
+                  {hoursSaving ? "Saving…" : "Save hours"}
+                </button>
+                {hoursSaved && <span style={{ fontSize: 13, color: "var(--green)", fontWeight: 600 }}>✓ Saved</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Products — shown for DRAFT/REJECTED and ACTIVE shops */}
         {(canEdit || isActive) && (
-          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+          <div id="products" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
             <ProductsManager
               shopId={shop.id}
               maxProducts={plan.maxProducts}
               maxImagesPerProduct={plan.maxImagesPerProduct}
               planKey={plan.key}
+              onProductsChange={setProductCount}
             />
           </div>
         )}
 
         {/* Payment settings (all statuses) */}
-        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
+        <div id="payments" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
           <ShopPaymentSettings
             shopId={shop.id}
             initial={{
