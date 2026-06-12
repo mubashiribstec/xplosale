@@ -46,6 +46,16 @@ export default function PrivacyPage() {
               <strong>Communications:</strong> messages sent via the platform&rsquo;s chat or support
               features.
             </li>
+            <li>
+              <strong>Shop order data:</strong> orders you place with shops, including delivery
+              details and payment-proof screenshots you upload. Screenshots are visible only to the
+              shop owner fulfilling your order and to authorised moderators.
+            </li>
+            <li>
+              <strong>Shop analytics:</strong> aggregated daily counters (page views, product
+              clicks, contact taps) shown to shop owners. These are totals only — no personal
+              visitor profiles or per-visitor tracking data are stored.
+            </li>
           </ul>
         </div>
 

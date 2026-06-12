@@ -3,11 +3,15 @@ import Link from "next/link";
 const NAV_LINKS = [
   { label: "Marketplace", href: "/m" },
   { label: "Jobs", href: "/jobs" },
+  { label: "Shops", href: "/shops" },
   { label: "For Partners", href: "/partner/register" },
   { label: "Verify identity", href: "/me/verify-identity" },
 ];
 
 const LEGAL_LINKS = [
+  { label: "Guide", href: "/guide" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Terms", href: "/terms" },
   { label: "Privacy", href: "/privacy" },
   { label: "Cookie preferences", href: "/cookies" },
 ];

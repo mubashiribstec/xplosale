@@ -193,14 +193,15 @@ export default async function ShopPublicPage({ params }: PageProps) {
 
         {/* Storefront hero */}
         {boardImg && (
-          <div style={{ width: "100%", height: "clamp(160px,30vw,300px)", borderRadius: 18, overflow: "hidden", marginBottom: 24, background: "var(--paper-2)" }}>
+          <div className="reveal" style={{ width: "100%", height: "clamp(160px,30vw,300px)", borderRadius: 18, overflow: "hidden", marginBottom: 24, background: "var(--paper-2)", position: "relative" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={boardImg} alt={`${shop.name} storefront`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 55%, rgba(26,22,19,.35))" }} />
           </div>
         )}
 
         {/* Shop header */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
+        <div className="reveal" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
               <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(22px,4vw,34px)", color: "var(--ink)", margin: 0, lineHeight: 1.1 }}>

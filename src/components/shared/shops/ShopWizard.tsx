@@ -52,15 +52,18 @@ export default function ShopWizard() {
   const [draft, setDraft] = useState<DraftState | null>(null);
   const restored = useRef(false);
 
-  // Detect saved draft on mount
+  // Detect saved draft on mount (deferred to avoid setState during hydration)
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as DraftState;
-        if (parsed.name || parsed.category || parsed.description) setDraft(parsed);
-      }
-    } catch { /* corrupted draft — ignore */ }
+    const t = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as DraftState;
+          if (parsed.name || parsed.category || parsed.description) setDraft(parsed);
+        }
+      } catch { /* corrupted draft — ignore */ }
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
 
   // Persist draft (debounced)
@@ -384,7 +387,7 @@ export default function ShopWizard() {
 
             <div style={{ marginTop: 18, padding: "12px 16px", background: "var(--paper-2)", borderRadius: 12 }}>
               <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: 0, lineHeight: 1.6 }}>
-                <strong>Next:</strong> after creating your shop you'll add a storefront photo, your products, and how customers can pay — then submit for review. Most shops go live within 24 hours.
+                <strong>Next:</strong> after creating your shop you&rsquo;ll add a storefront photo, your products, and how customers can pay — then submit for review. Most shops go live within 24 hours.
               </p>
             </div>
           </div>

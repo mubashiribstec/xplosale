@@ -53,7 +53,7 @@ export default async function ShopAnalyticsPage({ params }: PageProps) {
                 Analytics is a Premium feature
               </h1>
               <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: "0 0 22px", lineHeight: 1.6, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-                See how many people view your shop every day, which products they tap, and how often they call or visit your website — so you know what's working.
+                See how many people view your shop every day, which products they tap, and how often they call or visit your website — so you know what&rsquo;s working.
               </p>
               <Link
                 href={`/shops/manage/${id}/upgrade`}

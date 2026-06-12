@@ -43,32 +43,37 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>5. Content</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>5. Shop Orders and Payments</h2>
+            <p>Xplosale Shops is a venue connecting local shops with customers. When you place an order with a shop, the sale contract is between you and that shop — Xplosale is not a party to the transaction. Payments (cash, bank transfer, JazzCash, EasyPaisa) are made directly to the shop; Xplosale does not process, hold, or guarantee these payments. Payment screenshots you upload serve as evidence shared with the shop owner and our moderators — they are not payment processing. Refunds, exchanges, and delivery disputes must be resolved between the buyer and the shop; you may report misconduct through the platform&rsquo;s reporting tools and we may suspend shops that violate these terms. Shop reviews may only be left by customers with completed orders (one review per shop per customer); we may remove reviews we reasonably believe are fake, incentivised, or abusive.</p>
+          </section>
+
+          <section>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>6. Content</h2>
             <p>You retain ownership of content you post. By posting, you grant Xplosale a worldwide, royalty-free licence to display and distribute that content on the platform. You must not post content that infringes intellectual property rights or contains illegal material.</p>
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>6. Subscriptions and Payments</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>7. Subscriptions and Premium Plans</h2>
             <p>Premium plans are billed monthly. You may cancel at any time; access continues until the end of the current billing period. Refunds are issued at our discretion for billing errors.</p>
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>7. Limitation of Liability</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>8. Limitation of Liability</h2>
             <p>Xplosale is provided &quot;as is&quot; without warranty of any kind. To the maximum extent permitted by law, we are not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>8. Termination</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>9. Termination</h2>
             <p>We may suspend or terminate your account for violation of these terms or for conduct we reasonably believe is harmful to other users or the platform.</p>
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>9. Changes to Terms</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>10. Changes to Terms</h2>
             <p>We may update these terms from time to time. Continued use after notice of changes constitutes acceptance of the new terms.</p>
           </section>
 
           <section>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>10. Contact</h2>
+            <h2 style={{ fontFamily: "var(--display)", fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>11. Contact</h2>
             <p>Questions about these terms? Contact us via the support chat or email <a href="mailto:support@xplosale.com" style={{ color: "var(--clay)", textDecoration: "none" }}>support@xplosale.com</a>.</p>
           </section>
         </div>
