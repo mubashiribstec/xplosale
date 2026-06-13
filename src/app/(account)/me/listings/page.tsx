@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import ListingRowActions from "@/components/shared/marketplace/ListingRowActions";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -105,6 +106,7 @@ export default async function MyListingsPage() {
                         >
                           Edit
                         </Link>
+                        <ListingRowActions listingId={listing.id} status={listing.status} />
                       </div>
                     </td>
                   </tr>

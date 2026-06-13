@@ -114,7 +114,10 @@ export async function PATCH(
     if (status && !isAdmin) {
       const allowed =
         (listing.status === "DRAFT" && status === "PENDING_REVIEW") ||
-        (listing.status === "REJECTED" && status === "DRAFT");
+        (listing.status === "REJECTED" && status === "DRAFT") ||
+        (listing.status === "ACTIVE" && status === "SOLD") ||
+        (listing.status === "SOLD" && status === "ACTIVE") ||
+        (listing.status === "EXPIRED" && status === "ACTIVE");
       if (!allowed) return err("Invalid status transition", 422);
     }
 
