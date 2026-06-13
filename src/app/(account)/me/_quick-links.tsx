@@ -6,6 +6,7 @@ const LINKS = [
   { label: "My Profile", href: "/profile" },
   { label: "Saved Listings", href: "/me/saved-listings" },
   { label: "Favourite Shops", href: "/me/favourite-shops" },
+  { label: "Saved jobs", href: "/me/favourite-jobs" },
   { label: "My Orders", href: "/me/orders" },
   { label: "My Shops", href: "/shops/manage" },
   { label: "Job seeker settings", href: "/me/job-seeker" },

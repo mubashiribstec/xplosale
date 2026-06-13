@@ -71,8 +71,9 @@ export default async function JobsPage({
   searchParams: Promise<SearchParams>;
 }) {
   const [sp, session] = await Promise.all([searchParams, getSession()]);
-  const sessionUser = session?.user as { role?: string } | undefined;
+  const sessionUser = session?.user as { role?: string; id?: string } | undefined;
   const canPostJobs = sessionUser?.role === "PARTNER" || sessionUser?.role === "ADMIN";
+  const isAuthenticated = !!sessionUser;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
   const limit = 20;
 
@@ -126,6 +127,16 @@ export default async function JobsPage({
   ]);
 
   const pages = Math.ceil(total / limit);
+
+  // Batch-load which of these jobs the current user has saved
+  let favouritedIds = new Set<string>();
+  if (sessionUser?.id) {
+    const favRows = await prisma.jobFavourite.findMany({
+      where: { userId: sessionUser.id, jobPostingId: { in: result.hits.map((h) => h.id) } },
+      select: { jobPostingId: true },
+    });
+    favouritedIds = new Set(favRows.map((f) => f.jobPostingId));
+  }
 
   // Map JobHit to the shape JobCard expects
   const jobs = result.hits.map((hit) => ({
@@ -667,9 +678,14 @@ export default async function JobsPage({
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {jobs.map((job) => (
-                  <JobCard key={job.id} job={job} />
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    favourited={favouritedIds.has(job.id)}
+                    isAuthenticated={isAuthenticated}
+                  />
                 ))}
               </div>
             )}

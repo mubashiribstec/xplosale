@@ -51,16 +51,27 @@ export default function NewTestPage({ params }: { params: Promise<{ companyId: s
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
         <div>
-          <button type="button" onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">New Assessment Test</h1>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="text-sm hover:opacity-80 transition-opacity"
+            style={{ color: "var(--ink-faint)" }}
+          >
+            ← Back
+          </button>
+          <h1 className="text-2xl font-bold mt-1" style={{ color: "var(--ink)" }}>New Assessment Test</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-xl border p-6 space-y-4"
+          style={{ background: "var(--white)", borderColor: "var(--line)" }}
+        >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Test name</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Test name</label>
             <input
               type="text"
               value={form.name}
@@ -69,25 +80,29 @@ export default function NewTestPage({ params }: { params: Promise<{ companyId: s
               minLength={2}
               maxLength={120}
               placeholder="e.g. JavaScript Fundamentals"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)]"
+              style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-gray-400">(optional)</span></label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>
+              Description <span style={{ color: "var(--ink-faint)" }}>(optional)</span>
+            </label>
             <textarea
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
               rows={3}
               maxLength={500}
               placeholder="What does this test assess?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)] resize-none"
+              style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Duration (minutes)</label>
               <input
                 type="number"
                 value={form.durationMin}
@@ -95,11 +110,14 @@ export default function NewTestPage({ params }: { params: Promise<{ companyId: s
                 required
                 min={1}
                 max={300}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Passing score % <span className="text-gray-400">(optional)</span></label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>
+                Passing score % <span style={{ color: "var(--ink-faint)" }}>(optional)</span>
+              </label>
               <input
                 type="number"
                 value={form.passingScorePercent}
@@ -107,17 +125,23 @@ export default function NewTestPage({ params }: { params: Promise<{ companyId: s
                 min={0}
                 max={100}
                 placeholder="e.g. 70"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+          {error && (
+            <p className="text-sm px-3 py-2 rounded-lg" style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}>
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full py-3 font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {loading ? "Creating…" : "Create Test"}
           </button>

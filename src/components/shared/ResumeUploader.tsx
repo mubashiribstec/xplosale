@@ -56,11 +56,11 @@ export default function ResumeUploader({ onUpload, currentKey }: ResumeUploaderP
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-700">Resume (PDF)</p>
+      <p className="text-sm font-medium" style={{ color: "var(--ink-soft)" }}>Resume (PDF)</p>
 
       {uploadedKey && (
-        <p className="text-xs text-gray-500 flex items-center gap-1">
-          <span className="text-green-600">&#10003;</span>
+        <p className="text-xs flex items-center gap-1" style={{ color: "var(--ink-faint)" }}>
+          <span style={{ color: "var(--green)" }}>&#10003;</span>
           {displayName(uploadedKey)}
         </p>
       )}
@@ -78,12 +78,13 @@ export default function ResumeUploader({ onUpload, currentKey }: ResumeUploaderP
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={loading}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        className="px-4 py-2 text-sm font-medium border rounded-lg disabled:opacity-50 transition-colors"
+        style={{ color: "var(--ink-soft)", background: "var(--white)", borderColor: "var(--line)" }}
       >
         {loading ? 'Uploading…' : uploadedKey ? 'Replace resume' : 'Upload resume'}
       </button>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs" style={{ color: "#C83C28" }}>{error}</p>}
     </div>
   );
 }

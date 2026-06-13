@@ -19,10 +19,10 @@ type Recommendation = {
   };
 };
 
-function scoreColor(score: number) {
-  if (score >= 0.8) return "bg-green-100 text-green-700";
-  if (score >= 0.5) return "bg-blue-100 text-blue-700";
-  return "bg-gray-100 text-gray-600";
+function scoreColor(score: number): { background: string; color: string } {
+  if (score >= 0.8) return { background: "rgba(14,158,110,.12)", color: "var(--green)" };
+  if (score >= 0.5) return { background: "rgba(50,122,214,.12)", color: "var(--blue)" };
+  return { background: "var(--paper-2)", color: "var(--ink-soft)" };
 }
 
 export default function RecommendationsPage() {
@@ -52,61 +52,63 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8">
+    <main className="min-h-screen px-4 py-8" style={{ background: "var(--paper)" }}>
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Job Recommendations</h1>
-          <a href="/me/job-seeker" className="text-sm text-blue-600 hover:underline">← Profile settings</a>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--ink)", fontFamily: "var(--display)" }}>Job Recommendations</h1>
+          <a href="/me/job-seeker" className="text-sm hover:underline" style={{ color: "var(--blue)" }}>← Profile settings</a>
         </div>
 
         {loading && (
-          <div className="text-center py-12 text-gray-400">Loading recommendations…</div>
+          <div className="text-center py-12" style={{ color: "var(--ink-faint)" }}>Loading recommendations…</div>
         )}
 
         {!loading && recs.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
+          <div className="rounded-2xl border p-12 text-center" style={{ background: "var(--white)", borderColor: "var(--line)", color: "var(--ink-faint)" }}>
             <p className="text-lg font-medium">No recommendations yet.</p>
             <p className="text-sm mt-1">Make sure your profile is visible to recruiters in your job seeker settings.</p>
-            <a href="/me/job-seeker" className="mt-4 inline-block text-blue-600 hover:underline text-sm">Update settings →</a>
+            <a href="/me/job-seeker" className="mt-4 inline-block hover:underline text-sm" style={{ color: "var(--blue)" }}>Update settings →</a>
           </div>
         )}
 
         {recs.map((rec) => (
-          <div key={rec.id} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <div key={rec.id} className="rounded-2xl border p-5 space-y-3" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-gray-900 text-lg leading-tight">{rec.jobPosting.title}</h2>
-                <p className="text-gray-500 text-sm">{rec.jobPosting.company.name} · {rec.jobPosting.region.name}</p>
+                <h2 className="font-semibold text-lg leading-tight" style={{ color: "var(--ink)" }}>{rec.jobPosting.title}</h2>
+                <p className="text-sm" style={{ color: "var(--ink-faint)" }}>{rec.jobPosting.company.name} · {rec.jobPosting.region.name}</p>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${scoreColor(rec.score)}`}>
+              <span className="text-xs font-medium px-2 py-1 rounded-full shrink-0" style={scoreColor(rec.score)}>
                 {Math.round(rec.score * 100)}% match
               </span>
             </div>
 
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{rec.jobPosting.remoteType}</span>
+              <span className="px-2 py-1 rounded-full" style={{ background: "var(--paper-2)", color: "var(--ink-soft)" }}>{rec.jobPosting.remoteType}</span>
               {rec.jobPosting.salaryMin != null && (
-                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                <span className="px-2 py-1 rounded-full" style={{ background: "var(--paper-2)", color: "var(--ink-soft)" }}>
                   {rec.jobPosting.currency ?? "PKR"} {rec.jobPosting.salaryMin.toLocaleString()}
                   {rec.jobPosting.salaryMax ? `–${rec.jobPosting.salaryMax.toLocaleString()}` : "+"}
                 </span>
               )}
               {(rec.reasons as string[]).map((r) => (
-                <span key={r} className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full">{r}</span>
+                <span key={r} className="px-2 py-1 rounded-full" style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}>{r}</span>
               ))}
             </div>
 
             <div className="flex gap-2 pt-1">
               <a
                 href={`/jobs/${rec.jobPosting.id}`}
-                className="flex-1 text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-xl hover:bg-blue-700 transition"
+                className="flex-1 text-center text-sm font-medium py-2 rounded-xl transition"
+                style={{ background: "var(--clay)", color: "var(--white)" }}
               >
                 View Job
               </a>
               <button
                 onClick={() => dismiss(rec.id)}
                 disabled={dismissing === rec.id}
-                className="px-4 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition"
+                className="px-4 text-sm border rounded-xl disabled:opacity-50 transition"
+                style={{ color: "var(--ink-faint)", borderColor: "var(--line)" }}
               >
                 {dismissing === rec.id ? "…" : "Dismiss"}
               </button>

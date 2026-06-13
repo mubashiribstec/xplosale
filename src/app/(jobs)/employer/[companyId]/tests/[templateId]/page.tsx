@@ -178,109 +178,117 @@ export default function TestEditorPage({
 
   if (!template) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Loading…</p>
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--paper)" }}>
+        <p style={{ color: "var(--ink-faint)" }}>Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Link href={`/employer/${companyId}/tests`} className="text-sm text-gray-400 hover:text-gray-600">
+            <Link href={`/employer/${companyId}/tests`} className="text-sm hover:opacity-80 transition-opacity" style={{ color: "var(--ink-faint)" }}>
               ← All tests
             </Link>
-            <h1 className="text-xl font-bold text-gray-900 mt-1">{template.name}</h1>
+            <h1 className="text-xl font-bold mt-1" style={{ color: "var(--ink)" }}>{template.name}</h1>
           </div>
           <div className="flex gap-2">
             <button
               onClick={togglePublish}
               disabled={saving}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg ${
+              className="px-3 py-1.5 text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              style={
                 template.isPublished
-                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  : "bg-green-600 text-white hover:bg-green-700"
-              } disabled:opacity-50`}
+                  ? { background: "var(--paper-2)", color: "var(--ink-soft)" }
+                  : { background: "var(--green)", color: "var(--white)" }
+              }
             >
               {template.isPublished ? "Unpublish" : "Publish"}
             </button>
             <button
               onClick={deleteTemplate}
-              className="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+              className="px-3 py-1.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+              style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}
             >
               Delete
             </button>
           </div>
         </div>
 
-        {msg && <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">{msg}</p>}
-        {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+        {msg && <p className="text-sm px-3 py-2 rounded-lg" style={{ background: "rgba(14,158,110,.12)", color: "var(--green)" }}>{msg}</p>}
+        {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}>{error}</p>}
 
         {/* Settings */}
-        <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-          <h2 className="font-semibold text-gray-900">Settings</h2>
+        <section className="rounded-xl border p-5 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+          <h2 className="font-semibold" style={{ color: "var(--ink)" }}>Settings</h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Name</label>
             <input
               type="text"
               value={template.name}
               onChange={(e) => setTemplate((p) => p ? { ...p, name: e.target.value } : p)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)]"
+              style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Description</label>
             <textarea
               value={template.description ?? ""}
               onChange={(e) => setTemplate((p) => p ? { ...p, description: e.target.value } : p)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)] resize-none"
+              style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Duration (min)</label>
               <input
                 type="number"
                 value={template.durationMin}
                 onChange={(e) => setTemplate((p) => p ? { ...p, durationMin: parseInt(e.target.value, 10) || 1 } : p)}
                 min={1} max={300}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)]"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Passing score %</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Passing score %</label>
               <input
                 type="number"
                 value={template.passingScorePercent ?? ""}
                 onChange={(e) => setTemplate((p) => p ? { ...p, passingScorePercent: e.target.value ? parseInt(e.target.value, 10) : null } : p)}
                 min={0} max={100} placeholder="Optional"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)]"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
           </div>
           <button
             onClick={saveSettings}
             disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {saving ? "Saving…" : "Save settings"}
           </button>
         </section>
 
         {/* Questions */}
-        <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <section className="rounded-xl border p-5 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">
-              Questions <span className="text-gray-400 font-normal">({template.questions.length})</span>
+            <h2 className="font-semibold" style={{ color: "var(--ink)" }}>
+              Questions <span className="font-normal" style={{ color: "var(--ink-faint)" }}>({template.questions.length})</span>
             </h2>
             {!addingNew && (
               <button
                 onClick={() => { setAddingNew(true); }}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm font-medium hover:opacity-80 transition-opacity"
+                style={{ color: "var(--blue)" }}
               >
                 + Add question
               </button>
@@ -293,26 +301,31 @@ export default function TestEditorPage({
               .slice()
               .sort((a, b) => a.order - b.order)
               .map((q, idx) => (
-                <div key={q.id} className="border border-gray-100 rounded-lg p-4">
+                <div key={q.id} className="border rounded-lg p-4" style={{ borderColor: "var(--line)" }}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">
-                        <span className="text-gray-400 mr-2">{idx + 1}.</span>
+                      <p className="text-sm font-medium" style={{ color: "var(--ink-soft)" }}>
+                        <span className="mr-2" style={{ color: "var(--ink-faint)" }}>{idx + 1}.</span>
                         {q.body}
                       </p>
                       <div className="mt-2 space-y-1">
                         {q.metadata.options?.map((opt, oi) => (
-                          <p key={opt.id} className={`text-xs ${q.metadata.correctIds?.includes(opt.id) ? "text-green-700 font-medium" : "text-gray-500"}`}>
+                          <p
+                            key={opt.id}
+                            className={`text-xs ${q.metadata.correctIds?.includes(opt.id) ? "font-medium" : ""}`}
+                            style={{ color: q.metadata.correctIds?.includes(opt.id) ? "var(--green)" : "var(--ink-faint)" }}
+                          >
                             {OPTION_LETTERS[oi]}. {opt.text}
                             {q.metadata.correctIds?.includes(opt.id) && " ✓"}
                           </p>
                         ))}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">{q.points} pt{q.points !== 1 ? "s" : ""}</p>
+                      <p className="text-xs mt-1" style={{ color: "var(--ink-faint)" }}>{q.points} pt{q.points !== 1 ? "s" : ""}</p>
                     </div>
                     <button
                       onClick={() => deleteQuestion(q.id)}
-                      className="text-xs text-red-400 hover:text-red-600 shrink-0"
+                      className="text-xs shrink-0 hover:opacity-80 transition-opacity"
+                      style={{ color: "#C83C28" }}
                     >
                       Remove
                     </button>
@@ -323,24 +336,25 @@ export default function TestEditorPage({
 
           {/* Add new question form */}
           {addingNew && (
-            <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-800">New MCQ Question</h3>
+            <div className="border rounded-lg p-4 space-y-4" style={{ borderColor: "var(--blue)", background: "rgba(50,122,214,.08)" }}>
+              <h3 className="text-sm font-semibold" style={{ color: "var(--ink-soft)" }}>New MCQ Question</h3>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Question</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Question</label>
                 <textarea
                   value={newQ.body}
                   onChange={(e) => setNewQ((p) => ({ ...p, body: e.target.value }))}
                   rows={2}
                   placeholder="Enter the question…"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)] resize-none"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-gray-600">Options (mark correct)</label>
-                  <label className="flex items-center gap-1 text-xs text-gray-500">
+                  <label className="text-xs font-medium" style={{ color: "var(--ink-soft)" }}>Options (mark correct)</label>
+                  <label className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-faint)" }}>
                     <input
                       type="checkbox"
                       checked={newQ.multiSelect}
@@ -371,7 +385,7 @@ export default function TestEditorPage({
                         }}
                         className="shrink-0"
                       />
-                      <span className="text-xs text-gray-500 shrink-0">{OPTION_LETTERS[oi]}.</span>
+                      <span className="text-xs shrink-0" style={{ color: "var(--ink-faint)" }}>{OPTION_LETTERS[oi]}.</span>
                       <input
                         type="text"
                         value={opt.text}
@@ -383,7 +397,8 @@ export default function TestEditorPage({
                           }));
                         }}
                         placeholder={`Option ${OPTION_LETTERS[oi]}`}
-                        className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                        className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--clay)]"
+                        style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                       />
                       {newQ.options.length > 2 && (
                         <button
@@ -393,7 +408,8 @@ export default function TestEditorPage({
                             options: p.options.filter((o) => o.id !== opt.id),
                             correctIds: p.correctIds.filter((id) => id !== opt.id),
                           }))}
-                          className="text-xs text-red-400 hover:text-red-600"
+                          className="text-xs hover:opacity-80 transition-opacity"
+                          style={{ color: "#C83C28" }}
                         >
                           ×
                         </button>
@@ -405,7 +421,8 @@ export default function TestEditorPage({
                   <button
                     type="button"
                     onClick={() => setNewQ((p) => ({ ...p, options: [...p.options, { id: newOptionId(), text: "" }] }))}
-                    className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+                    className="mt-2 text-xs hover:opacity-80 transition-opacity"
+                    style={{ color: "var(--blue)" }}
                   >
                     + Add option
                   </button>
@@ -413,13 +430,14 @@ export default function TestEditorPage({
               </div>
 
               <div className="w-24">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Points</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Points</label>
                 <input
                   type="number"
                   value={newQ.points}
                   onChange={(e) => setNewQ((p) => ({ ...p, points: e.target.value }))}
                   min={1} max={100}
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--clay)]"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                 />
               </div>
 
@@ -427,14 +445,16 @@ export default function TestEditorPage({
                 <button
                   type="button"
                   onClick={addQuestion}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ background: "var(--clay)", color: "var(--white)" }}
                 >
                   Add Question
                 </button>
                 <button
                   type="button"
                   onClick={() => { setAddingNew(false); resetNewQ(); }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
+                  className="px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ background: "var(--paper-2)", color: "var(--ink-soft)" }}
                 >
                   Cancel
                 </button>
@@ -445,7 +465,7 @@ export default function TestEditorPage({
 
         {/* Status summary */}
         {template.questions.length > 0 && (
-          <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-sm text-gray-600">
+          <div className="rounded-xl border p-4 text-sm" style={{ background: "var(--paper-2)", borderColor: "var(--line)", color: "var(--ink-soft)" }}>
             {template.questions.length} questions ·{" "}
             {template.questions.reduce((s, q) => s + q.points, 0)} total points ·{" "}
             {template.durationMin} min

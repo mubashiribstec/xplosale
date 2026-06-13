@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import JobFavouriteButton from "@/components/shared/jobs/JobFavouriteButton";
 
 interface JobCardProps {
   job: {
@@ -22,6 +23,8 @@ interface JobCardProps {
   matchScore?: number | null;
   skills?: string[];
   applied?: boolean;
+  favourited?: boolean;
+  isAuthenticated?: boolean;
 }
 
 function daysAgo(date: string | Date): string {
@@ -88,7 +91,7 @@ const REMOTE_CHIP_STYLE: Record<string, React.CSSProperties> = {
   REMOTE: { background: "rgba(14,158,110,.10)", color: "var(--green)" },
 };
 
-export default function JobCard({ job, matchScore, skills, applied }: JobCardProps) {
+export default function JobCard({ job, matchScore, skills, applied, favourited, isAuthenticated }: JobCardProps) {
   const hasSalary = job.salaryMin != null || job.salaryMax != null;
 
   const salaryLabel = hasSalary
@@ -109,12 +112,11 @@ export default function JobCard({ job, matchScore, skills, applied }: JobCardPro
           border: "1.5px solid var(--line)",
           borderRadius: 18,
           padding: "20px 22px",
-          transition: "box-shadow .18s ease, transform .18s ease",
           display: "flex",
           flexDirection: "column",
           gap: 14,
         }}
-        className="hover:[box-shadow:var(--shadow-lg)] hover:-translate-y-0.5"
+        className="card-hover"
       >
         {/* Top row */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
@@ -142,23 +144,32 @@ export default function JobCard({ job, matchScore, skills, applied }: JobCardPro
             </div>
           </div>
 
-          {/* Remote chip */}
-          <span
-            style={{
-              ...remoteStyle,
-              fontFamily: "var(--body)",
-              fontWeight: 600,
-              fontSize: 11,
-              letterSpacing: ".06em",
-              textTransform: "uppercase",
-              padding: "3px 9px",
-              borderRadius: 99,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            {remoteLabel}
-          </span>
+          {/* Remote chip + optional favourite */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <span
+              style={{
+                ...remoteStyle,
+                fontFamily: "var(--body)",
+                fontWeight: 600,
+                fontSize: 11,
+                letterSpacing: ".06em",
+                textTransform: "uppercase",
+                padding: "3px 9px",
+                borderRadius: 99,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {remoteLabel}
+            </span>
+            {favourited !== undefined && (
+              <JobFavouriteButton
+                jobId={job.id}
+                initialFavourited={favourited}
+                isAuthenticated={isAuthenticated ?? false}
+                size="sm"
+              />
+            )}
+          </div>
         </div>
 
         {/* Region */}

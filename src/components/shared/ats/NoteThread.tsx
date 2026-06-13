@@ -105,26 +105,29 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
   return (
     <div className="flex flex-col gap-4">
       {loading ? (
-        <p className="text-xs text-gray-400">Loading notes…</p>
+        <p className="text-xs" style={{ color: "var(--ink-faint)" }}>Loading notes…</p>
       ) : notes.length === 0 ? (
-        <p className="text-xs text-gray-400">No notes yet. Add one below.</p>
+        <p className="text-xs" style={{ color: "var(--ink-faint)" }}>No notes yet. Add one below.</p>
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
             <div key={note.id} className="flex gap-2">
-              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5"
+                style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}
+              >
                 {(note.author.name ?? note.author.networkProfile?.handle ?? "?")[0].toUpperCase()}
               </div>
               <div className="flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold text-gray-800">
+                  <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>
                     {note.author.name ?? `@${note.author.networkProfile?.handle ?? "unknown"}`}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs" style={{ color: "var(--ink-faint)" }}>
                     {new Date(note.createdAt).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap">{note.body}</p>
+                <p className="text-sm mt-0.5 whitespace-pre-wrap" style={{ color: "var(--ink-soft)" }}>{note.body}</p>
               </div>
             </div>
           ))}
@@ -138,19 +141,27 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
           onChange={handleBodyChange}
           placeholder={`Add a note… type @ to mention a team member`}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          style={{ borderColor: "var(--line)" }}
         />
 
         {autocomplete.length > 0 && (
-          <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 w-52 overflow-hidden">
+          <div
+            className="absolute bottom-full left-0 mb-1 border rounded-xl shadow-lg z-10 w-52 overflow-hidden"
+            style={{ background: "var(--white)", borderColor: "var(--line)" }}
+          >
             {autocomplete.slice(0, 6).map((m) => (
               <button
                 key={m.id}
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); selectMention(m); }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:opacity-80"
+                style={{ color: "var(--ink)" }}
               >
-                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center font-semibold">
+                <span
+                  className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold"
+                  style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}
+                >
                   {(m.name ?? m.handle ?? "?")[0].toUpperCase()}
                 </span>
                 <span className="truncate">{m.name ?? `@${m.handle}`}</span>
@@ -163,7 +174,8 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
           <button
             type="submit"
             disabled={submitting || !body.trim()}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {submitting ? "Posting…" : "Post note"}
           </button>

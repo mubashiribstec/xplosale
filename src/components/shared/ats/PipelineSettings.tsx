@@ -85,7 +85,7 @@ export default function PipelineSettings({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
         {stages.map((stage, idx) => (
           <div
             key={rowKey(stage)}
@@ -93,10 +93,11 @@ export default function PipelineSettings({
             onDragStart={() => { dragIdx.current = idx; }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => { if (dragIdx.current !== null && dragIdx.current !== idx) { reorder(dragIdx.current, idx); dragIdx.current = null; } }}
-            className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-grab active:cursor-grabbing"
+            className="flex items-center gap-3 px-4 py-3 border-b last:border-0 cursor-grab active:cursor-grabbing transition-colors hover:opacity-90"
+            style={{ borderColor: "var(--paper-2)" }}
           >
             {/* Drag handle */}
-            <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16" style={{ color: "var(--ink-faint)" }}>
               <path d="M4 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm5-6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
             </svg>
 
@@ -117,7 +118,8 @@ export default function PipelineSettings({
               value={stage.name}
               onChange={(e) => update(idx, { name: e.target.value })}
               maxLength={50}
-              className="flex-1 text-sm font-medium bg-transparent border-0 outline-none focus:bg-white focus:border focus:border-blue-200 rounded px-1 py-0.5"
+              className="flex-1 text-sm font-medium bg-transparent border-0 outline-none focus:border rounded px-1 py-0.5"
+              style={{ color: "var(--ink)" }}
             />
 
             {/* Flag toggles */}
@@ -126,7 +128,12 @@ export default function PipelineSettings({
                 type="button"
                 onClick={() => setFlag(idx, "isInitial")}
                 title="Initial stage (where new applications land)"
-                className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${stage.isInitial ? "bg-blue-100 text-blue-700 border-blue-200" : "text-gray-400 border-gray-200 hover:border-gray-300"}`}
+                className="text-xs px-1.5 py-0.5 rounded border transition-colors"
+                style={
+                  stage.isInitial
+                    ? { background: "rgba(50,122,214,.12)", color: "var(--blue)", borderColor: "rgba(50,122,214,.3)" }
+                    : { color: "var(--ink-faint)", borderColor: "var(--line)" }
+                }
               >
                 IN
               </button>
@@ -134,7 +141,12 @@ export default function PipelineSettings({
                 type="button"
                 onClick={() => setFlag(idx, "isHired")}
                 title="Hired stage"
-                className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${stage.isHired ? "bg-green-100 text-green-700 border-green-200" : "text-gray-400 border-gray-200 hover:border-gray-300"}`}
+                className="text-xs px-1.5 py-0.5 rounded border transition-colors"
+                style={
+                  stage.isHired
+                    ? { background: "rgba(14,158,110,.12)", color: "var(--green)", borderColor: "rgba(14,158,110,.3)" }
+                    : { color: "var(--ink-faint)", borderColor: "var(--line)" }
+                }
               >
                 ✓
               </button>
@@ -142,7 +154,12 @@ export default function PipelineSettings({
                 type="button"
                 onClick={() => setFlag(idx, "isRejected")}
                 title="Rejected stage"
-                className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${stage.isRejected ? "bg-red-100 text-red-700 border-red-200" : "text-gray-400 border-gray-200 hover:border-gray-300"}`}
+                className="text-xs px-1.5 py-0.5 rounded border transition-colors"
+                style={
+                  stage.isRejected
+                    ? { background: "rgba(200,60,40,.12)", color: "#C83C28", borderColor: "rgba(200,60,40,.3)" }
+                    : { color: "var(--ink-faint)", borderColor: "var(--line)" }
+                }
               >
                 ✗
               </button>
@@ -153,7 +170,8 @@ export default function PipelineSettings({
               type="button"
               onClick={() => remove(idx)}
               disabled={stages.length <= 2}
-              className="text-gray-300 hover:text-red-400 disabled:opacity-30 flex-shrink-0 transition-colors"
+              className="disabled:opacity-30 flex-shrink-0 transition-colors hover:opacity-80"
+              style={{ color: "var(--ink-faint)" }}
               title="Delete stage"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,27 +186,29 @@ export default function PipelineSettings({
         <button
           type="button"
           onClick={add}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-sm font-medium hover:opacity-80 transition-colors"
+          style={{ color: "var(--blue)" }}
         >
           + Add stage
         </button>
         <div className="ml-auto flex items-center gap-3">
           {msg && (
-            <span className={`text-sm ${msg.ok ? "text-green-600" : "text-red-600"}`}>{msg.text}</span>
+            <span className="text-sm" style={{ color: msg.ok ? "var(--green)" : "#C83C28" }}>{msg.text}</span>
           )}
           <button
             type="button"
             onClick={() => void save()}
             disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {saving ? "Saving…" : "Save pipeline"}
           </button>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400">
-        Drag rows to reorder. <span className="font-medium">IN</span> = initial (new applications land here). <span className="text-green-600 font-medium">✓</span> = hired. <span className="text-red-600 font-medium">✗</span> = rejected.
+      <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
+        Drag rows to reorder. <span className="font-medium">IN</span> = initial (new applications land here). <span className="font-medium" style={{ color: "var(--green)" }}>✓</span> = hired. <span className="font-medium" style={{ color: "#C83C28" }}>✗</span> = rejected.
       </p>
     </div>
   );

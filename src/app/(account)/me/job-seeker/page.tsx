@@ -68,42 +68,46 @@ export default function JobSeekerProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8">
+    <main className="min-h-screen px-4 py-8" style={{ background: "var(--paper)" }}>
       <div className="max-w-lg mx-auto">
-        <button onClick={() => router.push("/me")} className="text-sm text-gray-400 hover:text-gray-600 mb-4">← Back</button>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">{profile ? "Edit" : "Set up"} Job Seeker Profile</h1>
-        {loadError && <p className="text-sm text-red-600 mb-4">{loadError}</p>}
-        <form onSubmit={handleSave} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+        <button onClick={() => router.push("/me")} className="text-sm mb-4 transition-colors" style={{ color: "var(--ink-faint)" }}>← Back</button>
+        <h1 className="text-2xl font-bold mb-6" style={{ color: "var(--ink)", fontFamily: "var(--display)" }}>{profile ? "Edit" : "Set up"} Job Seeker Profile</h1>
+        {loadError && <p className="text-sm mb-4" style={{ color: "#C83C28" }}>{loadError}</p>}
+        <form onSubmit={handleSave} className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
           {[
             { label: "Headline", key: "headline", placeholder: "e.g. Senior Engineer | React | Node.js", max: 120 },
             { label: "Current Role", key: "currentRoleTitle", placeholder: "e.g. Software Engineer at Startup", max: 100 },
           ].map(({ label, key, placeholder, max }) => (
             <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>{label}</label>
               <input type="text" value={(form as unknown as Record<string,string>)[key]} onChange={(e) => set(key, e.target.value)} placeholder={placeholder} maxLength={max}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }} />
             </div>
           ))}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Summary</label>
             <textarea value={form.summary} onChange={(e) => set("summary", e.target.value)} rows={3} maxLength={2000} placeholder="Brief professional summary..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Min Salary (PKR)</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Min Salary (PKR)</label>
               <input type="number" value={form.expectedSalaryMin} onChange={(e) => set("expectedSalaryMin", e.target.value)} placeholder="e.g. 100000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Salary (PKR)</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Max Salary (PKR)</label>
               <input type="number" value={form.expectedSalaryMax} onChange={(e) => set("expectedSalaryMax", e.target.value)} placeholder="e.g. 250000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }} />
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.openToWork} onChange={(e) => set("openToWork", e.target.checked)} className="rounded" />
-            <span className="text-sm text-gray-700">Open to work</span>
+            <span className="text-sm" style={{ color: "var(--ink-soft)" }}>Open to work</span>
           </label>
           <ResumeUploader
             currentKey={resumeKey ?? undefined}
@@ -112,9 +116,10 @@ export default function JobSeekerProfilePage() {
               setMsg("Resume uploaded successfully.");
             }}
           />
-          {msg && <p className="text-sm text-blue-600">{msg}</p>}
+          {msg && <p className="text-sm" style={{ color: "var(--blue)" }}>{msg}</p>}
           <button type="submit" disabled={saving}
-            className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+            className="w-full py-2.5 text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+            style={{ background: "var(--clay)", color: "var(--white)" }}>
             {saving ? "Saving…" : "Save Job Seeker Profile"}
           </button>
         </form>

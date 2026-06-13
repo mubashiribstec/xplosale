@@ -201,38 +201,42 @@ export default function PipelineBoard({
         {/* Top bar */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{jobTitle}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{apps.length} total applicants</p>
+            <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>{jobTitle}</h1>
+            <p className="text-sm mt-0.5" style={{ color: "var(--ink-faint)" }}>{apps.length} total applicants</p>
           </div>
           <div className="flex gap-2 flex-wrap items-center">
             {hasAnyMatch && (
               <button
                 type="button"
                 onClick={() => setSortByMatch((v) => !v)}
-                className={`text-xs px-2 py-1 rounded border transition-colors ${
+                className="text-xs px-2 py-1 rounded border transition-colors"
+                style={
                   sortByMatch
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-gray-200 text-gray-500 hover:border-gray-400"
-                }`}
+                    ? { background: "var(--clay)", color: "var(--white)", borderColor: "var(--clay)" }
+                    : { borderColor: "var(--line)", color: "var(--ink-faint)" }
+                }
               >
                 {sortByMatch ? "✓ Sort: Match" : "Sort by Match"}
               </button>
             )}
             <Link
               href={`/employer/${companyId}/jobs/${jobId}/team`}
-              className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1"
+              className="text-xs rounded px-2 py-1 border"
+              style={{ color: "var(--ink-faint)", borderColor: "var(--line)" }}
             >
               Manage team
             </Link>
             <Link
               href={`/employer/${companyId}/pipeline-settings`}
-              className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1"
+              className="text-xs rounded px-2 py-1 border"
+              style={{ color: "var(--ink-faint)", borderColor: "var(--line)" }}
             >
               Pipeline settings
             </Link>
             <Link
               href={`/employer/${companyId}/templates`}
-              className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1"
+              className="text-xs rounded px-2 py-1 border"
+              style={{ color: "var(--ink-faint)", borderColor: "var(--line)" }}
             >
               Email templates
             </Link>
@@ -242,13 +246,16 @@ export default function PipelineBoard({
         {/* Tag filter */}
         {tags.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-400">Filter by tag:</span>
+            <span className="text-xs" style={{ color: "var(--ink-faint)" }}>Filter by tag:</span>
             <button
               type="button"
               onClick={() => setFilterTagId(null)}
-              className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                !filterTagId ? "bg-gray-800 text-white border-gray-800" : "border-gray-200 text-gray-500 hover:border-gray-400"
-              }`}
+              className="text-xs px-2 py-0.5 rounded-full border transition-colors"
+              style={
+                !filterTagId
+                  ? { background: "var(--ink)", color: "var(--white)", borderColor: "var(--ink)" }
+                  : { borderColor: "var(--line)", color: "var(--ink-faint)" }
+              }
             >
               All
             </button>
@@ -271,13 +278,16 @@ export default function PipelineBoard({
         )}
 
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-lg">{error}</div>
+          <div className="text-sm px-3 py-2 rounded-lg" style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}>{error}</div>
         )}
 
         {/* Bulk action bar */}
         {selected.size > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-blue-800">{selected.size} selected</span>
+          <div
+            className="rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap border"
+            style={{ background: "rgba(50,122,214,.08)", borderColor: "rgba(50,122,214,.3)" }}
+          >
+            <span className="text-sm font-medium" style={{ color: "var(--blue-deep)" }}>{selected.size} selected</span>
             <select
               value={bulkAction}
               onChange={async (e) => {
@@ -286,7 +296,8 @@ export default function PipelineBoard({
                   await fetchBulkTemplates();
                 }
               }}
-              className="text-sm border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none"
+              className="text-sm rounded-lg px-2 py-1 border focus:outline-none"
+              style={{ borderColor: "rgba(50,122,214,.3)", background: "var(--white)", color: "var(--ink)" }}
             >
               <option value="">Choose action…</option>
               <option value="MOVE_STAGE">Move to stage</option>
@@ -297,7 +308,8 @@ export default function PipelineBoard({
 
             {bulkAction === "MOVE_STAGE" && (
               <select value={bulkStageId} onChange={(e) => setBulkStageId(e.target.value)}
-                className="text-sm border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+                className="text-sm rounded-lg px-2 py-1 border focus:outline-none"
+                style={{ borderColor: "rgba(50,122,214,.3)", background: "var(--white)", color: "var(--ink)" }}>
                 <option value="">Select stage…</option>
                 {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -305,7 +317,8 @@ export default function PipelineBoard({
 
             {bulkAction === "ADD_TAG" && (
               <select value={bulkTagId} onChange={(e) => setBulkTagId(e.target.value)}
-                className="text-sm border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+                className="text-sm rounded-lg px-2 py-1 border focus:outline-none"
+                style={{ borderColor: "rgba(50,122,214,.3)", background: "var(--white)", color: "var(--ink)" }}>
                 <option value="">Select tag…</option>
                 {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -313,21 +326,25 @@ export default function PipelineBoard({
 
             {(bulkAction === "SEND_EMAIL" || bulkAction === "REJECT_WITH_TEMPLATE") && (
               <select value={bulkTemplateId} onChange={(e) => setBulkTemplateId(e.target.value)}
-                className="text-sm border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+                className="text-sm rounded-lg px-2 py-1 border focus:outline-none"
+                style={{ borderColor: "rgba(50,122,214,.3)", background: "var(--white)", color: "var(--ink)" }}>
                 <option value="">Select template…</option>
                 {bulkTemplates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             )}
 
-            {bulkMsg && <span className={`text-xs ${bulkMsg.startsWith("Done") ? "text-green-700" : "text-red-600"}`}>{bulkMsg}</span>}
+            {bulkMsg && (
+              <span className="text-xs" style={{ color: bulkMsg.startsWith("Done") ? "var(--green-deep)" : "#C83C28" }}>{bulkMsg}</span>
+            )}
 
             <div className="flex gap-2 ml-auto">
               <button type="button" onClick={() => { setSelected(new Set()); setBulkAction(""); setBulkMsg(null); }}
-                className="text-sm text-gray-500 hover:text-gray-700">
+                className="text-sm" style={{ color: "var(--ink-faint)" }}>
                 Clear
               </button>
               <button type="button" onClick={() => void executeBulk()} disabled={bulking}
-                className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                className="text-sm px-3 py-1 rounded-lg disabled:opacity-50 transition-colors"
+                style={{ background: "var(--clay)", color: "var(--white)" }}>
                 {bulking ? "Working…" : "Apply"}
               </button>
             </div>
@@ -351,8 +368,8 @@ export default function PipelineBoard({
                     style={{ backgroundColor: `${stage.color}18` }}
                   >
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                    <span className="text-xs font-semibold text-gray-700 truncate">{stage.name}</span>
-                    <span className="ml-auto text-xs text-gray-400">{stageApps.length}</span>
+                    <span className="text-xs font-semibold truncate" style={{ color: "var(--ink-soft)" }}>{stage.name}</span>
+                    <span className="ml-auto text-xs" style={{ color: "var(--ink-faint)" }}>{stageApps.length}</span>
                   </div>
 
                   <div className="space-y-2 min-h-[120px]">
@@ -362,9 +379,14 @@ export default function PipelineBoard({
                         draggable
                         onDragStart={() => setDragging(app.id)}
                         onDragEnd={() => setDragging(null)}
-                        className={`bg-white border rounded-xl p-3 shadow-sm transition-all ${
+                        className={`border rounded-xl p-3 shadow-sm transition-all ${
                           moving === app.id ? "opacity-40" : "hover:shadow-md"
-                        } ${selected.has(app.id) ? "border-blue-400 ring-1 ring-blue-300" : "border-gray-200"}`}
+                        }`}
+                        style={{
+                          background: "var(--white)",
+                          borderColor: selected.has(app.id) ? "var(--blue)" : "var(--line)",
+                          boxShadow: selected.has(app.id) ? "0 0 0 1px var(--blue)" : undefined,
+                        }}
                       >
                         {/* Checkbox + name */}
                         <div className="flex items-start gap-1.5">
@@ -373,18 +395,18 @@ export default function PipelineBoard({
                             checked={selected.has(app.id)}
                             onChange={() => toggleSelect(app.id)}
                             onClick={(e) => e.stopPropagation()}
-                            className="mt-0.5 flex-shrink-0 rounded accent-blue-600"
+                            className="mt-0.5 flex-shrink-0 rounded accent-[var(--clay)]"
                           />
                           <button
                             type="button"
                             className="flex-1 text-left"
                             onClick={() => setOpenAppId(app.id)}
                           >
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium truncate" style={{ color: "var(--ink)" }}>
                               {app.jobSeeker.user.name ?? "Applicant"}
                             </p>
                             {app.jobSeeker.headline && (
-                              <p className="text-xs text-gray-500 truncate mt-0.5">{app.jobSeeker.headline}</p>
+                              <p className="text-xs truncate mt-0.5" style={{ color: "var(--ink-faint)" }}>{app.jobSeeker.headline}</p>
                             )}
                           </button>
                         </div>
@@ -411,13 +433,14 @@ export default function PipelineBoard({
                               type="button"
                               onMouseEnter={() => setHoverMatchId(app.id)}
                               onMouseLeave={() => setHoverMatchId(null)}
-                              className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+                              className="text-xs px-1.5 py-0.5 rounded font-semibold"
+                              style={
                                 app.match.score >= 75
-                                  ? "bg-green-100 text-green-700"
+                                  ? { background: "rgba(14,158,110,.12)", color: "var(--green)" }
                                   : app.match.score >= 50
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-gray-100 text-gray-500"
-                              }`}
+                                  ? { background: "rgba(50,122,214,.12)", color: "var(--blue)" }
+                                  : { background: "var(--paper-2)", color: "var(--ink-faint)" }
+                              }
                             >
                               {app.match.score}% match
                               {app.match.requiredTotal > 0 && (
@@ -427,23 +450,26 @@ export default function PipelineBoard({
                               )}
                             </button>
                             {hoverMatchId === app.id && (app.match.matchedTerms.length > 0 || app.match.missedTerms.length > 0) && (
-                              <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-52 text-xs">
+                              <div
+                                className="absolute left-0 top-full mt-1 z-50 border rounded-lg p-3 w-52 text-xs"
+                                style={{ background: "var(--white)", borderColor: "var(--line)", boxShadow: "var(--shadow-lg)" }}
+                              >
                                 {app.match.matchedTerms.length > 0 && (
                                   <div className="mb-2">
-                                    <p className="font-semibold text-green-700 mb-1">Matched</p>
+                                    <p className="font-semibold mb-1" style={{ color: "var(--green-deep)" }}>Matched</p>
                                     <div className="flex flex-wrap gap-1">
                                       {app.match.matchedTerms.map((t) => (
-                                        <span key={t} className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">{t}</span>
+                                        <span key={t} className="px-1.5 py-0.5 rounded" style={{ background: "rgba(14,158,110,.12)", color: "var(--green)" }}>{t}</span>
                                       ))}
                                     </div>
                                   </div>
                                 )}
                                 {app.match.missedTerms.length > 0 && (
                                   <div>
-                                    <p className="font-semibold text-red-600 mb-1">Missing</p>
+                                    <p className="font-semibold mb-1" style={{ color: "#C83C28" }}>Missing</p>
                                     <div className="flex flex-wrap gap-1">
                                       {app.match.missedTerms.map((t) => (
-                                        <span key={t} className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded">{t}</span>
+                                        <span key={t} className="px-1.5 py-0.5 rounded" style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}>{t}</span>
                                       ))}
                                     </div>
                                   </div>
@@ -454,7 +480,7 @@ export default function PipelineBoard({
                         )}
 
                         <div className="flex items-center justify-between mt-1.5">
-                          <p className="text-xs text-gray-300">
+                          <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
                             {new Date(app.createdAt).toLocaleDateString()}
                           </p>
                           <InviteButton
@@ -467,8 +493,8 @@ export default function PipelineBoard({
                     ))}
 
                     {stageApps.length === 0 && (
-                      <div className="border-2 border-dashed border-gray-100 rounded-xl h-16 flex items-center justify-center">
-                        <span className="text-xs text-gray-300">Drop here</span>
+                      <div className="border-2 border-dashed rounded-xl h-16 flex items-center justify-center" style={{ borderColor: "var(--line)" }}>
+                        <span className="text-xs" style={{ color: "var(--ink-faint)" }}>Drop here</span>
                       </div>
                     )}
                   </div>

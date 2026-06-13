@@ -195,8 +195,8 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
 
   if (phase === "loading") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Loading test…</p>
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--paper)" }}>
+        <p style={{ color: "var(--ink-faint)" }}>Loading test…</p>
       </main>
     );
   }
@@ -209,21 +209,22 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
         a.scorePercent
       );
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-4">
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--paper)" }}>
+        <div className="max-w-md w-full rounded-2xl border p-8 text-center space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
           <div className="text-4xl">{a?.scorePercent != null ? "🎉" : "📋"}</div>
-          <h1 className="text-xl font-bold text-gray-900">Test Submitted</h1>
+          <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>Test Submitted</h1>
           {a?.scorePercent != null ? (
-            <p className="text-3xl font-bold text-blue-600">{a.scorePercent.toFixed(0)}%</p>
+            <p className="text-3xl font-bold" style={{ color: "var(--blue)" }}>{a.scorePercent.toFixed(0)}%</p>
           ) : (
-            <p className="text-sm text-gray-500">Your submission is being reviewed by the team.</p>
+            <p className="text-sm" style={{ color: "var(--ink-faint)" }}>Your submission is being reviewed by the team.</p>
           )}
           {a?.autoGraded && a.scorePercent != null && (
-            <p className="text-xs text-gray-400">Auto-graded · Score is final</p>
+            <p className="text-xs" style={{ color: "var(--ink-faint)" }}>Auto-graded · Score is final</p>
           )}
           <button
             onClick={() => router.push("/me/employer/jobs")}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+            className="mt-4 px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             Back to dashboard
           </button>
@@ -234,28 +235,29 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
 
   if (phase === "intro") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-white rounded-2xl border border-gray-200 p-8 space-y-5">
-          <h1 className="text-xl font-bold text-gray-900">{assignment?.template.name ?? "Assessment Test"}</h1>
+      <main className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--paper)" }}>
+        <div className="max-w-lg w-full rounded-2xl border p-8 space-y-5" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+          <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>{assignment?.template.name ?? "Assessment Test"}</h1>
           {assignment?.template.description && (
-            <p className="text-sm text-gray-600">{assignment.template.description}</p>
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{assignment.template.description}</p>
           )}
-          <div className="text-sm text-gray-500 space-y-1">
+          <div className="text-sm space-y-1" style={{ color: "var(--ink-faint)" }}>
             <p>⏱ Time limit: <strong>{assignment?.template.durationMin} minutes</strong></p>
             <p>📝 Questions: <strong>{assignment?.questions.length}</strong></p>
             <p>📅 Due: <strong>{assignment ? new Date(assignment.dueAt).toLocaleDateString() : "—"}</strong></p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+          <div className="rounded-lg p-3 text-xs border" style={{ background: "rgba(160,78,55,.12)", borderColor: "rgba(160,78,55,.3)", color: "var(--clay-deep)" }}>
             <strong>Transparency notice:</strong> This test records focus-loss and fullscreen-exit events as soft signals.
             Significant deviations are reviewed by a human recruiter; no auto-fail occurs based on these signals.
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm" style={{ color: "#C83C28" }}>{error}</p>}
 
           <button
             onClick={() => void startTest()}
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700"
+            className="w-full py-3 font-semibold rounded-xl transition-colors hover:opacity-90"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             Start Test
           </button>
@@ -271,26 +273,27 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
   const answered = questions.filter((q2) => (answers[q2.id]?.length ?? 0) > 0).length;
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
+    <main className="min-h-screen flex flex-col" style={{ background: "var(--paper)" }}>
       {/* Top bar */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      <header className="border-b px-4 py-3 flex items-center justify-between" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
         <div>
-          <p className="text-sm font-semibold text-gray-900">{assignment?.template.name}</p>
-          <p className="text-xs text-gray-400">{answered}/{questions.length} answered</p>
+          <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{assignment?.template.name}</p>
+          <p className="text-xs" style={{ color: "var(--ink-faint)" }}>{answered}/{questions.length} answered</p>
         </div>
         <div className="flex items-center gap-4">
           {(focusLoss > 0 || fullscreenExits > 0) && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+            <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(160,78,55,.12)", color: "var(--clay)" }}>
               Focus events: {focusLoss + fullscreenExits}
             </span>
           )}
-          <span className={`text-sm font-mono font-bold ${timeLeft < 60 ? "text-red-600" : "text-gray-700"}`}>
+          <span className="text-sm font-mono font-bold" style={{ color: timeLeft < 60 ? "#C83C28" : "var(--ink-soft)" }}>
             {formatTime(timeLeft)}
           </span>
           <button
             onClick={() => { if (confirm("Submit the test now?")) void handleSubmit(); }}
             disabled={submitting}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-3 py-1.5 text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {submitting ? "Submitting…" : "Submit"}
           </button>
@@ -299,32 +302,36 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
 
       <div className="flex-1 flex max-w-4xl mx-auto w-full">
         {/* Question nav sidebar */}
-        <aside className="w-16 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-2 overflow-y-auto">
-          {questions.map((q2, i) => (
-            <button
-              key={q2.id}
-              onClick={() => setCurrentQ(i)}
-              className={`w-9 h-9 rounded-full text-xs font-medium transition-colors ${
-                i === currentQ
-                  ? "bg-blue-600 text-white"
-                  : (answers[q2.id]?.length ?? 0) > 0
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+        <aside className="w-16 border-r flex flex-col items-center py-4 gap-2 overflow-y-auto" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+          {questions.map((q2, i) => {
+            const isCurrent = i === currentQ;
+            const isAnswered = (answers[q2.id]?.length ?? 0) > 0;
+            const navStyle = isCurrent
+              ? { background: "var(--clay)", color: "var(--white)" }
+              : isAnswered
+              ? { background: "rgba(14,158,110,.12)", color: "var(--green)" }
+              : { background: "var(--paper-2)", color: "var(--ink-faint)" };
+            return (
+              <button
+                key={q2.id}
+                onClick={() => setCurrentQ(i)}
+                className="w-9 h-9 rounded-full text-xs font-medium transition-colors hover:opacity-80"
+                style={navStyle}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
         </aside>
 
         {/* Question area */}
         {q && (
           <div className="flex-1 p-8 space-y-6">
             <div>
-              <p className="text-xs text-gray-400 mb-2">Question {currentQ + 1} of {questions.length} · {q.points} pt{q.points !== 1 ? "s" : ""}</p>
-              <p className="text-base font-medium text-gray-900 leading-relaxed">{q.body}</p>
+              <p className="text-xs mb-2" style={{ color: "var(--ink-faint)" }}>Question {currentQ + 1} of {questions.length} · {q.points} pt{q.points !== 1 ? "s" : ""}</p>
+              <p className="text-base font-medium leading-relaxed" style={{ color: "var(--ink)" }}>{q.body}</p>
               {q.metadata.multiSelect && (
-                <p className="text-xs text-gray-400 mt-1">Select all that apply</p>
+                <p className="text-xs mt-1" style={{ color: "var(--ink-faint)" }}>Select all that apply</p>
               )}
             </div>
 
@@ -335,15 +342,17 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
                   <button
                     key={opt.id}
                     onClick={() => toggleAnswer(q.id, opt.id, q.metadata.multiSelect ?? false)}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors ${
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors hover:opacity-90"
+                    style={
                       selected
-                        ? "border-blue-500 bg-blue-50 text-blue-900"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
+                        ? { borderColor: "var(--blue)", background: "rgba(50,122,214,.08)", color: "var(--blue-deep)" }
+                        : { borderColor: "var(--line)", background: "var(--white)", color: "var(--ink-soft)" }
+                    }
                   >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      selected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"
-                    }`}>
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={selected ? { background: "var(--clay)", color: "var(--white)" } : { background: "var(--paper-2)", color: "var(--ink-faint)" }}
+                    >
                       {LETTERS[oi]}
                     </span>
                     <span className="text-sm">{opt.text}</span>
@@ -356,14 +365,16 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
               <button
                 onClick={() => setCurrentQ((i) => Math.max(0, i - 1))}
                 disabled={currentQ === 0}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40"
+                className="px-4 py-2 text-sm rounded-lg border disabled:opacity-40 hover:opacity-80"
+                style={{ color: "var(--ink-soft)", borderColor: "var(--line)" }}
               >
                 ← Previous
               </button>
               {currentQ < questions.length - 1 ? (
                 <button
                   onClick={() => setCurrentQ((i) => i + 1)}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 text-sm rounded-lg transition-colors hover:opacity-90"
+                  style={{ background: "var(--clay)", color: "var(--white)" }}
                 >
                   Next →
                 </button>
@@ -371,7 +382,8 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
                 <button
                   onClick={() => { if (confirm("Submit the test now?")) void handleSubmit(); }}
                   disabled={submitting}
-                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm rounded-lg disabled:opacity-50 transition-colors hover:opacity-90"
+                  style={{ background: "var(--green)", color: "var(--white)" }}
                 >
                   Submit Test
                 </button>

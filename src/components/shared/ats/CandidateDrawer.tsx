@@ -140,26 +140,27 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
 
       {/* Drawer */}
       <div
-        className="relative z-50 w-full max-w-lg bg-white shadow-2xl h-full flex flex-col overflow-hidden"
+        className="relative z-50 w-full max-w-lg shadow-2xl h-full flex flex-col overflow-hidden"
+        style={{ background: "var(--white)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--line)" }}>
           <div className="min-w-0">
             {loading ? (
-              <div className="h-5 w-40 bg-gray-100 rounded animate-pulse" />
+              <div className="h-5 w-40 rounded animate-pulse" style={{ background: "var(--paper-2)" }} />
             ) : (
               <>
-                <p className="font-semibold text-gray-900 truncate">
+                <p className="font-semibold truncate" style={{ color: "var(--ink)" }}>
                   {app?.jobSeeker.user.name ?? "Applicant"}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">
+                <p className="text-xs mt-0.5 truncate" style={{ color: "var(--ink-faint)" }}>
                   {app?.jobPosting.title}
                 </p>
               </>
             )}
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+          <button type="button" onClick={onClose} className="flex-shrink-0" style={{ color: "var(--ink-faint)" }}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -167,15 +168,18 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100 px-5">
+        <div className="flex border-b px-5" style={{ borderColor: "var(--line)" }}>
           {(["profile", "notes", "tests", "interviews"] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`mr-5 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
-                tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
+              className="mr-5 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize"
+              style={
+                tab === t
+                  ? { borderColor: "var(--clay)", color: "var(--clay)" }
+                  : { borderColor: "transparent", color: "var(--ink-faint)" }
+              }
             >
               {t}
             </button>
@@ -186,9 +190,9 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {loading && (
             <div className="space-y-3 animate-pulse">
-              <div className="h-4 bg-gray-100 rounded w-3/4" />
-              <div className="h-4 bg-gray-100 rounded w-1/2" />
-              <div className="h-4 bg-gray-100 rounded w-2/3" />
+              <div className="h-4 rounded w-3/4" style={{ background: "var(--paper-2)" }} />
+              <div className="h-4 rounded w-1/2" style={{ background: "var(--paper-2)" }} />
+              <div className="h-4 rounded w-2/3" style={{ background: "var(--paper-2)" }} />
             </div>
           )}
 
@@ -204,23 +208,23 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                     {app.currentStage.name}
                   </span>
                 )}
-                <span className="text-xs text-gray-400">Applied {new Date(app.createdAt).toLocaleDateString()}</span>
+                <span className="text-xs" style={{ color: "var(--ink-faint)" }}>Applied {new Date(app.createdAt).toLocaleDateString()}</span>
               </div>
 
               {/* Candidate info */}
-              <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-sm">
-                {app.jobSeeker.headline && <p className="text-gray-700 font-medium">{app.jobSeeker.headline}</p>}
-                {app.jobSeeker.currentRoleTitle && <p className="text-gray-500">{app.jobSeeker.currentRoleTitle}</p>}
+              <div className="rounded-xl p-3 space-y-1.5 text-sm" style={{ background: "var(--paper)" }}>
+                {app.jobSeeker.headline && <p className="font-medium" style={{ color: "var(--ink-soft)" }}>{app.jobSeeker.headline}</p>}
+                {app.jobSeeker.currentRoleTitle && <p style={{ color: "var(--ink-faint)" }}>{app.jobSeeker.currentRoleTitle}</p>}
                 {app.jobSeeker.user.email && (
-                  <p className="text-gray-500">
-                    <a href={`mailto:${app.jobSeeker.user.email}`} className="hover:underline text-blue-600">
+                  <p style={{ color: "var(--ink-faint)" }}>
+                    <a href={`mailto:${app.jobSeeker.user.email}`} className="hover:underline" style={{ color: "var(--blue)" }}>
                       {app.jobSeeker.user.email}
                     </a>
                   </p>
                 )}
-                {app.jobSeeker.user.phone && <p className="text-gray-500">{app.jobSeeker.user.phone}</p>}
+                {app.jobSeeker.user.phone && <p style={{ color: "var(--ink-faint)" }}>{app.jobSeeker.user.phone}</p>}
                 {(app.jobSeeker.expectedSalaryMin ?? app.jobSeeker.expectedSalaryMax) && (
-                  <p className="text-gray-500">
+                  <p style={{ color: "var(--ink-faint)" }}>
                     Expected: {app.jobSeeker.currency ?? "PKR"}{" "}
                     {app.jobSeeker.expectedSalaryMin?.toLocaleString() ?? "?"} –{" "}
                     {app.jobSeeker.expectedSalaryMax?.toLocaleString() ?? "?"}
@@ -233,7 +237,8 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                 href={app.resumeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="inline-flex items-center gap-1.5 text-sm font-medium hover:opacity-80"
+                style={{ color: "var(--blue)" }}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -244,14 +249,14 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
               {/* Cover letter */}
               {app.coverLetter && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Cover letter</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{app.coverLetter}</p>
+                  <p className="text-xs font-semibold mb-1 uppercase tracking-wide" style={{ color: "var(--ink-faint)" }}>Cover letter</p>
+                  <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--ink-soft)" }}>{app.coverLetter}</p>
                 </div>
               )}
 
               {/* Tags */}
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Tags</p>
+                <p className="text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: "var(--ink-faint)" }}>Tags</p>
                 <div className="flex flex-wrap gap-1.5">
                   {app.applicationTags.map(({ tag }) => (
                     <span
@@ -274,7 +279,8 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                         key={tag.id}
                         type="button"
                         onClick={() => void applyTag(tag.id)}
-                        className="text-xs px-2 py-0.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-xs px-2 py-0.5 rounded-full border border-dashed transition-colors"
+                        style={{ borderColor: "var(--line)", color: "var(--ink-faint)" }}
                       >
                         + {tag.name}
                       </button>
@@ -287,17 +293,19 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                 <button
                   type="button"
                   onClick={() => setShowEmailPanel(true)}
-                  className="w-full py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                  className="w-full py-2 rounded-xl text-sm border transition-colors hover:opacity-80"
+                  style={{ borderColor: "var(--line)", color: "var(--ink-soft)" }}
                 >
                   Send email
                 </button>
               ) : (
-                <div className="border border-blue-100 rounded-xl p-3 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Send email template</p>
+                <div className="rounded-xl p-3 space-y-2 border" style={{ borderColor: "rgba(50,122,214,.3)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--ink-faint)" }}>Send email template</p>
                   <select
                     value={selectedTemplateId}
                     onChange={(e) => setSelectedTemplateId(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg px-3 py-2 text-sm border focus:outline-none"
+                    style={{ borderColor: "var(--line)", background: "var(--white)", color: "var(--ink)" }}
                   >
                     <option value="">Select template…</option>
                     {templates.map((t) => (
@@ -305,13 +313,14 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                     ))}
                   </select>
                   {emailMsg && (
-                    <p className={`text-xs ${emailMsg.startsWith("Email") ? "text-green-600" : "text-red-600"}`}>{emailMsg}</p>
+                    <p className="text-xs" style={{ color: emailMsg.startsWith("Email") ? "var(--green-deep)" : "#C83C28" }}>{emailMsg}</p>
                   )}
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => { setShowEmailPanel(false); setEmailMsg(null); }}
-                      className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50"
+                      className="flex-1 py-1.5 rounded-lg text-xs border hover:opacity-80"
+                      style={{ borderColor: "var(--line)", color: "var(--ink-faint)" }}
                     >
                       Cancel
                     </button>
@@ -319,7 +328,8 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
                       type="button"
                       onClick={() => void sendEmail()}
                       disabled={!selectedTemplateId || sendingEmail}
-                      className="flex-1 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className="flex-1 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 transition-colors"
+                      style={{ background: "var(--clay)", color: "var(--white)" }}
                     >
                       {sendingEmail ? "Sending…" : "Send"}
                     </button>
@@ -345,7 +355,7 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
           )}
 
           {!loading && tab === "interviews" && (
-            <div className="py-12 text-center text-sm text-gray-400">
+            <div className="py-12 text-center text-sm" style={{ color: "var(--ink-faint)" }}>
               Coming in Phase 21.
             </div>
           )}
@@ -414,27 +424,28 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
     setDueAt("");
   }
 
-  const STATUS_COLORS: Record<string, string> = {
-    ASSIGNED: "bg-blue-50 text-blue-600",
-    IN_PROGRESS: "bg-yellow-50 text-yellow-700",
-    SUBMITTED: "bg-purple-50 text-purple-700",
-    PENDING_GRADE: "bg-orange-50 text-orange-600",
-    GRADED: "bg-green-100 text-green-700",
-    EXPIRED: "bg-gray-100 text-gray-500",
+  const STATUS_COLORS: Record<string, { background: string; color: string }> = {
+    ASSIGNED: { background: "rgba(50,122,214,.12)", color: "var(--blue)" },
+    IN_PROGRESS: { background: "rgba(160,78,55,.12)", color: "var(--clay)" },
+    SUBMITTED: { background: "rgba(50,122,214,.12)", color: "var(--blue)" },
+    PENDING_GRADE: { background: "rgba(160,78,55,.12)", color: "var(--clay)" },
+    GRADED: { background: "rgba(14,158,110,.12)", color: "var(--green)" },
+    EXPIRED: { background: "var(--paper-2)", color: "var(--ink-soft)" },
   };
 
-  if (loading) return <p className="py-8 text-center text-sm text-gray-400">Loading…</p>;
+  if (loading) return <p className="py-8 text-center text-sm" style={{ color: "var(--ink-faint)" }}>Loading…</p>;
 
   const defaultDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-700">Assessment Tests</p>
+        <p className="text-sm font-medium" style={{ color: "var(--ink-soft)" }}>Assessment Tests</p>
         {!showAssign && templates.length > 0 && (
           <button
             onClick={() => { setShowAssign(true); setDueAt(defaultDue); }}
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            className="text-xs font-medium hover:opacity-80"
+            style={{ color: "var(--blue)" }}
           >
             + Assign Test
           </button>
@@ -442,12 +453,13 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
       </div>
 
       {showAssign && (
-        <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 space-y-3">
-          <p className="text-sm font-medium text-gray-800">Assign a test</p>
+        <div className="rounded-lg p-4 space-y-3 border" style={{ borderColor: "rgba(50,122,214,.3)", background: "rgba(50,122,214,.08)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--ink-soft)" }}>Assign a test</p>
           <select
             value={selectedTemplate}
             onChange={(e) => setSelectedTemplate(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 rounded-lg text-sm border focus:outline-none"
+            style={{ borderColor: "var(--line)", background: "var(--white)", color: "var(--ink)" }}
           >
             <option value="">Select a published test…</option>
             {templates.map((t) => (
@@ -455,26 +467,29 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
             ))}
           </select>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Due date</label>
+            <label className="block text-xs mb-1" style={{ color: "var(--ink-faint)" }}>Due date</label>
             <input
               type="datetime-local"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 rounded-lg text-sm border focus:outline-none"
+              style={{ borderColor: "var(--line)", background: "var(--white)", color: "var(--ink)" }}
             />
           </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs" style={{ color: "#C83C28" }}>{error}</p>}
           <div className="flex gap-2">
             <button
               onClick={() => void assign()}
               disabled={assigning || !selectedTemplate || !dueAt}
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+              style={{ background: "var(--clay)", color: "var(--white)" }}
             >
               {assigning ? "Assigning…" : "Assign"}
             </button>
             <button
               onClick={() => { setShowAssign(false); setError(null); }}
-              className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors hover:opacity-80"
+              style={{ background: "var(--paper-2)", color: "var(--ink-soft)" }}
             >
               Cancel
             </button>
@@ -483,31 +498,34 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
       )}
 
       {templates.length === 0 && !loading && (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm" style={{ color: "var(--ink-faint)" }}>
           No published tests yet.{" "}
-          <a href={`/employer/${companyId}/tests`} className="text-blue-600 hover:underline">
+          <a href={`/employer/${companyId}/tests`} className="hover:underline" style={{ color: "var(--blue)" }}>
             Create one →
           </a>
         </p>
       )}
 
       {assignments.length === 0 && templates.length > 0 && !showAssign && (
-        <p className="text-sm text-gray-400">No tests assigned yet.</p>
+        <p className="text-sm" style={{ color: "var(--ink-faint)" }}>No tests assigned yet.</p>
       )}
 
       <div className="space-y-2">
         {assignments.map((a) => (
-          <div key={a.id} className="border border-gray-100 rounded-lg p-3 space-y-1">
+          <div key={a.id} className="rounded-lg p-3 space-y-1 border" style={{ borderColor: "var(--line)" }}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-gray-800">{a.template.name}</p>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-500"}`}>
+              <p className="text-sm font-medium" style={{ color: "var(--ink-soft)" }}>{a.template.name}</p>
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={STATUS_COLORS[a.status] ?? { background: "var(--paper-2)", color: "var(--ink-faint)" }}
+              >
                 {a.status.replace(/_/g, " ")}
               </span>
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
               Due: {new Date(a.dueAt).toLocaleDateString()}
               {a.scorePercent != null && (
-                <> · Score: <strong className={a.scorePercent >= 70 ? "text-green-600" : "text-red-500"}>{a.scorePercent.toFixed(0)}%</strong></>
+                <> · Score: <strong style={{ color: a.scorePercent >= 70 ? "var(--green)" : "#C83C28" }}>{a.scorePercent.toFixed(0)}%</strong></>
               )}
               {a.autoGraded && " · Auto-graded"}
             </p>

@@ -22,12 +22,14 @@ const ROLE_LABELS: Record<string, string> = {
   OBSERVER: "Observer",
 };
 
-const ROLE_COLORS: Record<string, string> = {
-  RECRUITER: "bg-blue-100 text-blue-700",
-  HIRING_MANAGER: "bg-purple-100 text-purple-700",
-  INTERVIEWER: "bg-green-100 text-green-700",
-  OBSERVER: "bg-gray-100 text-gray-600",
+const ROLE_COLORS: Record<string, { background: string; color: string }> = {
+  RECRUITER: { background: "rgba(50,122,214,.12)", color: "var(--blue)" },
+  HIRING_MANAGER: { background: "rgba(144,37,179,.12)", color: "var(--purple)" },
+  INTERVIEWER: { background: "rgba(14,158,110,.12)", color: "var(--green)" },
+  OBSERVER: { background: "var(--paper-2)", color: "var(--ink-soft)" },
 };
+
+const DEFAULT_ROLE_COLOR = { background: "var(--paper-2)", color: "var(--ink-soft)" };
 
 export default function HiringTeamManager({
   jobId,
@@ -79,34 +81,39 @@ export default function HiringTeamManager({
   return (
     <div className="space-y-6">
       {/* Current team */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
         {team.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-gray-400">
+          <div className="px-4 py-8 text-center text-sm" style={{ color: "var(--ink-faint)" }}>
             No team members yet. Add people below.
           </div>
         ) : (
           team.map((member) => (
-            <div key={member.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0">
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+            <div key={member.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-0" style={{ borderColor: "var(--paper-2)" }}>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}
+              >
                 {(member.user.name ?? member.user.email ?? "?")[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium truncate" style={{ color: "var(--ink)" }}>
                   {member.user.name ?? member.user.email ?? member.user.phone ?? "Unknown"}
                 </p>
                 {member.user.networkProfile && (
-                  <p className="text-xs text-gray-400">@{member.user.networkProfile.handle}</p>
+                  <p className="text-xs" style={{ color: "var(--ink-faint)" }}>@{member.user.networkProfile.handle}</p>
                 )}
               </div>
               <span
-                className={`text-xs font-medium px-2 py-0.5 rounded-full ${ROLE_COLORS[member.role] ?? "bg-gray-100 text-gray-600"}`}
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={ROLE_COLORS[member.role] ?? DEFAULT_ROLE_COLOR}
               >
                 {ROLE_LABELS[member.role] ?? member.role}
               </span>
               <button
                 type="button"
                 onClick={() => removeMember(member.id)}
-                className="text-gray-300 hover:text-red-400 transition-colors"
+                className="transition-colors hover:opacity-80"
+                style={{ color: "var(--ink-faint)" }}
                 title="Remove"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,20 +126,22 @@ export default function HiringTeamManager({
       </div>
 
       {/* Add member form */}
-      <form onSubmit={(e) => void addMember(e)} className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700">Add team member</h3>
+      <form onSubmit={(e) => void addMember(e)} className="rounded-2xl border p-4 space-y-3" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+        <h3 className="text-sm font-semibold" style={{ color: "var(--ink-soft)" }}>Add team member</h3>
         <div className="flex gap-2">
           <input
             type="text"
             value={form.identifier}
             onChange={(e) => setForm((p) => ({ ...p, identifier: e.target.value }))}
             placeholder="Phone, email, or @handle"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style={{ borderColor: "var(--line)" }}
           />
           <select
             value={form.role}
             onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style={{ borderColor: "var(--line)" }}
           >
             {Object.entries(ROLE_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
@@ -141,13 +150,14 @@ export default function HiringTeamManager({
           <button
             type="submit"
             disabled={adding || !form.identifier.trim()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             {adding ? "Adding…" : "Add"}
           </button>
         </div>
         {msg && (
-          <p className={`text-sm ${msg.ok ? "text-green-600" : "text-red-600"}`}>{msg.text}</p>
+          <p className="text-sm" style={{ color: msg.ok ? "var(--green)" : "#C83C28" }}>{msg.text}</p>
         )}
       </form>
     </div>

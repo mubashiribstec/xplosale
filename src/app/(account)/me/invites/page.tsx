@@ -17,12 +17,13 @@ type Invite = {
   sender: { id: string; name: string | null };
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-700",
-  ACCEPTED: "bg-green-100 text-green-700",
-  DECLINED: "bg-gray-100 text-gray-600",
-  EXPIRED: "bg-red-100 text-red-600",
+const STATUS_STYLES: Record<string, { background: string; color: string }> = {
+  PENDING: { background: "rgba(160,78,55,.12)", color: "var(--clay)" },
+  ACCEPTED: { background: "rgba(14,158,110,.12)", color: "var(--green)" },
+  DECLINED: { background: "var(--paper-2)", color: "var(--ink-soft)" },
+  EXPIRED: { background: "rgba(200,60,40,.12)", color: "#C83C28" },
 };
+const DEFAULT_STATUS_STYLE: { background: string; color: string } = { background: "var(--paper-2)", color: "var(--ink-soft)" };
 
 export default function InvitesPage() {
   const router = useRouter();
@@ -79,38 +80,41 @@ export default function InvitesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8">
+    <main className="min-h-screen px-4 py-8" style={{ background: "var(--paper)" }}>
       <div className="max-w-3xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Invite to Apply Inbox</h1>
+        <h1 className="text-2xl font-bold" style={{ color: "var(--ink)", fontFamily: "var(--display)" }}>Invite to Apply Inbox</h1>
 
-        {loading && <div className="text-center py-12 text-gray-400">Loading…</div>}
+        {loading && <div className="text-center py-12" style={{ color: "var(--ink-faint)" }}>Loading…</div>}
 
         {!loading && invites.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
+          <div className="rounded-2xl border p-12 text-center" style={{ background: "var(--white)", borderColor: "var(--line)", color: "var(--ink-faint)" }}>
             <p className="text-lg">No invitations yet.</p>
             <p className="text-sm mt-1">Recruiters can invite you to apply to their open jobs.</p>
           </div>
         )}
 
         {invites.map((inv) => (
-          <div key={inv.id} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+          <div key={inv.id} className="rounded-2xl border p-5 space-y-3" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-gray-900">{inv.jobPosting.title}</h2>
-                <p className="text-gray-500 text-sm">{inv.jobPosting.company.name}</p>
-                <p className="text-gray-400 text-xs mt-0.5">From {inv.sender.name ?? "Recruiter"}</p>
+                <h2 className="font-semibold" style={{ color: "var(--ink)" }}>{inv.jobPosting.title}</h2>
+                <p className="text-sm" style={{ color: "var(--ink-faint)" }}>{inv.jobPosting.company.name}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--ink-faint)" }}>From {inv.sender.name ?? "Recruiter"}</p>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${STATUS_STYLES[inv.status] ?? ""}`}>
+              <span
+                className="text-xs font-medium px-2 py-1 rounded-full shrink-0"
+                style={STATUS_STYLES[inv.status] ?? DEFAULT_STATUS_STYLE}
+              >
                 {inv.status}
               </span>
             </div>
 
             {inv.message && (
-              <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 italic">{inv.message}</p>
+              <p className="text-sm rounded-xl p-3 italic" style={{ color: "var(--ink-soft)", background: "var(--paper)" }}>{inv.message}</p>
             )}
 
             {inv.status === "PENDING" && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
                 Expires {new Date(inv.expiresAt).toLocaleDateString()}
               </p>
             )}
@@ -120,20 +124,23 @@ export default function InvitesPage() {
                 <button
                   onClick={() => respond(inv.id, "accept")}
                   disabled={responding === inv.id}
-                  className="flex-1 bg-blue-600 text-white text-sm font-medium py-2 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition"
+                  className="flex-1 text-sm font-medium py-2 rounded-xl disabled:opacity-50 transition"
+                  style={{ background: "var(--clay)", color: "var(--white)" }}
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => respond(inv.id, "decline")}
                   disabled={responding === inv.id}
-                  className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition"
+                  className="flex-1 border text-sm font-medium py-2 rounded-xl disabled:opacity-50 transition"
+                  style={{ borderColor: "var(--line)", color: "var(--ink-soft)" }}
                 >
                   Decline
                 </button>
                 <a
                   href={`/jobs/${inv.jobPosting.id}`}
-                  className="px-4 text-sm text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-50 flex items-center transition"
+                  className="px-4 text-sm border rounded-xl flex items-center transition"
+                  style={{ color: "var(--blue)", borderColor: "rgba(50,122,214,.3)" }}
                 >
                   View
                 </a>
@@ -142,19 +149,20 @@ export default function InvitesPage() {
           </div>
         ))}
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 mt-6">
-          <h2 className="font-semibold text-gray-900 mb-1">Invitation preferences</h2>
-          <p className="text-sm text-gray-500 mb-3">
+        <div className="rounded-2xl border p-5 mt-6" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+          <h2 className="font-semibold mb-1" style={{ color: "var(--ink)" }}>Invitation preferences</h2>
+          <p className="text-sm mb-3" style={{ color: "var(--ink-faint)" }}>
             Block all future invitations from recruiters. You can undo this at any time.
           </p>
           <button
             onClick={toggleDoNotContact}
             disabled={toggling}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50 ${
+            className="px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
+            style={
               optedOut
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-            }`}
+                ? { background: "var(--green)", color: "var(--white)" }
+                : { background: "rgba(200,60,40,.08)", color: "#C83C28", border: "1px solid rgba(200,60,40,.25)" }
+            }
           >
             {toggling ? "…" : optedOut ? "Allow invitations again" : "Block all invitations"}
           </button>

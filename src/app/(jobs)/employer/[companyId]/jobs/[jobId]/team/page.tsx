@@ -47,17 +47,18 @@ export default async function HiringTeamPage({
   });
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <div>
           <Link
             href={`/employer/${companyId}/jobs/${jobId}/pipeline`}
-            className="text-sm text-gray-400 hover:text-gray-600"
+            className="text-sm hover:opacity-80 transition-opacity"
+            style={{ color: "var(--ink-faint)" }}
           >
             ← Back to pipeline
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Hiring Team</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold mt-1" style={{ color: "var(--ink)" }}>Hiring Team</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--ink-faint)" }}>
             {job.title} — {company.name}
           </p>
         </div>

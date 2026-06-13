@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import ApplyButton from "@/components/shared/ApplyButton";
+import JobFavouriteButton from "@/components/shared/jobs/JobFavouriteButton";
+import JobViewBeacon from "@/components/shared/jobs/JobViewBeacon";
+import JobShareButton from "@/components/shared/jobs/JobShareButton";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { serializeJsonLd } from "@/lib/json-ld";
 
@@ -150,7 +153,7 @@ export default async function JobDetailPage({
     ? (session.user as unknown as { role: string }).role === "ADMIN"
     : false;
 
-  const [job, jobSeekerProfileRaw] = await Promise.all([
+  const [job, jobSeekerProfileRaw, favouriteRow] = await Promise.all([
     prisma.jobPosting.findUnique({
       where: { id: jobId },
       include: {
@@ -160,9 +163,12 @@ export default async function JobDetailPage({
       },
     }),
     userId ? prisma.jobSeekerProfile.findUnique({ where: { userId } }) : null,
+    userId ? prisma.jobFavourite.findUnique({ where: { jobPostingId_userId: { jobPostingId: jobId, userId } } }) : null,
   ]);
 
   if (!job) notFound();
+
+  const isFavourited = !!favouriteRow;
 
   const isOwner = userId === job.postedByUserId;
 
@@ -226,6 +232,7 @@ export default async function JobDetailPage({
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)" }}>
+      {job.status === "ACTIVE" && <JobViewBeacon jobId={jobId} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -276,7 +283,7 @@ export default async function JobDetailPage({
 
         <div style={{ display: "grid", gridTemplateColumns: "1.65fr 1fr", gap: 24, alignItems: "start" }}>
           {/* Left col */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Job header card */}
             <div
               style={{
@@ -478,22 +485,30 @@ export default async function JobDetailPage({
                 gap: 16,
               }}
             >
-              <div>
-                <p
-                  style={{
-                    fontFamily: "var(--display)",
-                    fontWeight: 800,
-                    fontSize: 20,
-                    color: "#FBFAF5",
-                    margin: "0 0 4px",
-                  }}
-                >
-                  Ready to apply?
-                </p>
-                <p style={{ fontFamily: "var(--body)", fontSize: 13, color: "rgba(251,250,245,.7)", margin: 0 }}>
-                  {job.company.verifiedEmployer ? "Verified employer · " : ""}
-                  {hasSalary ? salaryLabel : "Salary not disclosed"}
-                </p>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div>
+                  <p
+                    style={{
+                      fontFamily: "var(--display)",
+                      fontWeight: 800,
+                      fontSize: 20,
+                      color: "#FBFAF5",
+                      margin: "0 0 4px",
+                    }}
+                  >
+                    Ready to apply?
+                  </p>
+                  <p style={{ fontFamily: "var(--body)", fontSize: 13, color: "rgba(251,250,245,.7)", margin: 0 }}>
+                    {job.company.verifiedEmployer ? "Verified employer · " : ""}
+                    {hasSalary ? salaryLabel : "Salary not disclosed"}
+                  </p>
+                </div>
+                <JobFavouriteButton
+                  jobId={jobId}
+                  initialFavourited={isFavourited}
+                  isAuthenticated={!!userId}
+                  size="md"
+                />
               </div>
 
               {job.status !== "ACTIVE" && (
@@ -535,6 +550,8 @@ export default async function JobDetailPage({
                   Sign in to Apply
                 </Link>
               )}
+
+              <JobShareButton jobId={jobId} jobTitle={job.title} companyName={job.company.name} />
             </div>
 
             {/* Company card */}

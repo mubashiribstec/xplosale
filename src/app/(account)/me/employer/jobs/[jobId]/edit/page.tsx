@@ -45,13 +45,14 @@ const REMOTE_TYPES = [
 
 const APPLICATION_STATUSES = ["REVIEWED", "SHORTLISTED", "REJECTED", "HIRED"] as const;
 
-const STATUS_COLORS: Record<string, string> = {
-  APPLIED: "bg-blue-50 text-blue-600",
-  REVIEWED: "bg-gray-100 text-gray-600",
-  SHORTLISTED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-600",
-  HIRED: "bg-purple-100 text-purple-700",
+const STATUS_COLORS: Record<string, { background: string; color: string }> = {
+  APPLIED: { background: "rgba(50,122,214,.12)", color: "var(--blue)" },
+  REVIEWED: { background: "var(--paper-2)", color: "var(--ink-soft)" },
+  SHORTLISTED: { background: "rgba(14,158,110,.12)", color: "var(--green)" },
+  REJECTED: { background: "rgba(200,60,40,.12)", color: "#C83C28" },
+  HIRED: { background: "rgba(144,37,179,.12)", color: "var(--purple)" },
 };
+const DEFAULT_STATUS_STYLE: { background: string; color: string } = { background: "var(--paper-2)", color: "var(--ink-soft)" };
 
 const EMPTY_LOCATION: JobLocation = { country: "", city: "", postCode: "", companyAddress: "" };
 
@@ -185,37 +186,38 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
   if (!job) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Loading…</p>
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--paper)" }}>
+        <p style={{ color: "var(--ink-faint)" }}>Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div>
           <button
             type="button"
             onClick={() => router.push("/me/employer/jobs")}
-            className="text-sm text-gray-400 hover:text-gray-600"
+            className="text-sm transition-colors"
+            style={{ color: "var(--ink-faint)" }}
           >
             Back to jobs
           </button>
           <div className="flex items-center gap-3 mt-1">
-            <h1 className="text-2xl font-bold text-gray-900">Edit Job Posting</h1>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+            <h1 className="text-2xl font-bold" style={{ color: "var(--ink)", fontFamily: "var(--display)" }}>Edit Job Posting</h1>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: "var(--paper-2)", color: "var(--ink-soft)" }}>
               {job.status}
             </span>
           </div>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
-          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Job Details</h2>
+          <section className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+            <h2 className="font-semibold" style={{ color: "var(--ink)" }}>Job Details</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Title</label>
               <input
                 type="text"
                 value={form.title}
@@ -223,12 +225,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 required
                 minLength={5}
                 maxLength={200}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Description</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
@@ -236,16 +239,18 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 minLength={20}
                 maxLength={10000}
                 rows={8}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Work type</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Work type</label>
               <select
                 value={form.remoteType}
                 onChange={(e) => setField("remoteType", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
               >
                 {REMOTE_TYPES.map((rt) => (
                   <option key={rt.value} value={rt.value}>{rt.label}</option>
@@ -255,11 +260,11 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           </section>
 
           {/* Location */}
-          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+          <section className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
             <div>
-              <h2 className="font-semibold text-gray-900">Location</h2>
+              <h2 className="font-semibold" style={{ color: "var(--ink)" }}>Location</h2>
               {form.remoteType !== "REMOTE" && (
-                <p className="text-xs text-gray-400 mt-0.5">Country and city where this role is based.</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--ink-faint)" }}>Country and city where this role is based.</p>
               )}
             </div>
             <JobLocationPicker
@@ -269,9 +274,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
             />
           </section>
 
-          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Matching Criteria</h2>
-            <p className="text-xs text-gray-400">Used to automatically score and rank candidates. Leave blank to skip scoring.</p>
+          <section className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+            <h2 className="font-semibold" style={{ color: "var(--ink)" }}>Matching Criteria</h2>
+            <p className="text-xs" style={{ color: "var(--ink-faint)" }}>Used to automatically score and rank candidates. Leave blank to skip scoring.</p>
             <SkillsChipInput
               label="Required skills"
               value={requiredSkills}
@@ -292,50 +297,54 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
             />
           </section>
 
-          <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Compensation</h2>
+          <section className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+            <h2 className="font-semibold" style={{ color: "var(--ink)" }}>Compensation</h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Currency</label>
                 <input
                   type="text"
                   value={form.currency}
                   onChange={(e) => setField("currency", e.target.value)}
                   maxLength={10}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min salary</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Min salary</label>
                 <input
                   type="number"
                   value={form.salaryMin}
                   onChange={(e) => setField("salaryMin", e.target.value)}
                   min={1}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max salary</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: "var(--ink-soft)" }}>Max salary</label>
                 <input
                   type="number"
                   value={form.salaryMax}
                   onChange={(e) => setField("salaryMax", e.target.value)}
                   min={1}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                 />
               </div>
             </div>
           </section>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-          {msg && <p className="text-sm text-green-600">{msg}</p>}
+          {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ background: "rgba(200,60,40,.08)", color: "#C83C28" }}>{error}</p>}
+          {msg && <p className="text-sm" style={{ color: "var(--green)" }}>{msg}</p>}
 
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="flex-1 py-3 font-semibold rounded-xl disabled:opacity-50 transition-colors"
+              style={{ background: "var(--clay)", color: "var(--white)" }}
             >
               {loading ? "Saving…" : "Save changes"}
             </button>
@@ -345,7 +354,8 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 type="button"
                 onClick={publish}
                 disabled={loading}
-                className="flex-1 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="flex-1 py-3 font-semibold rounded-xl disabled:opacity-50 transition-colors"
+                style={{ background: "var(--green)", color: "var(--white)" }}
               >
                 Publish
               </button>
@@ -353,35 +363,36 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           </div>
         </form>
 
-        <section className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">
-            Applicants <span className="text-gray-400 font-normal">({applicants.length})</span>
+        <section className="rounded-2xl border p-6 space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+          <h2 className="font-semibold" style={{ color: "var(--ink)" }}>
+            Applicants <span className="font-normal" style={{ color: "var(--ink-faint)" }}>({applicants.length})</span>
           </h2>
 
           {applicants.length === 0 ? (
-            <p className="text-sm text-gray-400">No applications yet.</p>
+            <p className="text-sm" style={{ color: "var(--ink-faint)" }}>No applications yet.</p>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y" style={{ borderColor: "var(--line)" }}>
               {applicants.map((app) => (
                 <div key={app.id} className="py-4 space-y-2">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">
+                      <p className="font-medium text-sm" style={{ color: "var(--ink)" }}>
                         {app.jobSeeker.user.name ?? "Unknown"}
                       </p>
                       {app.jobSeeker.headline && (
-                        <p className="text-xs text-gray-500">{app.jobSeeker.headline}</p>
+                        <p className="text-xs" style={{ color: "var(--ink-faint)" }}>{app.jobSeeker.headline}</p>
                       )}
                     </div>
                     <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[app.status] ?? "bg-gray-100 text-gray-600"}`}
+                      className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0"
+                      style={STATUS_COLORS[app.status] ?? DEFAULT_STATUS_STYLE}
                     >
                       {app.status}
                     </span>
                   </div>
 
                   {app.coverLetter && (
-                    <p className="text-xs text-gray-600 line-clamp-2">{app.coverLetter}</p>
+                    <p className="text-xs line-clamp-2" style={{ color: "var(--ink-soft)" }}>{app.coverLetter}</p>
                   )}
 
                   <div className="flex items-center gap-3">
@@ -389,14 +400,16 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                       href={app.resumeSignedUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs hover:underline"
+                      style={{ color: "var(--blue)" }}
                     >
                       View resume
                     </a>
                     <select
                       value={app.status}
                       onChange={(e) => updateApplicationStatus(app.id, e.target.value)}
-                      className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
                     >
                       <option value={app.status} disabled>{app.status}</option>
                       {APPLICATION_STATUSES.map((s) => (

@@ -39,14 +39,18 @@ export default async function PipelineSettingsPage({
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <div>
-          <Link href="/me/employer/jobs" className="text-sm text-gray-400 hover:text-gray-600">
+          <Link
+            href="/me/employer/jobs"
+            className="text-sm hover:opacity-80 transition-opacity"
+            style={{ color: "var(--ink-faint)" }}
+          >
             ← Back to jobs
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Pipeline Settings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{company.name}</p>
+          <h1 className="text-2xl font-bold mt-1" style={{ color: "var(--ink)" }}>Pipeline Settings</h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--ink-faint)" }}>{company.name}</p>
         </div>
 
         <PipelineSettings

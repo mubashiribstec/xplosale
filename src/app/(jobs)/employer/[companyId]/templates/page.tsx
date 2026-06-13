@@ -33,15 +33,19 @@ export default async function TemplatesPage({
   });
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/me/employer/jobs" className="text-sm text-gray-400 hover:text-gray-600">
+            <Link
+              href="/me/employer/jobs"
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: "var(--ink-faint)" }}
+            >
               ← All jobs
             </Link>
-            <h1 className="mt-2 text-xl font-bold text-gray-900">Email templates</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{company.name}</p>
+            <h1 className="mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>Email templates</h1>
+            <p className="text-sm mt-0.5" style={{ color: "var(--ink-faint)" }}>{company.name}</p>
           </div>
         </div>
 

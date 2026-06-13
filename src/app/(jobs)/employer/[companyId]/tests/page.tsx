@@ -33,30 +33,36 @@ export default async function CompanyTestsPage({
   });
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link href={`/employer/${companyId}/pipeline-settings`} className="text-sm text-gray-400 hover:text-gray-600">
+            <Link
+              href={`/employer/${companyId}/pipeline-settings`}
+              className="text-sm hover:opacity-80 transition-opacity"
+              style={{ color: "var(--ink-faint)" }}
+            >
               ← Back to settings
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 mt-1">Assessment Tests</h1>
-            <p className="text-sm text-gray-500">{company.name}</p>
+            <h1 className="text-2xl font-bold mt-1" style={{ color: "var(--ink)" }}>Assessment Tests</h1>
+            <p className="text-sm" style={{ color: "var(--ink-faint)" }}>{company.name}</p>
           </div>
           <Link
             href={`/employer/${companyId}/tests/new`}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+            className="px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            style={{ background: "var(--clay)", color: "var(--white)" }}
           >
             + New Test
           </Link>
         </div>
 
         {templates.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-400 mb-4">No assessment tests yet.</p>
+          <div className="rounded-xl border p-12 text-center" style={{ background: "var(--white)", borderColor: "var(--line)" }}>
+            <p className="mb-4" style={{ color: "var(--ink-faint)" }}>No assessment tests yet.</p>
             <Link
               href={`/employer/${companyId}/tests/new`}
-              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+              className="inline-block px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              style={{ background: "var(--clay)", color: "var(--white)" }}
             >
               Create your first test
             </Link>
@@ -67,29 +73,31 @@ export default async function CompanyTestsPage({
               <Link
                 key={t.id}
                 href={`/employer/${companyId}/tests/${t.id}`}
-                className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 transition-colors"
+                className="block rounded-xl border p-5 transition-colors hover:opacity-90"
+                style={{ background: "var(--white)", borderColor: "var(--line)" }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-semibold text-gray-900">{t.name}</p>
+                    <p className="font-semibold" style={{ color: "var(--ink)" }}>{t.name}</p>
                     {t.description && (
-                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{t.description}</p>
+                      <p className="text-sm mt-0.5 line-clamp-1" style={{ color: "var(--ink-faint)" }}>{t.description}</p>
                     )}
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs text-gray-400">{t._count.questions} questions</span>
-                      <span className="text-xs text-gray-400">{t.durationMin} min</span>
-                      <span className="text-xs text-gray-400">{t._count.assignments} assigned</span>
+                      <span className="text-xs" style={{ color: "var(--ink-faint)" }}>{t._count.questions} questions</span>
+                      <span className="text-xs" style={{ color: "var(--ink-faint)" }}>{t.durationMin} min</span>
+                      <span className="text-xs" style={{ color: "var(--ink-faint)" }}>{t._count.assignments} assigned</span>
                       {t.passingScorePercent != null && (
-                        <span className="text-xs text-gray-400">Pass: {t.passingScorePercent}%</span>
+                        <span className="text-xs" style={{ color: "var(--ink-faint)" }}>Pass: {t.passingScorePercent}%</span>
                       )}
                     </div>
                   </div>
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${
+                    className="text-xs font-medium px-2 py-1 rounded-full shrink-0"
+                    style={
                       t.isPublished
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
+                        ? { background: "rgba(14,158,110,.12)", color: "var(--green)" }
+                        : { background: "var(--paper-2)", color: "var(--ink-soft)" }
+                    }
                   >
                     {t.isPublished ? "Published" : "Draft"}
                   </span>

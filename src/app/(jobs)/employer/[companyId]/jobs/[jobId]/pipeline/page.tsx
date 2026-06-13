@@ -100,15 +100,22 @@ export default async function PipelinePage({
     (job.requiredKeywords as string[]).length > 0;
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: "var(--paper)" }}>
       <div className="max-w-full px-4 py-6 space-y-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Link href="/me/employer/jobs" className="text-sm text-gray-400 hover:text-gray-600">
+          <Link
+            href="/me/employer/jobs"
+            className="text-sm hover:opacity-80 transition-opacity"
+            style={{ color: "var(--ink-faint)" }}
+          >
             ← All jobs
           </Link>
           <div className="flex gap-2 flex-wrap">
             {!hasSkills && (
-              <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+              <span
+                className="text-xs border rounded px-2 py-1"
+                style={{ color: "var(--clay)", background: "rgba(160,78,55,.12)", borderColor: "var(--line)" }}
+              >
                 Add required skills to the job to enable match scoring
               </span>
             )}
@@ -116,13 +123,15 @@ export default async function PipelinePage({
               <>
                 <Link
                   href={`/employer/${companyId}/jobs/${jobId}/team`}
-                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
+                  className="text-xs border rounded px-2 py-1 hover:opacity-80 transition-opacity"
+                  style={{ borderColor: "var(--line)", color: "var(--ink-soft)" }}
                 >
                   Manage team
                 </Link>
                 <Link
                   href={`/employer/${companyId}/pipeline-settings`}
-                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 hover:border-gray-300"
+                  className="text-xs border rounded px-2 py-1 hover:opacity-80 transition-opacity"
+                  style={{ borderColor: "var(--line)", color: "var(--ink-soft)" }}
                 >
                   Pipeline settings
                 </Link>
