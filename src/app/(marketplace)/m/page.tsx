@@ -80,6 +80,8 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   if (sp.minPrice) filters.priceMin = Number(sp.minPrice);
   if (sp.maxPrice) filters.priceMax = Number(sp.maxPrice);
   if (sp.beds) filters.beds = parseInt(sp.beds, 10);
+  if (sp.condition && sp.condition !== "all") filters.condition = sp.condition.toUpperCase();
+  if (sp.verified === "1") filters.verified = true;
 
   const cursor = page > 1 ? encodeCursor((page - 1) * PAGE_SIZE) : undefined;
 
@@ -100,6 +102,8 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   if (sp.q) countWhere.title = { contains: sp.q, mode: "insensitive" };
   if (sp.propertyType) countWhere.propertyType = sp.propertyType;
   if (sp.beds) countWhere.beds = { gte: parseInt(sp.beds, 10) };
+  if (sp.condition && sp.condition !== "all") countWhere.condition = sp.condition.toUpperCase();
+  if (sp.verified === "1") countWhere.sellerProfile = { user: { verificationStatus: "VERIFIED" } };
   if (sp.minPrice || sp.maxPrice) {
     const priceFilter: Record<string, unknown> = {};
     if (sp.minPrice) priceFilter.gte = Number(sp.minPrice);
@@ -137,18 +141,18 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
           padding: "16px clamp(16px,4vw,32px) 0",
         }}>
           <div style={{
-            background: "linear-gradient(135deg, #f0f9ff, #fff)",
-            border: "1.5px solid #e0f2fe",
+            background: "linear-gradient(135deg, var(--paper-2), var(--paper-3))",
+            border: "1px solid var(--line)",
             borderRadius: 16, padding: "16px 20px",
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
           }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#0369a1", margin: 0, fontFamily: "var(--body)" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", margin: 0, fontFamily: "var(--body)" }}>
               📦 Got something to sell? List it for free in minutes.
             </p>
             <Link
               href={session ? "/me/listings/new" : "/login?redirect=/me/listings/new"}
               style={{
-                padding: "9px 18px", background: "#0369a1", color: "#fff",
+                padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
                 borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none",
                 fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
               }}

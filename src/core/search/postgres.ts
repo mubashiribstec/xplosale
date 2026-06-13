@@ -124,6 +124,10 @@ export class PostgresSearchClient implements SearchClient {
     if (filters.priceMin != null) conditions.push(Prisma.sql`l.price >= ${Number(filters.priceMin)}`);
     if (filters.priceMax != null) conditions.push(Prisma.sql`l.price <= ${Number(filters.priceMax)}`);
     if (filters.beds != null) conditions.push(Prisma.sql`l.beds = ${Number(filters.beds)}`);
+    if (filters.condition) conditions.push(Prisma.sql`l.condition = ${String(filters.condition)}`);
+    if (filters.verified) {
+      conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "SellerProfile" sp2 JOIN "User" u2 ON u2.id = sp2."userId" WHERE sp2.id = l."sellerProfileId" AND u2."verificationStatus" = 'VERIFIED')`);
+    }
     const where = andConditions(conditions);
 
     const orderBy = this.listingOrderBy(sort);
