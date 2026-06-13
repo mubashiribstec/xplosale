@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SkillsChipInput from "@/components/shared/SkillsChipInput";
 import JobLocationPicker, { type JobLocation } from "@/components/shared/jobs/JobLocationPicker";
