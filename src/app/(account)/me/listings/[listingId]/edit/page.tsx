@@ -191,6 +191,7 @@ export default function EditListingPage({ params }: { params: Promise<{ listingI
           <div className="flex flex-wrap gap-3">
             {images.map((img) => (
               <div key={img.id} className="relative group w-24 h-24">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/api/upload/serve-public/${img.url}`}
                   alt=""

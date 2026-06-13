@@ -52,6 +52,7 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
   const currentAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!applicationId) { setApp(null); return; }
     currentAppIdRef.current = applicationId;
     setLoading(true);
@@ -392,6 +393,7 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
   const [dueAt, setDueAt] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [defaultDueState] = useState(() => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
 
   useEffect(() => {
     Promise.all([
@@ -435,7 +437,8 @@ function TestsTab({ applicationId, companyId }: { applicationId: string; company
 
   if (loading) return <p className="py-8 text-center text-sm" style={{ color: "var(--ink-faint)" }}>Loading…</p>;
 
-  const defaultDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+  // Lazy one-time default (7 days out); avoids calling Date.now() during render.
+  const defaultDue = defaultDueState;
 
   return (
     <div className="space-y-4">

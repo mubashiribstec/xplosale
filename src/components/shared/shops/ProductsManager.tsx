@@ -54,6 +54,7 @@ export default function ProductsManager({
     }
   }, [shopId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void fetchProducts(); }, [fetchProducts]);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function ProductsManager({
           padding: "12px 16px", background: "rgba(160,78,55,.06)", borderRadius: 10,
           fontSize: 13, color: "var(--clay)", marginBottom: 14,
         }}>
-          You've reached the {maxProducts}-product limit on the Free plan.{" "}
+          You&apos;ve reached the {maxProducts}-product limit on the Free plan.{" "}
           <strong>Upgrade to Premium</strong> to list up to 30 products.
         </div>
       )}

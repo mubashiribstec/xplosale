@@ -32,7 +32,11 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
   const isShopInquiry = contextType === "SHOP_INQUIRY";
 
   useEffect(() => {
-    if (!pendingFile) { setPreviewUrl(null); return; }
+    if (!pendingFile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewUrl(null);
+      return;
+    }
     const url = URL.createObjectURL(pendingFile);
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);

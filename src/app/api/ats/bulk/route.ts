@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { canAccessJobApplications, canManagePipelineStages } from "@/verticals/jobs/ats/permissions";
+import { canAccessJobApplications } from "@/verticals/jobs/ats/permissions";
 import { getEmailClient } from "@/core/adapters/email";
 import { renderTemplate, renderTemplateHtml } from "@/verticals/jobs/ats/template-vars";
 import { logAdminAction } from "@/core/audit";

@@ -166,7 +166,6 @@ export default async function JobsPage({
   if (sp.sort) spRecord.sort = sp.sort;
   if (sp.verified) spRecord.verified = sp.verified;
 
-  const activeRemote = sp.remoteType ?? "All";
   const activeSort = sp.sort ?? "newest";
 
   return (

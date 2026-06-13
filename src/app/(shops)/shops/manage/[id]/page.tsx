@@ -89,6 +89,7 @@ export default function EditShopPage() {
     }
   }, [id, router]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void fetchShop(); }, [fetchShop]);
 
   async function handleSubmitForReview() {

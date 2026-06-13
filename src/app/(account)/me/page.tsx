@@ -56,7 +56,6 @@ export default async function MePage() {
     hasVerifiedBadge: dbUser?.hasVerifiedBadge ?? false,
   });
 
-  const displayName = dbUser?.name ?? user.name ?? dbUser?.email ?? user.phone ?? "User";
   // Admins are treated as fully verified platform-wide
   const verificationStatus = isAdmin ? "VERIFIED" : (dbUser?.verificationStatus ?? "UNVERIFIED");
   const emailVerified = isAdmin || !!dbUser?.emailVerified;

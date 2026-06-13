@@ -84,6 +84,7 @@ export default function ShopReviews({ shopId, currentUserId }: ShopReviewsProps)
     }
   }, [shopId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void fetchReviews(1); }, [fetchReviews]);
 
   async function handleWriteReview(e: React.FormEvent) {

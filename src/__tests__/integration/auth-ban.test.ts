@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // Integration test: ban enforcement contract
 // These tests document the expected behavior of the ban system

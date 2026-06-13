@@ -94,7 +94,6 @@ function loadEnv(): Env {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __env: Env | undefined;
 }
 

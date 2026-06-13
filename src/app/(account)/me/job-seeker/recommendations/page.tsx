@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Recommendation = {
   id: string;
@@ -42,6 +43,7 @@ export default function RecommendationsPage() {
     setLoading(false);
   }, [router]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
 
   async function dismiss(id: string) {
@@ -56,7 +58,7 @@ export default function RecommendationsPage() {
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold" style={{ color: "var(--ink)", fontFamily: "var(--display)" }}>Job Recommendations</h1>
-          <a href="/me/job-seeker" className="text-sm hover:underline" style={{ color: "var(--blue)" }}>← Profile settings</a>
+          <Link href="/me/job-seeker" className="text-sm hover:underline" style={{ color: "var(--blue)" }}>← Profile settings</Link>
         </div>
 
         {loading && (
@@ -67,7 +69,7 @@ export default function RecommendationsPage() {
           <div className="rounded-2xl border p-12 text-center" style={{ background: "var(--white)", borderColor: "var(--line)", color: "var(--ink-faint)" }}>
             <p className="text-lg font-medium">No recommendations yet.</p>
             <p className="text-sm mt-1">Make sure your profile is visible to recruiters in your job seeker settings.</p>
-            <a href="/me/job-seeker" className="mt-4 inline-block hover:underline text-sm" style={{ color: "var(--blue)" }}>Update settings →</a>
+            <Link href="/me/job-seeker" className="mt-4 inline-block hover:underline text-sm" style={{ color: "var(--blue)" }}>Update settings →</Link>
           </div>
         )}
 

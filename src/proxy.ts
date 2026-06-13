@@ -1,6 +1,5 @@
 import { auth } from "@/core/auth/auth.edge";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { edgeKvGet, edgeKvSetNx } from "@/core/adapters/kv.edge";
 
 const BANNED_PAGE = "/banned";

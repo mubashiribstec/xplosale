@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Platform — Admin", robots: { index: false, follow: false } };
 
@@ -101,19 +102,19 @@ export default async function AdminPlatformPage() {
         <h2 className="text-base font-semibold text-gray-700 mb-3">Queues Requiring Attention</h2>
         <div className="flex flex-wrap gap-3">
           {pendingVerifications > 0 && (
-            <a href="/admin/verifications" className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm font-semibold text-yellow-700 hover:bg-yellow-100 transition-colors no-underline">
+            <Link href="/admin/verifications" className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm font-semibold text-yellow-700 hover:bg-yellow-100 transition-colors no-underline">
               {pendingVerifications} pending verification{pendingVerifications !== 1 ? "s" : ""}
-            </a>
+            </Link>
           )}
           {pendingPartners > 0 && (
-            <a href="/admin/partners" className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors no-underline">
+            <Link href="/admin/partners" className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors no-underline">
               {pendingPartners} partner application{pendingPartners !== 1 ? "s" : ""}
-            </a>
+            </Link>
           )}
           {pendingListings > 0 && (
-            <a href="/admin/listings" className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors no-underline">
+            <Link href="/admin/listings" className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors no-underline">
               {pendingListings} listing{pendingListings !== 1 ? "s" : ""} awaiting review
-            </a>
+            </Link>
           )}
           {pendingVerifications === 0 && pendingPartners === 0 && pendingListings === 0 && (
             <p className="text-sm text-gray-400">All queues clear.</p>

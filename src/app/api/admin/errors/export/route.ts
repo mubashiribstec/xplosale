@@ -6,7 +6,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { err, parseError } from "@/lib/http";
-import { getSession, getUserId } from "@/core/auth/session";
+import { getSession } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
 const TOP_N = 200;

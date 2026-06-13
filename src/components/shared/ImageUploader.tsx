@@ -64,6 +64,7 @@ export default function ImageUploader({ purpose, listingId, onUpload, label, cur
 
       {previewUrl && (
         <div className="relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Preview"

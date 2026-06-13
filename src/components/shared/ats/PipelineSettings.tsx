@@ -18,11 +18,6 @@ type Stage = {
 const uid = () => Math.random().toString(36).slice(2);
 const rowKey = (s: Stage) => s.id ?? s._uid ?? "";
 
-const PRESET_COLORS = [
-  "#6B7280", "#3B82F6", "#8B5CF6", "#F59E0B",
-  "#10B981", "#EF4444", "#EC4899", "#F97316",
-];
-
 export default function PipelineSettings({
   companyId,
   initialStages,

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const existing = await prisma.networkProfile.findUnique({ where: { handle }, select: { userId: true } });
     const available = !existing || existing.userId === currentUserId;
     return ok({ handle, available });
-  } catch (e) {
+  } catch {
     return ok({ handle, available: false });
   }
 }

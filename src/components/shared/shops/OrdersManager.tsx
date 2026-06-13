@@ -95,6 +95,7 @@ export default function OrdersManager({ shopId }: OrdersManagerProps) {
     }
   }, [shopId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void fetchOrders(activeTab, 1); }, [fetchOrders, activeTab]);
 
   async function updateStatus(orderId: string, status: string) {

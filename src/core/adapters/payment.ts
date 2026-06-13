@@ -42,6 +42,7 @@ export class MockPaymentProvider implements PaymentProvider {
     return { sessionId, url };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async handleWebhook(rawBody: string, _signature: string): Promise<WebhookEvent | null> {
     try {
       const data = JSON.parse(rawBody) as {
@@ -66,6 +67,7 @@ export class MockPaymentProvider implements PaymentProvider {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async cancelSubscription(_externalRef: string): Promise<void> {
     // Mock: no-op — subscription expires at period end
   }

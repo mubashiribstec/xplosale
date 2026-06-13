@@ -1,9 +1,8 @@
-import { type NextRequest } from "next/server";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const session = await getSession();
     if (!session) return err("Unauthorized", 401);

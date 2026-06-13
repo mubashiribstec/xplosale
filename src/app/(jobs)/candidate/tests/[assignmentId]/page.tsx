@@ -203,11 +203,6 @@ export default function TestTakerPage({ params }: { params: Promise<{ assignment
 
   if (phase === "submitted") {
     const a = assignment;
-    const passed =
-      a?.scorePercent != null && a.template && a?.scorePercent >= (
-        // We don't have passingScorePercent here, show raw score
-        a.scorePercent
-      );
     return (
       <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--paper)" }}>
         <div className="max-w-md w-full rounded-2xl border p-8 text-center space-y-4" style={{ background: "var(--white)", borderColor: "var(--line)" }}>

@@ -31,7 +31,6 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
   const [submitting, setSubmitting] = useState(false);
   const [mentions, setMentions] = useState<string[]>([]);
   const [autocomplete, setAutocomplete] = useState<TeamMember[]>([]);
-  const [acWord, setAcWord] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -53,7 +52,6 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
     const match = before.match(/@(\w*)$/);
     if (match) {
       const query = match[1].toLowerCase();
-      setAcWord(match[0]);
       setAutocomplete(
         team.filter(
           (m) =>
@@ -62,7 +60,6 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
         )
       );
     } else {
-      setAcWord("");
       setAutocomplete([]);
     }
   }
@@ -75,7 +72,6 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
     const replaced = before.replace(/@(\w*)$/, `@${handle} `);
     setBody(replaced + after);
     setAutocomplete([]);
-    setAcWord("");
     if (!mentions.includes(member.id)) {
       setMentions((prev) => [...prev, member.id]);
     }

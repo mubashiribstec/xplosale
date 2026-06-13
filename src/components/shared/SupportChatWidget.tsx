@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ChatThread } from "@/components/shared/ChatThread";
 import type { Message } from "@prisma/client";
@@ -108,9 +109,9 @@ export default function SupportChatWidget() {
             {!user.id ? (
               <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
                 <p style={{ fontFamily: "var(--body)", fontSize: 14, color: "var(--ink-soft)", textAlign: "center" }}>Sign in to chat with our support team.</p>
-                <a href="/login" style={{ padding: "10px 20px", background: "var(--clay)", color: "var(--white)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", fontFamily: "var(--body)" }}>
+                <Link href="/login" style={{ padding: "10px 20px", background: "var(--clay)", color: "var(--white)", borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: "none", fontFamily: "var(--body)" }}>
                   Log in
-                </a>
+                </Link>
               </div>
             ) : loading ? (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>

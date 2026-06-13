@@ -47,6 +47,7 @@ export default function GeoCascadeFilter({ onRegionChange, initialRegionId }: Ge
 
   // Load cities when country changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!country) { setCities([]); setCity(""); setAreas([]); setRegionId(""); return; }
     fetch(`/api/regions?cascade=cities&country=${encodeURIComponent(country)}`)
       .then((r) => r.json())
@@ -59,6 +60,7 @@ export default function GeoCascadeFilter({ onRegionChange, initialRegionId }: Ge
 
   // Load areas when city changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!city || !country) { setAreas([]); setRegionId(""); return; }
     fetch(`/api/regions?cascade=areas&country=${encodeURIComponent(country)}&city=${encodeURIComponent(city)}`)
       .then((r) => r.json())

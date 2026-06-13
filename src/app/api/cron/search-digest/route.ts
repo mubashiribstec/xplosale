@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
     let cursor: string | undefined;
     let processed = 0;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const searches = await prisma.savedSearch.findMany({
         where: { frequency: { not: "OFF" } },

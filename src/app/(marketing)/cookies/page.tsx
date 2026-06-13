@@ -23,6 +23,7 @@ export default function CookiesPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConsent(getConsent());
   }, []);
 

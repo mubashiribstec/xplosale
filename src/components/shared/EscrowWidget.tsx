@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface EscrowWidgetProps {
   listingId: string;
@@ -214,9 +215,9 @@ export default function EscrowWidget({
         <p style={{ fontSize: 13, color: "var(--ink-soft, #555)", margin: "0 0 12px" }}>
           Pay safely — funds are held until you confirm receipt.
         </p>
-        <a href="/login" style={primaryBtnStyle}>
+        <Link href="/login" style={primaryBtnStyle}>
           Sign in to buy with escrow
-        </a>
+        </Link>
       </div>
     );
   }

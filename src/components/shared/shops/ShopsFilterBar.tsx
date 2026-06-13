@@ -35,6 +35,7 @@ export default function ShopsFilterBar({ initialParams }: Props) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!country) { setCities([]); setAreas([]); return; }
     void fetch(`/api/regions?cascade=cities&country=${encodeURIComponent(country)}`)
       .then((r) => r.json() as Promise<{ data?: string[] }>)
@@ -42,6 +43,7 @@ export default function ShopsFilterBar({ initialParams }: Props) {
   }, [country]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!country || !city) { setAreas([]); return; }
     void fetch(`/api/regions?cascade=areas&country=${encodeURIComponent(country)}&city=${encodeURIComponent(city)}`)
       .then((r) => r.json() as Promise<{ data?: { id: string; name: string }[] }>)

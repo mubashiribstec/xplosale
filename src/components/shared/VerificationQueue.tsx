@@ -34,6 +34,7 @@ export function VerificationQueue() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchQueue(); }, [fetchQueue]);
 
   async function selectUser(user: PendingUser) {

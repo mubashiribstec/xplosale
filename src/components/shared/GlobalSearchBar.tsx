@@ -116,6 +116,7 @@ export default function GlobalSearchBar({ placeholder = "Search...", initialQ = 
       <div className="relative">
         <input
           type="text"
+          role="combobox"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -127,6 +128,7 @@ export default function GlobalSearchBar({ placeholder = "Search...", initialQ = 
           aria-label="Search"
           aria-autocomplete="list"
           aria-expanded={open}
+          aria-controls="global-search-results"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
           {loading ? (
@@ -152,7 +154,7 @@ export default function GlobalSearchBar({ placeholder = "Search...", initialQ = 
       </div>
 
       {open && (
-        <div className="absolute z-50 top-full mt-1.5 w-full bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div id="global-search-results" role="listbox" className="absolute z-50 top-full mt-1.5 w-full bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
           {!hasResults && !loading && (
             <div className="px-4 py-6 text-center text-sm text-gray-400">
               No results for &ldquo;{value}&rdquo;

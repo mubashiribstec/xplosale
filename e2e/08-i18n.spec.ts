@@ -13,11 +13,6 @@ test.describe("Language switcher", () => {
 
   test("language switcher is visible on /me", async ({ page }) => {
     await page.goto("/me");
-    // Language switcher may be in settings or account dropdown
-    const switcher = page
-      .getByRole("button", { name: /language|en|ur|ar|fr|es|zh|hi/i })
-      .first()
-      .or(page.locator("[data-testid='language-switcher']").first());
     // Not asserting visibility — just check page loaded
     await expect(page.locator("body")).not.toBeEmpty();
   });
@@ -27,13 +22,11 @@ test.describe("RTL locales", () => {
   test("Arabic locale sets dir=rtl", async ({ page }) => {
     // Switch via API endpoint
     await page.goto("/");
-    const res = await page.request.post("/api/account/language", {
+    await page.request.post("/api/account/language", {
       data: { locale: "ar" },
     });
     // 401 without auth cookie in request context — navigate directly
     await page.goto("/");
-    // Check html dir attribute — may be set by locale detection
-    const dir = await page.locator("html").getAttribute("dir");
     // Just verify the page loads — dir depends on cookie being set
     await expect(page.locator("body")).not.toBeEmpty();
   });

@@ -117,7 +117,6 @@ function AdminLoginForm() {
               placeholder="admin"
               required
               autoComplete="username"
-              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               style={{
                 width: "100%",

@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
 
-    const { regionId: _r, country, city, postCode, companyAddress, ...restData } = parsed.data;
+    const { country, city, postCode, companyAddress, ...restData } = parsed.data;
     const job = await prisma.jobPosting.create({
       data: {
         ...restData,

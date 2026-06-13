@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface ScrollLoginPromptProps {
   isAuthenticated: boolean;
@@ -70,7 +71,7 @@ export default function ScrollLoginPrompt({ isAuthenticated }: ScrollLoginPrompt
         Buy, sell, and connect with verified sellers and employers across Pakistan.
       </p>
       <div style={{ display: "flex", gap: 10 }}>
-        <a
+        <Link
           href="/login"
           style={{
             flex: 1, textAlign: "center",
@@ -84,8 +85,8 @@ export default function ScrollLoginPrompt({ isAuthenticated }: ScrollLoginPrompt
           }}
         >
           Log in
-        </a>
-        <a
+        </Link>
+        <Link
           href="/login?tab=register"
           style={{
             flex: 1, textAlign: "center",
@@ -99,7 +100,7 @@ export default function ScrollLoginPrompt({ isAuthenticated }: ScrollLoginPrompt
           }}
         >
           Create account
-        </a>
+        </Link>
       </div>
     </div>
   );

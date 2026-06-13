@@ -15,7 +15,6 @@ export default function SaveListingButton({
   listingId,
   initialSaved,
   initialCount,
-  sellerUserId: _sellerUserId,
 }: SaveListingButtonProps) {
   const { data: session } = useSession();
   const router = useRouter();

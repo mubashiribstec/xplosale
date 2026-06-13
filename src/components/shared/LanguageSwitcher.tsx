@@ -25,6 +25,7 @@ export default function LanguageSwitcher() {
   const { data: session } = useSession();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentLocale(getLocaleCookie());
   }, []);
 

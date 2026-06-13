@@ -180,7 +180,7 @@ export default function OrderForm({ shopId, product, capabilities, onClose, onSu
           borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12,
           color: "#991b1b", lineHeight: 1.5,
         }}>
-          ⚠️ <strong>Xplosale is not responsible for any fraud or payment disputes.</strong> This is a direct transaction between buyer and seller. Verify the seller's identity before transferring money.
+          ⚠️ <strong>Xplosale is not responsible for any fraud or payment disputes.</strong> This is a direct transaction between buyer and seller. Verify the seller&apos;s identity before transferring money.
         </div>
 
         <form onSubmit={(e) => void handleSubmit(e)} style={{ display: "flex", flexDirection: "column", gap: 14 }}>

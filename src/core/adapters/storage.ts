@@ -57,7 +57,6 @@ function hmacToken(data: string): string {
 // ─── S3 implementation ────────────────────────────────────────────────────────
 
 declare global {
-  // eslint-disable-next-line no-var
   var __s3: import("@aws-sdk/client-s3").S3Client | undefined;
 }
 

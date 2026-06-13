@@ -181,6 +181,7 @@ export default function SearchResults({ q, listings, jobs, profiles }: SearchRes
                   className="group flex items-start gap-3 bg-white rounded-xl border border-gray-200 px-4 py-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                 >
                   {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={photoUrl}
                       alt={profile.name ?? profile.handle}

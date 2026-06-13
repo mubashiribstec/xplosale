@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 // Lightweight sliding-window implementation for unit testing
 // mirrors the production logic in src/lib/rate-limit.ts

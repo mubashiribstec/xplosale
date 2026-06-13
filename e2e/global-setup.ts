@@ -13,7 +13,6 @@ import { encode } from "@auth/core/jwt";
 
 const TEST_DB = process.env.TEST_DATABASE_URL ?? "postgresql://xplosale_test:xplosale_test@localhost:5432/xplosale_test";
 const SECRET = process.env.NEXTAUTH_SECRET ?? "0zxW7RvOoIwsaNqdYLk8aJfs6DBT5RH42zPhvTPstEQ=";
-const BASE_URL = "http://localhost:3000";
 const COOKIE_NAME = "authjs.session-token";
 const STATE_DIR = path.join(__dirname, ".auth");
 

@@ -40,7 +40,6 @@ const MAX_QUEUE = 50;
 
 const breadcrumbs: Breadcrumb[] = [];
 const queue: ClientEvent[] = [];
-let flushTimer: ReturnType<typeof setInterval> | null = null;
 let activeFetches = 0;
 let initialized = false;
 
@@ -259,13 +258,12 @@ export function initClientLogger(userRole?: string | null) {
 
     // Store role for subsequent captures
     if (userRole) {
-      const _capture = capture;
       // Wrap capture to inject role
       (window as { __xplogRole?: string }).__xplogRole = userRole;
     }
 
     // Periodic flush
-    flushTimer = setInterval(flush, FLUSH_INTERVAL_MS);
+    setInterval(flush, FLUSH_INTERVAL_MS);
     // Flush on tab hide (sendBeacon path)
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") flush();

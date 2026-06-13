@@ -16,14 +16,11 @@ function setConsent(value: "all" | "essential") {
   document.cookie = `${COOKIE_NAME}=${value};path=/;max-age=${MAX_AGE};SameSite=Lax`;
 }
 
-function hasAnalyticsConsent(): boolean {
-  return getConsent() === "all";
-}
-
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (getConsent() === null) setVisible(true);
   }, []);
 
