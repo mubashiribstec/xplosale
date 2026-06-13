@@ -24,6 +24,8 @@ export const metadata: Metadata = {
 interface SearchParams {
   regionSlug?: string;
   remoteType?: string;
+  employmentType?: string;
+  experienceLevel?: string;
   minSalary?: string;
   maxSalary?: string;
   keyword?: string;
@@ -32,8 +34,24 @@ interface SearchParams {
   verified?: string;
 }
 
-const JOB_TYPES = ["All", "Engineering", "Product", "Design", "Operations", "Growth"];
 const REMOTE_TYPES = ["All", "Onsite", "Hybrid", "Remote"] as const;
+const EMPLOYMENT_TYPES = ["All", "FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE"] as const;
+const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
+  All: "All",
+  FULL_TIME: "Full-time",
+  PART_TIME: "Part-time",
+  CONTRACT: "Contract",
+  INTERNSHIP: "Internship",
+  FREELANCE: "Freelance",
+};
+const EXPERIENCE_LEVELS = ["All", "ENTRY", "MID", "SENIOR", "LEAD"] as const;
+const EXPERIENCE_LEVEL_LABELS: Record<string, string> = {
+  All: "All",
+  ENTRY: "Entry",
+  MID: "Mid",
+  SENIOR: "Senior",
+  LEAD: "Lead",
+};
 const SORT_OPTIONS = [
   { key: "newest", label: "Newest" },
   { key: "relevance", label: "Relevance" },
@@ -63,8 +81,11 @@ export default async function JobsPage({
   const filters: Record<string, unknown> = {};
   if (regionId) filters.regionId = regionId;
   if (sp.remoteType && sp.remoteType !== "All") filters.remoteType = sp.remoteType.toUpperCase();
+  if (sp.employmentType && sp.employmentType !== "All") filters.employmentType = sp.employmentType;
+  if (sp.experienceLevel && sp.experienceLevel !== "All") filters.experienceLevel = sp.experienceLevel;
   if (sp.minSalary) filters.salaryMin = parseInt(sp.minSalary, 10);
   if (sp.maxSalary) filters.salaryMax = parseInt(sp.maxSalary, 10);
+  if (sp.verified === "true") filters.verified = true;
 
   const VALID_SORTS = ["relevance", "newest", "salary_asc", "salary_desc"] as const;
   type JobSort = typeof VALID_SORTS[number];
@@ -85,6 +106,8 @@ export default async function JobsPage({
   const countWhere: Record<string, unknown> = { status: "ACTIVE" };
   if (regionId) countWhere.regionId = regionId;
   if (sp.remoteType && sp.remoteType !== "All") countWhere.remoteType = sp.remoteType.toUpperCase();
+  if (sp.employmentType && sp.employmentType !== "All") countWhere.employmentType = sp.employmentType;
+  if (sp.experienceLevel && sp.experienceLevel !== "All") countWhere.experienceLevel = sp.experienceLevel;
   if (sp.keyword) countWhere.title = { contains: sp.keyword, mode: "insensitive" };
   if (sp.verified === "true") countWhere.company = { verifiedEmployer: true };
   if (sp.minSalary || sp.maxSalary) {
@@ -124,6 +147,8 @@ export default async function JobsPage({
   const spRecord: Record<string, string> = {};
   if (sp.regionSlug) spRecord.regionSlug = sp.regionSlug;
   if (sp.remoteType) spRecord.remoteType = sp.remoteType;
+  if (sp.employmentType) spRecord.employmentType = sp.employmentType;
+  if (sp.experienceLevel) spRecord.experienceLevel = sp.experienceLevel;
   if (sp.minSalary) spRecord.minSalary = sp.minSalary;
   if (sp.maxSalary) spRecord.maxSalary = sp.maxSalary;
   if (sp.keyword) spRecord.keyword = sp.keyword;
@@ -314,6 +339,8 @@ export default async function JobsPage({
                 keyword: sp.keyword,
                 regionSlug: sp.regionSlug,
                 remoteType: sp.remoteType,
+                employmentType: sp.employmentType,
+                experienceLevel: sp.experienceLevel,
                 minSalary: sp.minSalary,
                 maxSalary: sp.maxSalary,
                 sort: sp.sort,
@@ -322,11 +349,11 @@ export default async function JobsPage({
             />
           </form>
 
-          {/* Job type chips */}
+          {/* Employment type chips */}
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-            {JOB_TYPES.map((type) => {
-              const isActive = type === "All" ? !sp.keyword : sp.keyword === type;
-              const href = `/jobs?${new URLSearchParams({ ...spRecord, keyword: type === "All" ? "" : type, page: "1" }).toString()}`;
+            {EMPLOYMENT_TYPES.map((type) => {
+              const isActive = (sp.employmentType ?? "All") === type;
+              const href = `/jobs?${new URLSearchParams({ ...spRecord, employmentType: type === "All" ? "" : type, page: "1" }).toString()}`;
               return (
                 <Link
                   key={type}
@@ -343,7 +370,7 @@ export default async function JobsPage({
                     textDecoration: "none",
                   }}
                 >
-                  {type}
+                  {EMPLOYMENT_TYPE_LABELS[type]}
                 </Link>
               );
             })}
@@ -464,6 +491,74 @@ export default async function JobsPage({
                         }}
                       >
                         {rt}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Employment type */}
+              <div>
+                <p style={{ fontFamily: "var(--body)", fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Employment Type
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {EMPLOYMENT_TYPES.map((type) => {
+                    const isActive = (sp.employmentType ?? "All") === type;
+                    return (
+                      <Link
+                        key={type}
+                        href={`/jobs?${new URLSearchParams({ ...spRecord, employmentType: type === "All" ? "" : type, page: "1" }).toString()}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          background: isActive ? "rgba(160,78,55,.08)" : "transparent",
+                          border: `1px solid ${isActive ? "rgba(160,78,55,.3)" : "transparent"}`,
+                          fontFamily: "var(--body)",
+                          fontSize: 13,
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? "var(--clay)" : "var(--ink-soft)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {EMPLOYMENT_TYPE_LABELS[type]}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Experience level */}
+              <div>
+                <p style={{ fontFamily: "var(--body)", fontSize: 11, fontWeight: 600, color: "var(--ink-faint)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Experience Level
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {EXPERIENCE_LEVELS.map((lvl) => {
+                    const isActive = (sp.experienceLevel ?? "All") === lvl;
+                    return (
+                      <Link
+                        key={lvl}
+                        href={`/jobs?${new URLSearchParams({ ...spRecord, experienceLevel: lvl === "All" ? "" : lvl, page: "1" }).toString()}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          background: isActive ? "rgba(160,78,55,.08)" : "transparent",
+                          border: `1px solid ${isActive ? "rgba(160,78,55,.3)" : "transparent"}`,
+                          fontFamily: "var(--body)",
+                          fontSize: 13,
+                          fontWeight: isActive ? 600 : 400,
+                          color: isActive ? "var(--clay)" : "var(--ink-soft)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {EXPERIENCE_LEVEL_LABELS[lvl]}
                       </Link>
                     );
                   })}

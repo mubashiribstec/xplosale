@@ -27,6 +27,7 @@ export interface JobHit {
   id: string; title: string; title_hl: string;
   companyId: string; companyName: string;
   regionId: string; remoteType: string;
+  employmentType: string | null; experienceLevel: string | null;
   salaryMin: number | null; salaryMax: number | null; currency: string;
   status: string; createdAt: Date; rank: number;
   regionName: string; regionCity: string;
@@ -233,8 +234,11 @@ export class PostgresSearchClient implements SearchClient {
     ];
     if (filters.regionId)   conditions.push(Prisma.sql`j."regionId" = ${String(filters.regionId)}`);
     if (filters.remoteType) conditions.push(Prisma.sql`j."remoteType" = ${String(filters.remoteType)}::"RemoteType"`);
+    if (filters.employmentType)  conditions.push(Prisma.sql`j."employmentType" = ${String(filters.employmentType)}::"EmploymentType"`);
+    if (filters.experienceLevel) conditions.push(Prisma.sql`j."experienceLevel" = ${String(filters.experienceLevel)}::"ExperienceLevel"`);
     if (filters.salaryMin != null) conditions.push(Prisma.sql`j."salaryMax" >= ${Number(filters.salaryMin)}`);
     if (filters.salaryMax != null) conditions.push(Prisma.sql`j."salaryMin" <= ${Number(filters.salaryMax)}`);
+    if (filters.verified) conditions.push(Prisma.sql`c."verifiedEmployer" = true`);
     const where = andConditions(conditions);
 
     const orderBy = sort === "newest"
@@ -253,6 +257,7 @@ export class PostgresSearchClient implements SearchClient {
           ts_headline('simple', j.title, ${q}, 'MaxWords=6,MinWords=1') AS title_hl,
           j."companyId", c.name AS "companyName",
           j."regionId", j."remoteType",
+          j."employmentType", j."experienceLevel",
           j."salaryMin", j."salaryMax", j.currency,
           j.status, j."createdAt",
           ts_rank_cd(j."searchVector", ${q}) AS rank,
@@ -272,6 +277,7 @@ export class PostgresSearchClient implements SearchClient {
           j.id, j.title, j.title AS title_hl,
           j."companyId", c.name AS "companyName",
           j."regionId", j."remoteType",
+          j."employmentType", j."experienceLevel",
           j."salaryMin", j."salaryMax", j.currency,
           j.status, j."createdAt",
           similarity(j.title, ${query}) AS rank,
@@ -291,6 +297,7 @@ export class PostgresSearchClient implements SearchClient {
         j.id, j.title, j.title AS title_hl,
         j."companyId", c.name AS "companyName",
         j."regionId", j."remoteType",
+        j."employmentType", j."experienceLevel",
         j."salaryMin", j."salaryMax", j.currency,
         j.status, j."createdAt",
         0::float AS rank,

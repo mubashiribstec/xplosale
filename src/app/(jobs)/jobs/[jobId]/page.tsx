@@ -117,6 +117,19 @@ const REMOTE_CHIP_STYLE: Record<string, { bg: string; color: string }> = {
   REMOTE: { bg: "rgba(14,158,110,.10)", color: "var(--green)" },
 };
 
+const SCHEMA_EMPLOYMENT_TYPE: Record<string, string> = {
+  FULL_TIME: "FULL_TIME",
+  PART_TIME: "PART_TIME",
+  CONTRACT: "CONTRACTOR",
+  INTERNSHIP: "INTERN",
+  FREELANCE: "TEMPORARY",
+};
+
+function jsonLdEmploymentType(job: { employmentType: string | null; remoteType: string }): string {
+  if (job.employmentType) return SCHEMA_EMPLOYMENT_TYPE[job.employmentType] ?? "FULL_TIME";
+  return job.remoteType === "REMOTE" ? "TELECOMMUTE" : "FULL_TIME";
+}
+
 function daysAgo(date: Date): string {
   const ms = Date.now() - new Date(date).getTime();
   const days = Math.floor(ms / (1000 * 60 * 60 * 24));
@@ -167,7 +180,11 @@ export default async function JobDetailPage({
   const remoteChip = REMOTE_CHIP_STYLE[job.remoteType] ?? { bg: "var(--paper-2)", color: "var(--ink-soft)" };
   const remoteLabel = job.remoteType.charAt(0) + job.remoteType.slice(1).toLowerCase();
 
-  // Similar jobs
+  const requiredSkills = Array.isArray(job.requiredSkills)
+    ? (job.requiredSkills as string[])
+    : [];
+
+  // Similar jobs — same company
   const similarJobs = await prisma.jobPosting.findMany({
     where: {
       status: "ACTIVE",
@@ -181,9 +198,31 @@ export default async function JobDetailPage({
     },
   });
 
-  const requiredSkills = Array.isArray(job.requiredSkills)
-    ? (job.requiredSkills as string[])
-    : [];
+  // Similar jobs — across other companies, matching employment type / experience level / region / skills
+  const crossCompanyJobs = await prisma.$queryRaw<Array<{
+    id: string; title: string; remoteType: string;
+    salaryMin: number | null; salaryMax: number | null; currency: string;
+    companyName: string; verifiedEmployer: boolean;
+    regionName: string; regionCity: string;
+  }>>`
+    SELECT j.id, j.title, j."remoteType", j."salaryMin", j."salaryMax", j.currency,
+      c.name AS "companyName", c."verifiedEmployer",
+      r.name AS "regionName", r.city AS "regionCity"
+    FROM "JobPosting" j
+    JOIN "Company" c ON c.id = j."companyId"
+    JOIN "Region" r ON r.id = j."regionId"
+    WHERE j.status = 'ACTIVE'
+      AND j.id != ${job.id}
+      AND j."companyId" != ${job.companyId}
+      AND (
+        j."employmentType" = ${job.employmentType}::"EmploymentType"
+        OR j."experienceLevel" = ${job.experienceLevel}::"ExperienceLevel"
+        OR j."regionId" = ${job.regionId}
+        OR j."requiredSkills" ?| ${requiredSkills}::text[]
+      )
+    ORDER BY j."createdAt" DESC
+    LIMIT 4
+  `;
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)" }}>
@@ -197,7 +236,7 @@ export default async function JobDetailPage({
             description: job.description,
             datePosted: job.createdAt.toISOString(),
             validThrough: job.expiresAt?.toISOString(),
-            employmentType: job.remoteType === "REMOTE" ? "TELECOMMUTE" : "FULL_TIME",
+            employmentType: jsonLdEmploymentType(job),
             hiringOrganization: {
               "@type": "Organization",
               name: job.company.name,
@@ -605,6 +644,51 @@ export default async function JobDetailPage({
                       </p>
                       <p style={{ fontFamily: "var(--body)", fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>
                         {sj.region.city || sj.region.name}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Similar jobs from other companies */}
+            {crossCompanyJobs.length > 0 && (
+              <div
+                style={{
+                  background: "var(--white)",
+                  border: "1.5px solid var(--line)",
+                  borderRadius: 18,
+                  padding: "20px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "var(--display)",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    color: "var(--ink)",
+                    margin: "0 0 12px",
+                  }}
+                >
+                  Similar jobs
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {crossCompanyJobs.map((sj, i) => (
+                    <Link
+                      key={sj.id}
+                      href={`/jobs/${sj.id}`}
+                      style={{
+                        display: "block",
+                        padding: "10px 0",
+                        borderBottom: i < crossCompanyJobs.length - 1 ? "1px solid var(--line)" : "none",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <p style={{ fontFamily: "var(--body)", fontWeight: 600, fontSize: 13, color: "var(--ink)", margin: "0 0 2px" }}>
+                        {sj.title}
+                      </p>
+                      <p style={{ fontFamily: "var(--body)", fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>
+                        {sj.companyName} · {sj.regionCity || sj.regionName}
                       </p>
                     </Link>
                   ))}

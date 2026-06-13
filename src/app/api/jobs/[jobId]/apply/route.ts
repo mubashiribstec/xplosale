@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { getOrCreateRoom, createNotification } from "@/core/messaging/rooms";
 import { getUserTier } from "@/lib/tier";
 import { recomputeMatchForApplication } from "@/verticals/jobs/ats/recompute-match";
@@ -19,6 +20,9 @@ export async function POST(
     const session = await getSession();
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+
+    const rl = await rateLimit(`job-apply:${userId}`, 30, 3600);
+    if (!rl.allowed) return err("Too many applications submitted. Please try again later.", 429);
 
     const { jobId } = await params;
 

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+import { getEffectiveJobPlan, countActiveJobPosts } from "@/verticals/jobs/tier";
 
 const skillsArray = z.array(z.string().max(60)).max(30).default([]);
 
@@ -11,9 +13,11 @@ const createSchema = z.object({
   description: z.string().min(20).max(10000),
   regionId: z.string().optional(),
   remoteType: z.enum(["ONSITE", "HYBRID", "REMOTE"]).default("ONSITE"),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE"]).optional(),
+  experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "LEAD"]).optional(),
   salaryMin: z.number().int().positive().optional(),
   salaryMax: z.number().int().positive().optional(),
-  currency: z.string().default("USD"),
+  currency: z.string().default("PKR"),
   country: z.string().max(100).optional(),
   city: z.string().max(100).optional(),
   postCode: z.string().max(20).optional(),
@@ -85,6 +89,9 @@ export async function POST(req: NextRequest) {
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
 
+    const rl = await rateLimit(`job-create:${userId}`, 20, 3600);
+    if (!rl.allowed) return err("Too many job posts created. Please try again later.", 429);
+
     const body = await req.json() as unknown;
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
@@ -100,24 +107,21 @@ export async function POST(req: NextRequest) {
 
     // Job post limit enforcement
     const company = employerProfile.company;
-    const isExpired = company.jobPlanKey === "MONTHLY" && company.jobPlanExpiresAt && company.jobPlanExpiresAt < new Date();
-    const effectivePlanKey = isExpired ? "FREE" : company.jobPlanKey;
-    const effectiveLimit = isExpired ? 3 : company.jobPostLimit;
+    const [effectivePlan, activeCount] = await Promise.all([
+      getEffectiveJobPlan(company.id),
+      countActiveJobPosts(company.id),
+    ]);
 
-    const activeCount = await prisma.jobPosting.count({
-      where: { companyId: company.id, status: { in: ["ACTIVE", "DRAFT"] } },
-    });
-
-    if (activeCount >= effectiveLimit) {
-      if (company.jobPostCredits > 0) {
+    if (activeCount >= effectivePlan.limit) {
+      if (effectivePlan.credits > 0) {
         await prisma.company.update({ where: { id: company.id }, data: { jobPostCredits: { decrement: 1 } } });
       } else {
         return err(
-          effectivePlanKey === "FREE"
-            ? `Free plan allows ${effectiveLimit} active posts. Upgrade to Monthly plan or contact admin to purchase extra credits.`
-            : `Monthly plan limit (${effectiveLimit} posts) reached. Contact admin to add extra post credits.`,
+          effectivePlan.key === "FREE"
+            ? `Free plan allows ${effectivePlan.limit} active posts. Upgrade to Monthly plan or contact admin to purchase extra credits.`
+            : `Monthly plan limit (${effectivePlan.limit} posts) reached. Contact admin to add extra post credits.`,
           422,
-          { activeCount, limit: effectiveLimit, planKey: effectivePlanKey }
+          { activeCount, limit: effectivePlan.limit, planKey: effectivePlan.key }
         );
       }
     }

@@ -98,7 +98,7 @@ export default function RecommendationsPage() {
 
             <div className="flex gap-2 pt-1">
               <a
-                href={`/j/${rec.jobPosting.id}`}
+                href={`/jobs/${rec.jobPosting.id}`}
                 className="flex-1 text-center bg-blue-600 text-white text-sm font-medium py-2 rounded-xl hover:bg-blue-700 transition"
               >
                 View Job

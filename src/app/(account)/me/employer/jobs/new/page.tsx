@@ -29,7 +29,7 @@ export default function NewJobPage() {
     remoteType: "ONSITE",
     salaryMin: "",
     salaryMax: "",
-    currency: "USD",
+    currency: "PKR",
   });
 
   const [location, setLocation] = useState<JobLocation>(EMPTY_LOCATION);

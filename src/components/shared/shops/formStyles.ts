@@ -17,6 +17,13 @@ export const selectStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
+export const textareaStyle: React.CSSProperties = {
+  ...inputStyle,
+  resize: "vertical",
+  minHeight: 120,
+  lineHeight: 1.5,
+};
+
 export const labelStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",

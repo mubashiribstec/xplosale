@@ -132,7 +132,7 @@ export default function InvitesPage() {
                   Decline
                 </button>
                 <a
-                  href={`/j/${inv.jobPosting.id}`}
+                  href={`/jobs/${inv.jobPosting.id}`}
                   className="px-4 text-sm text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-50 flex items-center transition"
                 >
                   View

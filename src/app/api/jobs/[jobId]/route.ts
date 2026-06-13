@@ -11,6 +11,8 @@ const patchSchema = z.object({
   title: z.string().min(5).max(200).optional(),
   description: z.string().min(20).max(10000).optional(),
   remoteType: z.enum(["ONSITE", "HYBRID", "REMOTE"]).optional(),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE"]).optional(),
+  experienceLevel: z.enum(["ENTRY", "MID", "SENIOR", "LEAD"]).optional(),
   salaryMin: z.number().int().positive().optional(),
   salaryMax: z.number().int().positive().optional(),
   regionId: z.string().cuid().optional(),
