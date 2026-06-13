@@ -69,6 +69,28 @@ enum RemoteType {
   REMOTE
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum ExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  LEAD
+}
+
+enum JobAnalyticsEventKind {
+  VIEW
+  APPLY_CLICK
+  CONTACT_CLICK
+  SHARE_CLICK
+}
+
 enum ApplicationStatus {
   APPLIED
   REVIEWED
@@ -352,6 +374,7 @@ model User {
   shopReports             ShopReport[]          @relation("ShopReporter")
   shopReviews             ShopReview[]          @relation("ShopReviewer")
   shopFavourites          ShopFavourite[]       @relation("ShopFavourites")
+  jobFavourites           JobFavourite[]        @relation("JobFavourites")
   savedListings           SavedListing[]
   listingReports          ListingReport[]       @relation("ListingReporter")
   sellerReviewsWritten    SellerReview[]        @relation("SellerReviewAuthor")
@@ -715,6 +738,8 @@ model JobPosting {
   description       String
   regionId          String
   remoteType        RemoteType @default(ONSITE)
+  employmentType    EmploymentType?
+  experienceLevel   ExperienceLevel?
   salaryMin         Int?
   salaryMax         Int?
   currency          String     @default("PKR")
@@ -739,6 +764,8 @@ model JobPosting {
   candidateMatches CandidateMatch[]
   recommendations  JobRecommendation[]
   invites          InviteToApply[]
+  favourites       JobFavourite[]
+  analyticsEvents  JobAnalyticsEvent[]
 
   @@index([status, regionId, createdAt])
   @@index([companyId, status])
@@ -1497,6 +1524,31 @@ model ShopFavourite {
 
   @@unique([shopId, userId])
   @@index([userId, createdAt])
+}
+
+model JobFavourite {
+  id           String     @id @default(cuid())
+  jobPostingId String
+  userId       String
+  createdAt    DateTime   @default(now())
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  user       User       @relation("JobFavourites", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobPostingId, userId])
+  @@index([userId, createdAt])
+}
+
+model JobAnalyticsEvent {
+  id           String                @id @default(cuid())
+  jobPostingId String
+  kind         JobAnalyticsEventKind
+  day          DateTime              @db.Date
+  count        Int                   @default(1)
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+
+  @@index([jobPostingId, day])
 }
 
 // ─── Error capture ────────────────────────────────────────────────────────────
