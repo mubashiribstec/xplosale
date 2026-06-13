@@ -14,6 +14,7 @@ import ReportListingButton from "@/components/shared/marketplace/ReportListingBu
 import ListingQA from "@/components/shared/marketplace/ListingQA";
 import SimilarListings from "@/components/shared/marketplace/SimilarListings";
 import ViewTracker from "@/components/shared/marketplace/ViewTracker";
+import ListingGallery from "@/components/shared/marketplace/ListingGallery";
 import { serializeJsonLd } from "@/lib/json-ld";
 
 interface PageProps {
@@ -27,23 +28,23 @@ export async function generateMetadata(
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
     select: {
-      title: true, description: true, price: true, currency: true,
+      title: true, description: true, price: true, currency: true, status: true,
       images: { select: { url: true }, take: 1, orderBy: { order: "asc" } },
       region: { select: { name: true, city: true } },
     },
   });
   if (!listing) return { title: "Listing not found" };
 
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://xplosale.com";
   const price = `${listing.currency} ${Number(listing.price).toLocaleString("en-PK")}`;
   const description = `${price} · ${listing.region.city}, ${listing.region.name} · ${listing.description?.slice(0, 150) ?? ""}`;
-  const imageUrl = listing.images[0]?.url
-    ? `${base}/api/upload/serve-public/${listing.images[0].url}`
-    : undefined;
+  const imageUrl = listing.images[0]?.url ? getPublicUrl(listing.images[0].url) : undefined;
+  const indexable = listing.status === "ACTIVE";
 
   return {
     title: `${listing.title} — ${price} | Xplosale`,
     description,
+    alternates: { canonical: `/m/${listingId}` },
+    robots: indexable ? undefined : { index: false, follow: false },
     openGraph: {
       title: listing.title,
       description,
@@ -52,6 +53,17 @@ export async function generateMetadata(
     },
     twitter: { card: "summary_large_image", title: listing.title, description },
   };
+}
+
+const CARD: React.CSSProperties = {
+  background: "var(--white)",
+  border: "1px solid var(--line)",
+  borderRadius: 18,
+  padding: 20,
+};
+
+function chip(bg: string, color: string): React.CSSProperties {
+  return { fontSize: 12, fontWeight: 600, padding: "3px 11px", borderRadius: 99, background: bg, color };
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {
@@ -128,8 +140,8 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
   const initialSaved = !!savedEntry;
   const initialSavedCount = listing.savedCount;
+  const isSold = listing.status === "SOLD";
 
-  // Serialize questions for client component
   const serializedQuestions = listing.questions.map((q) => ({
     id: q.id,
     question: q.question,
@@ -138,23 +150,21 @@ export default async function ListingDetailPage({ params }: PageProps) {
     asker: { name: q.asker.name },
   }));
 
-  const BADGE_STYLES: Record<string, string> = {
-    TRUSTED: "bg-blue-50 text-blue-700",
-    TOP_RATED: "bg-yellow-50 text-yellow-700",
-    QUICK_RESPONDER: "bg-green-50 text-green-700",
-  };
+  const galleryImages = listing.images.map((img) => ({ url: getPublicUrl(img.url), id: img.id }));
 
-  const CONDITION_STYLES: Record<string, string> = {
-    NEW: "bg-green-50 text-green-700",
-    USED: "bg-orange-50 text-orange-700",
-    REFURBISHED: "bg-blue-50 text-blue-700",
+  const BADGE: Record<string, [string, string]> = {
+    TRUSTED: ["rgba(50,122,214,.12)", "var(--blue)"],
+    TOP_RATED: ["rgba(217,119,6,.12)", "#d97706"],
+    QUICK_RESPONDER: ["rgba(15,184,126,.12)", "var(--green)"],
   };
-
-  // Fire view count (optimistic, non-blocking) — we increment server-side via a fetch
-  // This is handled by the ViewTracker client component below
+  const CONDITION: Record<string, [string, string]> = {
+    NEW: ["rgba(15,184,126,.12)", "var(--green)"],
+    USED: ["rgba(217,119,6,.12)", "#d97706"],
+    REFURBISHED: ["rgba(50,122,214,.12)", "var(--blue)"],
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main style={{ minHeight: "100vh", background: "var(--paper)", fontFamily: "var(--body)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -163,66 +173,63 @@ export default async function ListingDetailPage({ params }: PageProps) {
             "@type": "Product",
             name: listing.title,
             description: listing.description,
+            ...(galleryImages.length > 0 ? { image: galleryImages.map((i) => i.url) } : {}),
             offers: {
               "@type": "Offer",
               price: Number(listing.price),
               priceCurrency: listing.currency,
-              availability: "https://schema.org/InStock",
+              availability: isSold ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
               seller: { "@type": "Person", name: listing.sellerProfile?.user?.name ?? "Seller" },
             },
           }),
         }}
       />
 
-      {/* View tracker — fires once on mount */}
       <ViewTracker listingId={listing.id} />
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "clamp(16px,4vw,32px) clamp(16px,4vw,24px)", display: "flex", flexDirection: "column", gap: 16 }}>
+
+        {/* Breadcrumb */}
+        <nav style={{ fontSize: 13, color: "var(--ink-faint)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <Link href="/m" style={{ color: "var(--ink-faint)", textDecoration: "none" }}>Marketplace</Link>
+          <span>›</span>
+          {listing.category && (
+            <>
+              <Link href={`/m?category=${encodeURIComponent(listing.category)}`} style={{ color: "var(--ink-faint)", textDecoration: "none", textTransform: "capitalize" }}>
+                {listing.category.replace(/_/g, " ")}
+              </Link>
+              <span>›</span>
+            </>
+          )}
+          <span style={{ color: "var(--ink-soft)" }}>{listing.title}</span>
+        </nav>
+
         {listing.status !== "ACTIVE" && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm text-yellow-800">
-            This listing is <strong>{listing.status.toLowerCase().replace("_", " ")}</strong> and only visible to you.
+          <div style={{ ...CARD, padding: "12px 16px", background: "rgba(217,119,6,.08)", border: "1px solid rgba(217,119,6,.3)", color: "#b45309", fontSize: 14 }}>
+            This listing is <strong>{listing.status.toLowerCase().replace("_", " ")}</strong>{isOwner ? " and only visible to you." : "."}
           </div>
         )}
 
-        {listing.urgent && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-semibold flex items-center gap-2">
-            🔴 URGENT — Seller wants to sell quickly
+        {listing.urgent && listing.status === "ACTIVE" && (
+          <div style={{ ...CARD, padding: "12px 16px", background: "rgba(160,78,55,.08)", border: "1px solid rgba(160,78,55,.3)", color: "var(--clay)", fontSize: 14, fontWeight: 600 }}>
+            🔴 Urgent — seller wants to sell quickly
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column — images + details */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="relative w-full h-72 bg-gray-200 rounded-2xl overflow-hidden">
-              {listing.images[0] ? (
-                <Image
-                  src={getPublicUrl(listing.images[0].url)}
-                  alt={listing.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">No image</div>
-              )}
-            </div>
+        <div className="ld-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, alignItems: "start" }}>
 
-            {listing.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {listing.images.slice(1).map((img) => (
-                  <div key={img.id} className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden">
-                    <Image src={getPublicUrl(img.url)} alt={listing.title} fill className="object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Left — gallery + details */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
+            <ListingGallery images={galleryImages} alt={listing.title} sold={isSold} />
 
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="text-2xl font-bold text-gray-900">{listing.title}</h1>
-                <div className="flex items-center gap-2 flex-shrink-0">
+            <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
+                <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(20px,3.5vw,28px)", color: "var(--ink)", margin: 0, lineHeight: 1.15 }}>
+                  {listing.title}
+                </h1>
+                <div style={{ flexShrink: 0 }}>
                   {isOwner ? (
-                    <span className="text-xs text-gray-400">👁 {listing.viewCount} views</span>
+                    <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>👁 {listing.viewCount} views</span>
                   ) : userId ? (
                     <SaveListingButton
                       listingId={listing.id}
@@ -234,71 +241,58 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="flex items-baseline gap-3">
-                <p className="text-3xl font-bold text-blue-600">{listing.currency} {price}</p>
-                {!listing.negotiable && (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">Fixed Price</span>
-                )}
-                {listing.negotiable && (
-                  <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">Negotiable</span>
-                )}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <p className="mono" style={{ fontSize: "clamp(24px,4vw,32px)", fontWeight: 800, color: "var(--clay)", margin: 0 }}>
+                  {listing.currency} {price}
+                </p>
+                {listing.negotiable
+                  ? <span style={chip("rgba(50,122,214,.1)", "var(--blue)")}>Negotiable</span>
+                  : <span style={chip("var(--paper-2)", "var(--ink-soft)")}>Fixed price</span>}
               </div>
 
-              {/* Stats row */}
-              <div className="flex items-center gap-4 text-xs text-gray-400">
+              <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 12, color: "var(--ink-faint)", flexWrap: "wrap" }}>
                 <span>👁 {listing.viewCount} views</span>
                 <span>♡ {listing.savedCount} watching</span>
                 {listing.sellerType === "BUSINESS" && <span>🏢 Business seller</span>}
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
                 {listing.condition && (
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${CONDITION_STYLES[listing.condition] ?? "bg-gray-100 text-gray-600"}`}>
-                    {listing.condition}
-                  </span>
+                  <span style={chip(...(CONDITION[listing.condition] ?? ["var(--paper-2)", "var(--ink-soft)"]))}>{listing.condition}</span>
                 )}
                 {listing.propertyType && (
-                  <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full capitalize">
-                    {listing.propertyType.toLowerCase()}
-                  </span>
+                  <span style={{ ...chip("rgba(50,122,214,.1)", "var(--blue)"), textTransform: "capitalize" }}>{listing.propertyType.toLowerCase()}</span>
                 )}
-                {listing.beds && (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">{listing.beds} beds</span>
-                )}
-                {listing.baths && (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">{listing.baths} baths</span>
-                )}
+                {listing.beds && <span style={chip("var(--paper-2)", "var(--ink-soft)")}>{listing.beds} beds</span>}
+                {listing.baths && <span style={chip("var(--paper-2)", "var(--ink-soft)")}>{listing.baths} baths</span>}
                 {listing.areaValue && listing.areaUnit && (
-                  <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                    {listing.areaValue} {listing.areaUnit}
-                  </span>
+                  <span style={chip("var(--paper-2)", "var(--ink-soft)")}>{listing.areaValue} {listing.areaUnit}</span>
                 )}
                 {listing.deliveryAvailable && (
-                  <span className="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
-                    🚚 Delivery available{listing.deliveryCost ? ` · ${listing.currency} ${Number(listing.deliveryCost).toLocaleString("en-PK")}` : " (free)"}
+                  <span style={chip("rgba(144,37,179,.1)", "var(--purple)")}>
+                    🚚 Delivery{listing.deliveryCost ? ` · ${listing.currency} ${Number(listing.deliveryCost).toLocaleString("en-PK")}` : " (free)"}
                   </span>
                 )}
               </div>
 
-              <p className="text-sm text-gray-500">{listing.region.city} &mdash; {listing.region.name}</p>
+              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>📍 {listing.region.city} — {listing.region.name}</p>
 
-              <div className="border-t border-gray-100 pt-4">
-                <h2 className="text-sm font-semibold text-gray-700 mb-2">Description</h2>
-                <p className="text-sm text-gray-600 whitespace-pre-line">{listing.description}</p>
+              <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+                <h2 style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-soft)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".05em" }}>Description</h2>
+                <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0, lineHeight: 1.65, whiteSpace: "pre-line" }}>{listing.description}</p>
               </div>
 
-              {/* Price history */}
               {listing.priceHistory.length > 0 && (
-                <details className="border-t border-gray-100 pt-4">
-                  <summary className="text-sm font-semibold text-gray-700 cursor-pointer select-none">
+                <details style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+                  <summary style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-soft)", cursor: "pointer" }}>
                     Price history ({listing.priceHistory.length} change{listing.priceHistory.length > 1 ? "s" : ""})
                   </summary>
-                  <ul className="mt-2 space-y-1">
+                  <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
                     {listing.priceHistory.map((ph) => (
-                      <li key={ph.id} className="text-xs text-gray-500">
+                      <li key={ph.id} style={{ fontSize: 12, color: "var(--ink-faint)" }}>
                         {new Date(ph.changedAt).toLocaleDateString("en-PK")} — {listing.currency} {Number(ph.oldPrice).toLocaleString("en-PK")} → {listing.currency} {Number(ph.newPrice).toLocaleString("en-PK")}
                         {Number(ph.newPrice) < Number(ph.oldPrice) && (
-                          <span className="ml-1 text-green-600">▼ {Math.round((1 - Number(ph.newPrice) / Number(ph.oldPrice)) * 100)}% off</span>
+                          <span style={{ marginLeft: 5, color: "var(--green)", fontWeight: 600 }}>▼ {Math.round((1 - Number(ph.newPrice) / Number(ph.oldPrice)) * 100)}% off</span>
                         )}
                       </li>
                     ))}
@@ -306,32 +300,29 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 </details>
               )}
 
-              {/* Report button */}
               {userId && !isOwner && (
-                <div className="flex justify-end border-t border-gray-100 pt-3">
+                <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
                   <ReportListingButton listingId={listing.id} />
                 </div>
               )}
             </div>
 
-            {/* Listing reviews */}
             {listing.reviews.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-3">
-                <h2 className="font-semibold text-gray-900">Listing Reviews</h2>
+              <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: 12 }}>
+                <h2 style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Reviews</h2>
                 {listing.reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-gray-700">{review.author.name ?? "User"}</span>
-                      <span className="text-yellow-500 text-sm">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                  <div key={review.id} style={{ borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}>{review.author.name ?? "User"}</span>
+                      <span style={{ color: "#f59e0b", fontSize: 13 }}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
                     </div>
-                    {review.body && <p className="text-sm text-gray-600">{review.body}</p>}
+                    {review.body && <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>{review.body}</p>}
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Q&A section */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div style={CARD}>
               <ListingQA
                 listingId={listing.id}
                 sellerUserId={listing.sellerProfile.user.id}
@@ -339,7 +330,6 @@ export default async function ListingDetailPage({ params }: PageProps) {
               />
             </div>
 
-            {/* Similar listings */}
             <SimilarListings
               category={listing.category}
               regionId={listing.regionId}
@@ -347,101 +337,85 @@ export default async function ListingDetailPage({ params }: PageProps) {
             />
           </div>
 
-          {/* Right column — seller card + actions */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
-              {/* Seller header */}
-              <div className="flex items-start gap-3">
+          {/* Right — seller card */}
+          <div className="ld-side" style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: "calc(62px + 18px)" }}>
+            <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 {listing.sellerProfile.user.image ? (
                   <Image
                     src={listing.sellerProfile.user.image}
                     alt={listing.sellerProfile.user.name ?? "Seller"}
                     width={40}
                     height={40}
-                    className="rounded-full object-cover flex-shrink-0"
+                    style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm flex-shrink-0">
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(50,122,214,.12)", color: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
                     {(listing.sellerProfile.user.name ?? "S")[0].toUpperCase()}
                   </div>
                 )}
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{listing.sellerProfile.user.name ?? "Seller"}</p>
-                  {listing.sellerProfile.agentTier !== "NONE" && (
-                    <span className="text-xs text-yellow-600 font-medium">{listing.sellerProfile.agentTier} Agent</span>
-                  )}
-                  {listing.sellerProfile.user.verificationStatus === "VERIFIED" && (
-                    <span className="ml-1 text-xs text-blue-600">✓ Verified</span>
-                  )}
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", margin: 0, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                    {listing.sellerProfile.user.name ?? "Seller"}
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+                    {listing.sellerProfile.agentTier !== "NONE" && (
+                      <span style={{ fontSize: 12, color: "#d97706", fontWeight: 600 }}>{listing.sellerProfile.agentTier} Agent</span>
+                    )}
+                    {listing.sellerProfile.user.verificationStatus === "VERIFIED" && (
+                      <span style={{ fontSize: 12, color: "var(--blue)", fontWeight: 600 }}>✓ Verified</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Seller rating */}
               {listing.sellerProfile.sellerRatingCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-yellow-500 text-sm">{"★".repeat(Math.round(listing.sellerProfile.sellerRatingAvg))}{"☆".repeat(5 - Math.round(listing.sellerProfile.sellerRatingAvg))}</span>
-                  <span className="text-xs text-gray-500">{listing.sellerProfile.sellerRatingAvg.toFixed(1)} ({listing.sellerProfile.sellerRatingCount} reviews)</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#f59e0b", fontSize: 14 }}>{"★".repeat(Math.round(listing.sellerProfile.sellerRatingAvg))}{"☆".repeat(5 - Math.round(listing.sellerProfile.sellerRatingAvg))}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>{listing.sellerProfile.sellerRatingAvg.toFixed(1)} ({listing.sellerProfile.sellerRatingCount})</span>
                 </div>
               )}
 
-              {/* Response rate */}
               {listing.sellerProfile.responseRate != null && (
-                <p className="text-xs text-gray-500">Response rate: {Math.round(listing.sellerProfile.responseRate * 100)}%</p>
+                <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0 }}>Response rate: {Math.round(listing.sellerProfile.responseRate * 100)}%</p>
               )}
 
-              {/* Badges */}
               {listing.sellerProfile.badges.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                   {listing.sellerProfile.badges.map((badge) => (
-                    <span key={badge} className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE_STYLES[badge] ?? "bg-gray-100 text-gray-600"}`}>
-                      {badge.replace("_", " ")}
-                    </span>
+                    <span key={badge} style={chip(...(BADGE[badge] ?? ["var(--paper-2)", "var(--ink-soft)"]))}>{badge.replace("_", " ")}</span>
                   ))}
                 </div>
               )}
 
               {listing.sellerProfile.bio && (
-                <p className="text-xs text-gray-500 line-clamp-3">{listing.sellerProfile.bio}</p>
+                <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: 0, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{listing.sellerProfile.bio}</p>
               )}
 
-              {/* Storefront link */}
-              <Link
-                href={`/sellers/${listing.sellerProfile.id}`}
-                className="text-xs text-blue-600 hover:underline block"
-              >
+              <Link href={`/sellers/${listing.sellerProfile.id}`} style={{ fontSize: 12, color: "var(--clay)", fontWeight: 600, textDecoration: "none" }}>
                 View all listings by this seller →
               </Link>
 
-              <div className="border-t border-gray-100 pt-3 space-y-2">
+              <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                 {listing.status === "ACTIVE" && userId && !isOwner && (
                   <>
-                    {listing.negotiable && (
-                      <OfferButton
-                        listingId={listing.id}
-                        sellerName={listing.sellerProfile.user.name ?? "Seller"}
-                        currency={listing.currency}
-                      />
-                    )}
-                    {!listing.negotiable && (
-                      <p className="text-xs text-center text-gray-500">This listing has a fixed price.</p>
-                    )}
-                    <MessageSellerButton
-                      listingId={listing.id}
-                      sellerUserId={listing.sellerProfile.user.id}
-                    />
+                    {listing.negotiable
+                      ? <OfferButton listingId={listing.id} sellerName={listing.sellerProfile.user.name ?? "Seller"} currency={listing.currency} />
+                      : <p style={{ fontSize: 12, textAlign: "center", color: "var(--ink-faint)", margin: 0 }}>This listing has a fixed price.</p>}
+                    <MessageSellerButton listingId={listing.id} sellerUserId={listing.sellerProfile.user.id} />
                   </>
                 )}
 
                 {!userId && listing.status === "ACTIVE" && (
-                  <a
-                    href="/login"
-                    className="block w-full text-center py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+                  <Link
+                    href={`/login?callbackUrl=/m/${listing.id}`}
+                    style={{ display: "block", width: "100%", textAlign: "center", padding: "12px 0", background: "var(--clay)", color: "var(--white)", fontWeight: 700, borderRadius: 11, textDecoration: "none", fontSize: 14 }}
                   >
-                    Sign in to make an offer
-                  </a>
+                    Sign in to contact seller
+                  </Link>
                 )}
 
-                <div className="flex justify-center pt-1">
+                <div style={{ display: "flex", justifyContent: "center", paddingTop: 2 }}>
                   <ShareButton url={`/m/${listing.id}`} title={listing.title} text={`${listing.currency} ${price} — ${listing.title}`} />
                 </div>
 
@@ -457,19 +431,25 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 )}
 
                 {isOwner && (
-                  <a
+                  <Link
                     href={`/me/listings/${listing.id}/edit`}
-                    className="block w-full text-center py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                    style={{ display: "block", width: "100%", textAlign: "center", padding: "10px 0", border: "1px solid var(--line)", color: "var(--ink-soft)", fontSize: 13, fontWeight: 600, borderRadius: 11, textDecoration: "none" }}
                   >
                     Edit listing
-                  </a>
+                  </Link>
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 880px) {
+          .ld-grid { grid-template-columns: 1fr !important; }
+          .ld-side { position: static !important; }
+        }
+      `}</style>
     </main>
   );
 }
-

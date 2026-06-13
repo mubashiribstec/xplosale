@@ -7,7 +7,6 @@ import { searchClient } from "@/core/search/postgres";
 import { encodeCursor } from "@/core/search/query";
 import { getSession } from "@/core/auth/session";
 import type { ListingHit } from "@/core/search/postgres";
-import ListingCard from "@/components/shared/ListingCard";
 import MarketplaceShell from "./_components/MarketplaceShell";
 
 export const metadata: Metadata = {
