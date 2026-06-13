@@ -92,16 +92,85 @@ const FAQS: Faq[] = [
     a: "Every active shop gets a free printable poster with a QR code linking to its Xplosale page. Print it and place it at your counter — customers scan it to browse your products and order online. Find it under Manage Shop → QR Poster.",
   },
 
-  // ── Marketplace & jobs ──
+  // ── For job seekers ──
   {
-    section: "Marketplace & jobs",
-    q: "How is the marketplace different from shops?",
-    a: "Shops are for local businesses with a storefront and catalogue. The marketplace is classifieds — anyone can list second-hand goods, vehicles, property, and more for sale. Browse it at /m.",
+    section: "For job seekers",
+    q: "How do I find and apply for jobs?",
+    a: "Browse jobs at /jobs and filter by location, work type (on-site/hybrid/remote), employment type, experience level, salary, and verified employers. Open any job, review the details, and tap Apply Now. Add an optional cover letter and submit — the employer is notified instantly and a chat thread opens so you can follow up.",
   },
   {
-    section: "Marketplace & jobs",
-    q: "Are job postings verified?",
-    a: "Employers can verify their identity and companies on Xplosale, and verified employers get a badge. Always be cautious of any employer asking for money — report suspicious postings. Browse jobs at /jobs.",
+    section: "For job seekers",
+    q: "Do I need to verify my identity to apply?",
+    a: "No, but it helps. Anyone with a job seeker profile and an uploaded resume can apply. Verifying your identity removes the daily application limit and shows employers a trust badge next to your name, which makes your application stand out.",
+  },
+  {
+    section: "For job seekers",
+    q: "Is there a limit on how many jobs I can apply to?",
+    a: "Basic (unverified) accounts can apply to up to 10 jobs per day to keep the platform fair and spam-free. Verifying your identity removes this daily limit so you can apply to as many roles as you like.",
+  },
+  {
+    section: "For job seekers",
+    q: "What are verified employers?",
+    a: "Employers can verify their identity and company on Xplosale and earn a Verified Employer badge. You can filter the jobs page to show only verified employers. Always be cautious of any employer asking for money — never pay to apply, and report suspicious postings.",
+  },
+  {
+    section: "For job seekers",
+    q: "Can I save jobs to apply later?",
+    a: "Yes. Tap the heart icon on any job card or job page to save it. All your saved roles live under Account → Saved jobs, so you can come back and apply when you're ready.",
+  },
+  {
+    section: "For job seekers",
+    q: "How do recommendations and invites work?",
+    a: "If you keep your job seeker profile visible, our matching engine recommends roles that fit your skills — find them under Account → Recommendations. Employers can also invite you to apply directly; those invitations arrive in your Invites inbox, where you can accept, decline, or opt out of future invites.",
+  },
+  {
+    section: "For job seekers",
+    q: "What happens after I apply?",
+    a: "Your application enters the employer's hiring pipeline. You can track its status (Applied → Reviewed → Shortlisted → Hired/Rejected) under Account → Applications, and message the employer in the chat thread that opened when you applied. Some employers may also send you a short skills test.",
+  },
+
+  // ── For employers ──
+  {
+    section: "For employers",
+    q: "How do I post a job?",
+    a: "Go to Account → My Job Postings → Post a Job and follow the 4-step wizard: role basics, location, skills & compensation, and review. Your posting is saved as a draft so you can fine-tune it, then publish it when ready. Drafts autosave as you go.",
+  },
+  {
+    section: "For employers",
+    q: "How many jobs can I post, and what are credits?",
+    a: "The Free plan allows up to 3 active postings. The Monthly plan raises your limit and unlocks analytics. If you hit your limit, an admin can grant extra post credits, which are consumed one at a time when you publish beyond your plan's allowance.",
+  },
+  {
+    section: "For employers",
+    q: "What is the applicant pipeline (ATS)?",
+    a: "Every job comes with a Kanban-style hiring pipeline. Drag candidates between stages, leave private notes, rate and tag them, and email them with reusable templates — all from one board. Customise your stages under Pipeline Settings.",
+  },
+  {
+    section: "For employers",
+    q: "Can I test candidates' skills?",
+    a: "Yes. Build reusable test templates (multiple-choice and more) under your company's Tests area, then assign them to candidates from the pipeline. Candidates take the test in-browser and their scores appear right on their application.",
+  },
+  {
+    section: "For employers",
+    q: "What does the job analytics dashboard show?",
+    a: "On the Monthly plan, each posting gets an analytics dashboard: daily views, apply clicks, contact clicks, shares, and an applicant funnel showing how candidates move from Applied through to Hired. Open it from the Analytics link next to any of your postings.",
+  },
+  {
+    section: "For employers",
+    q: "How do I become a verified employer?",
+    a: "Complete identity and company verification on your account. Once approved by our team, your company earns the Verified Employer badge, which appears on your postings and lets candidates filter to trust your roles.",
+  },
+  {
+    section: "For employers",
+    q: "Can I invite candidates to apply?",
+    a: "Yes. You can invite matching candidates to apply directly to your roles. They receive the invitation in their Invites inbox and can accept or decline. Candidates who opt out of recruiter contact won't receive invites.",
+  },
+
+  // ── Marketplace ──
+  {
+    section: "Marketplace",
+    q: "How is the marketplace different from shops?",
+    a: "Shops are for local businesses with a storefront and catalogue. The marketplace is classifieds — anyone can list second-hand goods, vehicles, property, and more for sale. Browse it at /m.",
   },
 
   // ── Account & safety ──

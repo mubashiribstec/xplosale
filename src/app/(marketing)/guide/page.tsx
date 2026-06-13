@@ -4,13 +4,13 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "How to Use Xplosale — Buyer & Shopkeeper Guide",
+  title: "How to Use Xplosale — Buyer, Shopkeeper, Job Seeker & Employer Guide",
   description:
-    "Step-by-step guide to Xplosale: how to order from local shops, pay with cash, JazzCash or EasyPaisa, and how shopkeepers can list a shop, add products, and get orders online.",
+    "Step-by-step guide to Xplosale: order from local shops, pay with cash, JazzCash or EasyPaisa, list a shop and get orders online, find and apply for verified jobs, and post jobs with a built-in hiring pipeline.",
   alternates: { canonical: "/guide" },
   openGraph: {
-    title: "How to Use Xplosale — Buyer & Shopkeeper Guide",
-    description: "Step-by-step guide for buyers and shopkeepers on Xplosale.",
+    title: "How to Use Xplosale — Buyer, Shopkeeper, Job Seeker & Employer Guide",
+    description: "Step-by-step guide for buyers, shopkeepers, job seekers, and employers on Xplosale.",
     type: "website",
   },
 };
@@ -40,6 +40,26 @@ const SHOPKEEPER_STEPS: Step[] = [
   { title: "Print your QR poster & share", body: "Print the free QR poster for your counter and share your shop link in WhatsApp groups — that's how your regulars start ordering online." },
   { title: "Manage orders daily", body: "Confirm new orders, verify payment screenshots, and move orders through Preparing → Ready → Completed." },
   { title: "Grow with Premium", body: "When you're ready, upgrade for up to 30–50 products, the analytics dashboard, and featured placement in the directory." },
+];
+
+const JOB_SEEKER_STEPS: Step[] = [
+  { title: "Set up your job seeker profile", body: "Go to Account → Job seeker settings, add your details, and upload your resume. A complete profile lets employers and our matching engine find you." },
+  { title: "Search and filter jobs", body: "Browse /jobs and narrow down by city, work type, employment type, experience level, salary, and verified employers to find roles that fit." },
+  { title: "Save jobs for later", body: "Tap the heart on any job to save it. Your saved roles wait for you under Account → Saved jobs." },
+  { title: "Apply with confidence", body: "Open a role, review the company, and tap Apply Now. Add an optional cover letter — a chat thread opens with the employer the moment you apply." },
+  { title: "Verify to apply without limits", body: "Unverified accounts can apply to 10 jobs a day. Verify your identity to remove the limit and show employers a trust badge." },
+  { title: "Track your applications", body: "Follow each application's status — Applied → Reviewed → Shortlisted → Hired — under Account → Applications, and reply to employers in chat." },
+  { title: "Watch for recommendations & invites", body: "Keep your profile visible to get matched roles under Recommendations, and respond to direct recruiter invitations in your Invites inbox." },
+];
+
+const EMPLOYER_STEPS: Step[] = [
+  { title: "Post a job in 4 steps", body: "Go to Account → My Job Postings → Post a Job. The wizard covers role basics, location, skills & compensation, and review. Drafts autosave as you go." },
+  { title: "Publish within your plan", body: "Free allows up to 3 active postings; the Monthly plan raises your limit and unlocks analytics. Extra post credits can be granted if you need more." },
+  { title: "Set up your hiring pipeline", body: "Customise your stages under Pipeline Settings, then manage every applicant on a drag-and-drop Kanban board with notes, ratings, and tags." },
+  { title: "Test candidates' skills", body: "Build reusable test templates and assign them from the pipeline. Candidates take the test in-browser and scores show on their application." },
+  { title: "Email candidates with templates", body: "Reach candidates directly from the board using reusable email templates — keep your whole hiring team in sync." },
+  { title: "Invite great candidates", body: "Invite matching candidates to apply to your roles; they accept or decline from their Invites inbox." },
+  { title: "Track performance with analytics", body: "On the Monthly plan, each posting shows daily views, apply clicks, shares, and an applicant funnel so you know what's working." },
 ];
 
 function StepList({ steps, accent }: { steps: Step[]; accent: string }) {
@@ -132,6 +152,48 @@ export default function GuidePage() {
               }}
             >
               Open your shop free →
+            </Link>
+          </section>
+
+          {/* Job seeker guide */}
+          <section style={{ marginBottom: 44 }}>
+            <h2 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: 24, color: "var(--ink)", margin: "0 0 6px" }}>
+              🧑‍💼 For job seekers
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: "0 0 16px" }}>
+              Find verified jobs and apply with confidence — know exactly who you&rsquo;re applying to.
+            </p>
+            <StepList steps={JOB_SEEKER_STEPS} accent="var(--green)" />
+            <Link
+              href="/jobs"
+              style={{
+                display: "inline-block", marginTop: 16, padding: "11px 24px",
+                background: "var(--green)", color: "#fff", borderRadius: 11,
+                fontSize: 14, fontWeight: 700, textDecoration: "none",
+              }}
+            >
+              Browse jobs →
+            </Link>
+          </section>
+
+          {/* Employer guide */}
+          <section style={{ marginBottom: 44 }}>
+            <h2 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: 24, color: "var(--ink)", margin: "0 0 6px" }}>
+              🏢 For employers
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--ink-faint)", margin: "0 0 16px" }}>
+              Post roles, manage applicants end-to-end, and hire faster with a built-in ATS.
+            </p>
+            <StepList steps={EMPLOYER_STEPS} accent="var(--purple)" />
+            <Link
+              href="/me/employer/jobs/new"
+              style={{
+                display: "inline-block", marginTop: 16, padding: "11px 24px",
+                background: "var(--purple)", color: "#fff", borderRadius: 11,
+                fontSize: 14, fontWeight: 700, textDecoration: "none",
+              }}
+            >
+              Post a job →
             </Link>
           </section>
 
