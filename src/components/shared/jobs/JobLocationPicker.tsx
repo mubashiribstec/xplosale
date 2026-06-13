@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { COUNTRIES, getCitiesForCountry, getCountryName } from "@/lib/countries";
+import { inputStyle, selectStyle, textareaStyle, labelStyle, labelTextStyle } from "@/components/shared/shops/formStyles";
 
 export interface JobLocation {
   country: string;
@@ -15,9 +16,6 @@ interface Props {
   onChange: (v: JobLocation) => void;
   remoteType: string;
 }
-
-const INPUT_CLS =
-  "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 /** Resolve saved country name → country code (for dropdown selection) */
 function resolveCode(countryName: string): string {
@@ -90,24 +88,22 @@ export default function JobLocationPicker({ value, onChange, remoteType }: Props
 
   if (!isPhysical) {
     return (
-      <p className="text-sm text-gray-500">
-        Location: <strong>Remote / Worldwide</strong>
+      <p style={{ fontSize: 14, color: "var(--ink-faint)", fontFamily: "var(--body)" }}>
+        Location: <strong style={{ color: "var(--ink)" }}>Remote / Worldwide</strong>
       </p>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Country */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Country <span className="text-red-500">*</span>
-        </label>
+      <label style={labelStyle}>
+        <span style={labelTextStyle}>Country <span style={{ color: "var(--clay)" }}>*</span></span>
         <select
           value={countryCode}
           onChange={(e) => handleCountryChange(e.target.value)}
           required
-          className={INPUT_CLS}
+          style={selectStyle}
         >
           <option value="">Select a country</option>
           {COUNTRIES.map((c) => (
@@ -117,14 +113,12 @@ export default function JobLocationPicker({ value, onChange, remoteType }: Props
           ))}
           <option value="OTHER">Other (not listed)</option>
         </select>
-      </div>
+      </label>
 
       {/* Custom country input */}
       {showCustomCountry && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Country name <span className="text-red-500">*</span>
-          </label>
+        <label style={labelStyle}>
+          <span style={labelTextStyle}>Country name <span style={{ color: "var(--clay)" }}>*</span></span>
           <input
             type="text"
             value={customCountry}
@@ -132,23 +126,21 @@ export default function JobLocationPicker({ value, onChange, remoteType }: Props
             required
             maxLength={100}
             placeholder="Enter your country name"
-            className={INPUT_CLS}
+            style={inputStyle}
           />
-        </div>
+        </label>
       )}
 
       {/* City */}
       {showCitySection && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            City <span className="text-red-500">*</span>
-          </label>
+        <label style={labelStyle}>
+          <span style={labelTextStyle}>City <span style={{ color: "var(--clay)" }}>*</span></span>
           {cities.length > 0 ? (
             <select
               value={citySelect}
               onChange={(e) => setCitySelect(e.target.value)}
               required
-              className={INPUT_CLS}
+              style={selectStyle}
             >
               <option value="">Select a city</option>
               {cities.map((city) => (
@@ -169,18 +161,16 @@ export default function JobLocationPicker({ value, onChange, remoteType }: Props
               required
               maxLength={100}
               placeholder="Enter city name"
-              className={INPUT_CLS}
+              style={inputStyle}
             />
           )}
-        </div>
+        </label>
       )}
 
       {/* Custom city input */}
       {showCitySection && showCustomCity && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            City name <span className="text-red-500">*</span>
-          </label>
+        <label style={labelStyle}>
+          <span style={labelTextStyle}>City name <span style={{ color: "var(--clay)" }}>*</span></span>
           <input
             type="text"
             value={customCity}
@@ -188,45 +178,43 @@ export default function JobLocationPicker({ value, onChange, remoteType }: Props
             required
             maxLength={100}
             placeholder="Enter your city name"
-            className={INPUT_CLS}
+            style={inputStyle}
           />
-        </div>
+        </label>
       )}
 
       {/* Post code (optional) */}
       {showCitySection && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Post / ZIP code
-            <span className="ml-1 text-xs text-gray-400">(optional)</span>
-          </label>
+        <label style={labelStyle}>
+          <span style={labelTextStyle}>
+            Post / ZIP code <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>(optional)</span>
+          </span>
           <input
             type="text"
             value={value.postCode}
             onChange={(e) => patch("postCode", e.target.value)}
             maxLength={20}
             placeholder="e.g. SW1A 1AA or 10001"
-            className={INPUT_CLS}
+            style={inputStyle}
           />
-        </div>
+        </label>
       )}
 
       {/* Company address (for on-site / hybrid) */}
       {showAddress && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Company / office address
-            <span className="ml-1 text-xs text-gray-400">(optional)</span>
-          </label>
+        <label style={labelStyle}>
+          <span style={labelTextStyle}>
+            Company / office address <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>(optional)</span>
+          </span>
           <textarea
             value={value.companyAddress}
             onChange={(e) => patch("companyAddress", e.target.value)}
             rows={2}
             maxLength={300}
             placeholder="Street address, building name, floor…"
-            className={`${INPUT_CLS} resize-none`}
+            style={{ ...textareaStyle, minHeight: 60 }}
           />
-        </div>
+        </label>
       )}
     </div>
   );

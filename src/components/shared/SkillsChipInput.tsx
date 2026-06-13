@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { labelStyle, labelTextStyle } from "@/components/shared/shops/formStyles";
 
 interface SkillsChipInputProps {
   label: string;
@@ -35,22 +36,43 @@ export default function SkillsChipInput({ label, value, onChange, placeholder, c
   }
 
   return (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <label className={className} style={labelStyle}>
+      <span style={labelTextStyle}>{label}</span>
       <div
-        className="min-h-[42px] flex flex-wrap gap-1.5 items-center px-3 py-2 border border-gray-300 rounded-lg cursor-text bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+        style={{
+          minHeight: 42,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          alignItems: "center",
+          padding: "8px 12px",
+          border: "1.5px solid var(--line)",
+          borderRadius: 11,
+          cursor: "text",
+          background: "var(--paper)",
+        }}
         onClick={() => inputRef.current?.focus()}
       >
         {value.map((term) => (
           <span
             key={term}
-            className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 12,
+              fontWeight: 500,
+              background: "rgba(50,122,214,.12)",
+              color: "var(--blue)",
+              borderRadius: 99,
+              padding: "2px 8px",
+            }}
           >
             {term}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); remove(term); }}
-              className="text-blue-400 hover:text-blue-700 leading-none"
+              style={{ color: "var(--blue)", lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13 }}
               aria-label={`Remove ${term}`}
             >
               ×
@@ -63,11 +85,20 @@ export default function SkillsChipInput({ label, value, onChange, placeholder, c
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={add}
-          className="flex-1 min-w-[120px] text-sm outline-none bg-transparent"
+          style={{
+            flex: 1,
+            minWidth: 120,
+            fontSize: 14,
+            outline: "none",
+            background: "transparent",
+            border: "none",
+            color: "var(--ink)",
+            fontFamily: "var(--body)",
+          }}
           placeholder={value.length === 0 ? (placeholder ?? "Type and press Enter…") : ""}
         />
       </div>
-      <p className="text-xs text-gray-400 mt-1">Press Enter or comma to add · Backspace to remove last</p>
-    </div>
+      <span style={{ fontSize: 11, color: "var(--ink-faint)" }}>Press Enter or comma to add · Backspace to remove last</span>
+    </label>
   );
 }
