@@ -13,8 +13,6 @@ transactions:
   pipeline, and company profiles for employers.
 - **Shops** (`/shops`) — storefronts for partners and sellers to list
   products and manage orders.
-- **Network** (`/n`) — professional profiles, feed, connections, and
-  endorsements.
 
 Trust and safety features run across all verticals: CNIC-based identity
 verification, an escrow flow for marketplace transactions, a partner
@@ -27,7 +25,7 @@ actions).
 - **Marketplace** `/m` — property listings with FBR valuation, offer flow, escrow
 - **Jobs** `/jobs` — job postings, applications, company profiles
 - **Shops** `/shops` — partner/seller storefronts, products, and orders
-- **Network** `/n` — professional profiles, feed, connections, endorsements
+
 
 ## Stack
 
