@@ -4,10 +4,10 @@ import { Prisma } from "@prisma/client";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { getUserTier } from "@/lib/tier";
+import { getUserTier, getListingExpiryDays } from "@/lib/tier";
 import { rateLimit } from "@/lib/rate-limit";
 
-const LISTING_LIMITS: Record<string, number> = { BASIC: 5, VERIFIED: 20, PARTNER: Infinity };
+const LISTING_LIMITS: Record<string, number> = { BASIC: 2, VERIFIED: 20, PARTNER: Infinity };
 
 const createSchema = z.object({
   title: z.string().min(5).max(200),
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     if (dbUser?.bannedMarketplaceCategories.includes(category)) return err(`You are not allowed to post in the ${category} category.`, 403);
 
     const tier = getUserTier({ isPartner: dbUser?.isPartner ?? false, verificationStatus: dbUser?.verificationStatus ?? "UNVERIFIED" });
-    const limit = LISTING_LIMITS[tier] ?? 5;
+    const limit = LISTING_LIMITS[tier] ?? 2;
     if (limit !== Infinity) {
       // Count every slot the user occupies — a draft/pending listing still
       // counts, otherwise the cap is trivially bypassed by never publishing.
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { price, deliveryCost, ...rest } = parsed.data;
-    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + getListingExpiryDays(tier) * 24 * 60 * 60 * 1000);
 
     const listing = await prisma.listing.create({
       data: {

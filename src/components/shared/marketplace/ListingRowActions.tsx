@@ -33,32 +33,56 @@ export default function ListingRowActions({ listingId, status }: ListingRowActio
     }
   }
 
+  async function handleDelete() {
+    if (!confirm("Delete this listing? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/listings/${listingId}`, { method: "DELETE" });
+      if (res.ok) router.refresh();
+      else {
+        const j = await res.json().catch(() => null) as { error?: string } | null;
+        alert(j?.error ?? "Delete failed. Please try again.");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const linkBtn: React.CSSProperties = {
     fontSize: 12, fontWeight: 600, background: "none", border: "none",
     cursor: busy ? "not-allowed" : "pointer", padding: 0, fontFamily: "var(--body)",
     opacity: busy ? 0.5 : 1,
   };
 
+  let statusAction: React.ReactNode = null;
   if (status === "ACTIVE") {
-    return (
+    statusAction = (
       <button type="button" disabled={busy} onClick={() => void patch({ status: "SOLD" }, "Mark this listing as sold?")} style={{ ...linkBtn, color: "var(--green)" }}>
         Mark sold
       </button>
     );
-  }
-  if (status === "SOLD") {
-    return (
+  } else if (status === "SOLD") {
+    statusAction = (
       <button type="button" disabled={busy} onClick={() => void patch({ status: "ACTIVE" })} style={{ ...linkBtn, color: "var(--clay)" }}>
         Relist
       </button>
     );
-  }
-  if (status === "EXPIRED") {
-    return (
+  } else if (status === "EXPIRED") {
+    statusAction = (
       <button type="button" disabled={busy} onClick={() => void patch({ action: "renew" })} style={{ ...linkBtn, color: "var(--clay)" }}>
         Renew
       </button>
     );
   }
-  return null;
+
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      {statusAction}
+      <button type="button" disabled={busy} onClick={() => void handleDelete()} style={{ ...linkBtn, color: "#dc2626" }}>
+        Delete
+      </button>
+    </div>
+  );
 }

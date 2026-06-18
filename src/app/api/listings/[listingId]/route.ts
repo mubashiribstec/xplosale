@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { getUserTier, getListingExpiryDays } from "@/lib/tier";
 
 const patchSchema = z.object({
   title: z.string().min(5).max(200).optional(),
@@ -80,7 +81,14 @@ export async function PATCH(
 
     const listing = await prisma.listing.findUnique({
       where: { id: listingId },
-      include: { sellerProfile: { select: { userId: true } } },
+      include: {
+        sellerProfile: {
+          select: {
+            userId: true,
+            user: { select: { isPartner: true, verificationStatus: true, hasVerifiedBadge: true } },
+          },
+        },
+      },
     });
     if (!listing) return err("Listing not found", 404);
     if (!listing.sellerProfile || (listing.sellerProfile.userId !== userId && !isAdmin)) return err("Forbidden", 403);
@@ -94,9 +102,10 @@ export async function PATCH(
     // Handle special actions
     if (action === "renew") {
       if (!["ACTIVE", "EXPIRED"].includes(listing.status)) return err("Only ACTIVE or EXPIRED listings can be renewed", 422);
+      const tier = getUserTier(listing.sellerProfile.user);
       const renewed = await prisma.listing.update({
         where: { id: listingId },
-        data: { expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), renewedAt: new Date() },
+        data: { expiresAt: new Date(Date.now() + getListingExpiryDays(tier) * 24 * 60 * 60 * 1000), renewedAt: new Date() },
       });
       return ok(renewed);
     }

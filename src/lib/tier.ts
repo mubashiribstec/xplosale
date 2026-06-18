@@ -11,6 +11,11 @@ export function getUserTier(user: {
   return "BASIC";
 }
 
+/** Free (BASIC) listings expire after 7 days; paid tiers (VERIFIED/PARTNER) get 30 days. */
+export function getListingExpiryDays(tier: UserTier): number {
+  return tier === "BASIC" ? 7 : 30;
+}
+
 export function computeTrustScore(input: {
   emailVerified: boolean;
   verificationStatus: string;
