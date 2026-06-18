@@ -48,6 +48,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# update.sh deploy marker (per-server state, not source)
+.deployed_rev
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
