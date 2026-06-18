@@ -10,6 +10,7 @@ interface AdminUser {
   name: string | null;
   role: string;
   verificationStatus: string;
+  canCreateShop: boolean;
   bannedAt: string | null;
   createdAt: string;
   sellerProfile: { id: string } | null;
@@ -152,6 +153,42 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
       }
     } catch {
       setBanModal((prev) => prev ? { ...prev, loading: false, error: "Network error" } : null);
+    }
+  }
+
+  async function toggleShopkeeper(userId: string, current: boolean) {
+    setSaving(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ canCreateShop: !current }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (json.ok) router.refresh();
+      else setErrors((prev) => ({ ...prev, [userId]: json.error ?? "Failed" }));
+    } catch {
+      setErrors((prev) => ({ ...prev, [userId]: "Network error" }));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function grantAll(userId: string) {
+    setSaving(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ canCreateShop: true }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (json.ok) router.refresh();
+      else setErrors((prev) => ({ ...prev, [userId]: json.error ?? "Failed" }));
+    } catch {
+      setErrors((prev) => ({ ...prev, [userId]: "Network error" }));
+    } finally {
+      setSaving(null);
     }
   }
 
@@ -603,6 +640,39 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                             className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
                           >
                             {saving === user.id ? "…" : "Save"}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void toggleShopkeeper(user.id, user.canCreateShop)}
+                          disabled={saving === user.id}
+                          title="Allow this user to create a shop"
+                          className={`px-2 py-1 text-xs font-medium rounded transition-colors disabled:opacity-50 ${
+                            user.canCreateShop
+                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                              : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                          }`}
+                        >
+                          {user.canCreateShop ? "Shopkeeper ✓" : "Make Shopkeeper"}
+                        </button>
+                        {user.role !== "PARTNER" && user.role !== "ADMIN" && (
+                          <Link
+                            href="/admin/partners"
+                            title="Review this user's partner application to verify them as a Company"
+                            className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded hover:bg-purple-100 transition-colors"
+                          >
+                            Verify Company →
+                          </Link>
+                        )}
+                        {(!user.canCreateShop || (user.role !== "PARTNER" && user.role !== "ADMIN")) && (
+                          <button
+                            type="button"
+                            onClick={() => void grantAll(user.id)}
+                            disabled={saving === user.id}
+                            title="Grant shopkeeper permission; company verification still requires reviewing their partner application"
+                            className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                          >
+                            Grant All
                           </button>
                         )}
                         {isBanned ? (

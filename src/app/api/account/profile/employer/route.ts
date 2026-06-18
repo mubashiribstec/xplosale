@@ -77,8 +77,6 @@ export async function POST(req: NextRequest) {
       profile = result;
     }
 
-    await prisma.user.update({ where: { id: userId }, data: { role: "PARTNER" } });
-
     return ok(profile);
   } catch (e) { return parseError(e); }
 }

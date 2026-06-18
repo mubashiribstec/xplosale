@@ -64,8 +64,9 @@ export async function POST(req: NextRequest) {
     if (!isValidType(category, type)) return err("Invalid type for this category", 422);
 
     // Section ban check
-    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { bannedSections: true } });
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { bannedSections: true, canCreateShop: true } });
     if (dbUser?.bannedSections.includes("SHOPS")) return err("You are not allowed to create shops.", 403);
+    if (!dbUser?.canCreateShop) return err("You need shopkeeper permission to create a shop. Contact an admin.", 403);
 
     // Verify region exists
     const region = await prisma.region.findUnique({ where: { id: regionId }, select: { id: true, country: true } });

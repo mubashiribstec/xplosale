@@ -12,6 +12,7 @@ const bodySchema = z.object({
   role: z.enum(["USER", "PARTNER", "ADMIN"]).optional(),
   verificationStatus: z.enum(["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"]).optional(),
   hasVerifiedBadge: z.boolean().optional(),
+  canCreateShop: z.boolean().optional(),
   ban: z.boolean().optional(),
   bannedUntil: z.string().datetime().optional(),
   bannedSections: z.array(z.string()).optional(),
@@ -57,6 +58,7 @@ export async function PATCH(
     }
     if (body.verificationStatus !== undefined) data.verificationStatus = body.verificationStatus;
     if (body.hasVerifiedBadge !== undefined) data.hasVerifiedBadge = body.hasVerifiedBadge;
+    if (body.canCreateShop !== undefined) data.canCreateShop = body.canCreateShop;
     if (body.ban !== undefined) {
       data.bannedAt = body.ban ? new Date() : null;
       if (!body.ban) {
@@ -79,6 +81,7 @@ export async function PATCH(
     if (body.forceLogout) actions.push("FORCE_LOGOUT");
     if (body.role !== undefined) actions.push("CHANGE_ROLE");
     if (body.hasVerifiedBadge !== undefined) actions.push(body.hasVerifiedBadge ? "GRANT_BADGE" : "REVOKE_BADGE");
+    if (body.canCreateShop !== undefined) actions.push(body.canCreateShop ? "GRANT_SHOPKEEPER" : "REVOKE_SHOPKEEPER");
 
     const action = actions.join("+") || "UPDATE_USER";
 

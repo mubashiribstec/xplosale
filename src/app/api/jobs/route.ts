@@ -98,12 +98,17 @@ export async function POST(req: NextRequest) {
 
     const [employerProfile, dbUser] = await Promise.all([
       prisma.employerProfile.findUnique({ where: { userId }, include: { company: true } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { bannedSections: true, bannedJobCategories: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { bannedSections: true, bannedJobCategories: true, role: true } }),
     ]);
     if (!employerProfile) return err("Employer profile not found", 404);
 
     // Section/category ban check
     if (dbUser?.bannedSections.includes("JOBS")) return err("You are not allowed to post jobs.", 403);
+
+    // Company must be admin-verified (PARTNER role) before posting jobs
+    if (dbUser?.role !== "PARTNER" && dbUser?.role !== "ADMIN") {
+      return err("Your company must be admin-verified before posting jobs. Apply via the partner application.", 403);
+    }
 
     // Job post limit enforcement
     const company = employerProfile.company;

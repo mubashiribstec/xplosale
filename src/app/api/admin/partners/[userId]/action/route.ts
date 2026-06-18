@@ -28,6 +28,12 @@ export async function PATCH(
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return err("User not found", 404);
 
+    const employerProfile = await prisma.employerProfile.findUnique({ where: { userId }, select: { companyId: true } });
+    const setVerifiedEmployer = (verified: boolean) =>
+      employerProfile
+        ? [prisma.company.update({ where: { id: employerProfile.companyId }, data: { verifiedEmployer: verified } })]
+        : [];
+
     if (action === "suspend") {
       if (user.role !== "PARTNER") return err("User is not an active partner", 400);
       await prisma.$transaction([
@@ -35,6 +41,7 @@ export async function PATCH(
           where: { id: userId },
           data: { role: "USER", partnerSuspendedAt: new Date(), tokenVersion: { increment: 1 } },
         }),
+        ...setVerifiedEmployer(false),
         prisma.adminActionLog.create({
           data: { adminId, action: "PARTNER_SUSPENDED", targetType: "User", targetId: userId, reason },
         }),
@@ -49,6 +56,7 @@ export async function PATCH(
           where: { id: userId },
           data: { role: "PARTNER", partnerSuspendedAt: null },
         }),
+        ...setVerifiedEmployer(true),
         prisma.adminActionLog.create({
           data: { adminId, action: "PARTNER_REINSTATED", targetType: "User", targetId: userId, reason },
         }),
@@ -69,6 +77,7 @@ export async function PATCH(
           tokenVersion: { increment: 1 },
         },
       }),
+      ...setVerifiedEmployer(false),
       prisma.adminActionLog.create({
         data: { adminId, action: "PARTNER_DOWNGRADED", targetType: "User", targetId: userId, reason },
       }),

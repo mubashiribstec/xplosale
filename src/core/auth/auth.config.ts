@@ -152,14 +152,17 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
-      // Force immediate role refresh when the client calls session.update()
+      // Force immediate role/profile refresh when the client calls session.update()
       if (trigger === "update" && token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true },
+          select: { role: true, name: true, image: true, phone: true },
         });
         if (dbUser) {
           token.role = normalizeRole(dbUser.role);
+          token.name = dbUser.name;
+          token.picture = dbUser.image;
+          token.phone = dbUser.phone ?? null;
           token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         }
       }

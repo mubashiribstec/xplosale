@@ -309,106 +309,107 @@ enum ReportReason {
 // ─── Core ────────────────────────────────────────────────────────────────────
 
 model User {
-  id                 String             @id @default(cuid())
-  phone              String?            @unique
-  email              String?            @unique
-  emailVerified      DateTime?
-  name               String?
-  image              String?
-  cnHash             String?            @unique
-  role               Role               @default(USER)
-  isPhoneVerified    Boolean            @default(false)
-  verificationStatus VerificationStatus @default(UNVERIFIED)
-  hasVerifiedBadge   Boolean            @default(false)
-  docType            IdentityDocType?
-  isPartner          Boolean            @default(false)
-  partnerType        PartnerType?
-  partnerSuspendedAt DateTime?
-  bannedAt           DateTime?
-  banReason          String?
-  bannedUntil        DateTime?
-  tokenVersion       Int                @default(0)
-  bannedSections             String[]
+  id                          String             @id @default(cuid())
+  phone                       String?            @unique
+  email                       String?            @unique
+  emailVerified               DateTime?
+  name                        String?
+  image                       String?
+  cnHash                      String?            @unique
+  role                        Role               @default(USER)
+  isPhoneVerified             Boolean            @default(false)
+  verificationStatus          VerificationStatus @default(UNVERIFIED)
+  hasVerifiedBadge            Boolean            @default(false)
+  docType                     IdentityDocType?
+  isPartner                   Boolean            @default(false)
+  canCreateShop               Boolean            @default(false)
+  partnerType                 PartnerType?
+  partnerSuspendedAt          DateTime?
+  bannedAt                    DateTime?
+  banReason                   String?
+  bannedUntil                 DateTime?
+  tokenVersion                Int                @default(0)
+  bannedSections              String[]
   bannedMarketplaceCategories String[]
   bannedJobCategories         String[]
-  username           String?            @unique
-  passwordHash       String?
-  lastSeenAt         DateTime?
-  defaultRegionId    String?
-  languagePref       String             @default("en")
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  username                    String?            @unique
+  passwordHash                String?
+  lastSeenAt                  DateTime?
+  defaultRegionId             String?
+  languagePref                String             @default("en")
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
 
-  defaultRegion       Region?             @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
-  sellerProfile       SellerProfile?
-  employerProfile     EmployerProfile?
-  jobSeekerProfile    JobSeekerProfile?
-  networkProfile      NetworkProfile?
-  sentMessages        Message[]           @relation("SentMessages")
-  notifications       Notification[]
-  adminActions        AdminActionLog[]    @relation("AdminActions")
-  escrowAsBuyer       EscrowTransaction[] @relation("EscrowBuyer")
-  escrowAsSeller      EscrowTransaction[] @relation("EscrowSeller")
-  listingReviews      ListingReview[]     @relation("ReviewAuthor")
-  ownedCompanies      Company[]           @relation("CompanyOwner")
-  postedJobPostings   JobPosting[]        @relation("JobPostingPoster")
-  postLikes           PostLike[]
-  postComments        PostComment[]
-  connectionsAsRequester Connection[]    @relation("ConnectionRequester")
-  connectionsAsRecipient Connection[]    @relation("ConnectionRecipient")
-  chatRoomsAsA        ChatRoom[]          @relation("ChatParticipantA")
-  chatRoomsAsB        ChatRoom[]          @relation("ChatParticipantB")
-  accounts                Account[]
-  sessions                Session[]
-  partnerApplication      PartnerApplication?
-  hiringTeamMemberships   HiringTeam[]
-  candidateNotes          CandidateNote[]     @relation("NoteAuthor")
-  testAssignmentsGiven    TestAssignment[]    @relation("TestAssignedBy")
-  savedSearches           SavedSearch[]
-  searchClicks            SearchClickLog[]
-  sentInvites             InviteToApply[]     @relation("InviteSender")
-  receivedInvites         InviteToApply[]     @relation("InviteCandidate")
-  doNotContact            CandidateDoNotContact?
-  shops                   Shop[]                @relation("ShopOwner")
-  shopOrders              ShopOrder[]           @relation("CustomerOrders")
-  shopReports             ShopReport[]          @relation("ShopReporter")
-  shopReviews             ShopReview[]          @relation("ShopReviewer")
-  shopFavourites          ShopFavourite[]       @relation("ShopFavourites")
-  jobFavourites           JobFavourite[]        @relation("JobFavourites")
-  savedListings           SavedListing[]
-  listingReports          ListingReport[]       @relation("ListingReporter")
-  sellerReviewsWritten    SellerReview[]        @relation("SellerReviewAuthor")
-  listingQuestionsAsked   ListingQuestion[]     @relation("QuestionAsker")
+  defaultRegion          Region?                @relation("UserDefaultRegion", fields: [defaultRegionId], references: [id])
+  sellerProfile          SellerProfile?
+  employerProfile        EmployerProfile?
+  jobSeekerProfile       JobSeekerProfile?
+  networkProfile         NetworkProfile?
+  sentMessages           Message[]              @relation("SentMessages")
+  notifications          Notification[]
+  adminActions           AdminActionLog[]       @relation("AdminActions")
+  escrowAsBuyer          EscrowTransaction[]    @relation("EscrowBuyer")
+  escrowAsSeller         EscrowTransaction[]    @relation("EscrowSeller")
+  listingReviews         ListingReview[]        @relation("ReviewAuthor")
+  ownedCompanies         Company[]              @relation("CompanyOwner")
+  postedJobPostings      JobPosting[]           @relation("JobPostingPoster")
+  postLikes              PostLike[]
+  postComments           PostComment[]
+  connectionsAsRequester Connection[]           @relation("ConnectionRequester")
+  connectionsAsRecipient Connection[]           @relation("ConnectionRecipient")
+  chatRoomsAsA           ChatRoom[]             @relation("ChatParticipantA")
+  chatRoomsAsB           ChatRoom[]             @relation("ChatParticipantB")
+  accounts               Account[]
+  sessions               Session[]
+  partnerApplication     PartnerApplication?
+  hiringTeamMemberships  HiringTeam[]
+  candidateNotes         CandidateNote[]        @relation("NoteAuthor")
+  testAssignmentsGiven   TestAssignment[]       @relation("TestAssignedBy")
+  savedSearches          SavedSearch[]
+  searchClicks           SearchClickLog[]
+  sentInvites            InviteToApply[]        @relation("InviteSender")
+  receivedInvites        InviteToApply[]        @relation("InviteCandidate")
+  doNotContact           CandidateDoNotContact?
+  shops                  Shop[]                 @relation("ShopOwner")
+  shopOrders             ShopOrder[]            @relation("CustomerOrders")
+  shopReports            ShopReport[]           @relation("ShopReporter")
+  shopReviews            ShopReview[]           @relation("ShopReviewer")
+  shopFavourites         ShopFavourite[]        @relation("ShopFavourites")
+  jobFavourites          JobFavourite[]         @relation("JobFavourites")
+  savedListings          SavedListing[]
+  listingReports         ListingReport[]        @relation("ListingReporter")
+  sellerReviewsWritten   SellerReview[]         @relation("SellerReviewAuthor")
+  listingQuestionsAsked  ListingQuestion[]      @relation("QuestionAsker")
 }
 
 model Region {
-  id       String   @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String
   nameUr   String
   city     String
-  country  String   @default("PK")
-  slug     String   @unique
+  country  String  @default("PK")
+  slug     String  @unique
   parentId String?
   lat      Float?
   lng      Float?
 
-  parent      Region?   @relation("RegionChildren", fields: [parentId], references: [id])
-  children    Region[]  @relation("RegionChildren")
-  users       User[]    @relation("UserDefaultRegion")
+  parent      Region?      @relation("RegionChildren", fields: [parentId], references: [id])
+  children    Region[]     @relation("RegionChildren")
+  users       User[]       @relation("UserDefaultRegion")
   listings    Listing[]
   jobPostings JobPosting[]
   companies   Company[]
-  shops       Shop[]    @relation("ShopRegion")
+  shops       Shop[]       @relation("ShopRegion")
 }
 
 model OtpCode {
-  id          String    @id @default(cuid())
-  phone       String
-  codeHash    String
-  expiresAt   DateTime
-  attempts    Int       @default(0)
-  consumedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([phone, createdAt])
 }
@@ -491,18 +492,18 @@ model SellerProfile {
 }
 
 model Listing {
-  id                String        @id @default(cuid())
+  id                String                   @id @default(cuid())
   sellerProfileId   String
   category          String
   title             String
   description       String
   price             Decimal
-  currency          String        @default("PKR")
+  currency          String                   @default("PKR")
   regionId          String
   lat               Float?
   lng               Float?
-  status            ListingStatus @default(DRAFT)
-  featured          Boolean       @default(false)
+  status            ListingStatus            @default(DRAFT)
+  featured          Boolean                  @default(false)
   expiresAt         DateTime?
   propertyType      PropertyType?
   beds              Int?
@@ -513,18 +514,18 @@ model Listing {
   fbrValuationMax   Decimal?
   videoUrl          String?
   condition         String?
-  negotiable        Boolean       @default(true)
-  urgent            Boolean       @default(false)
-  sellerType        String        @default("PRIVATE")
-  deliveryAvailable Boolean       @default(false)
+  negotiable        Boolean                  @default(true)
+  urgent            Boolean                  @default(false)
+  sellerType        String                   @default("PRIVATE")
+  deliveryAvailable Boolean                  @default(false)
   deliveryCost      Decimal?
-  viewCount         Int           @default(0)
-  savedCount        Int           @default(0)
-  contactCount      Int           @default(0)
+  viewCount         Int                      @default(0)
+  savedCount        Int                      @default(0)
+  contactCount      Int                      @default(0)
   renewedAt         DateTime?
   bumpedAt          DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
   searchVector      Unsupported("tsvector")?
 
   sellerProfile      SellerProfile         @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
@@ -554,16 +555,16 @@ model ListingImage {
 }
 
 model EscrowTransaction {
-  id          String       @id @default(cuid())
-  listingId   String
-  buyerId     String
-  sellerId    String
-  amount      Decimal
-  currency    String       @default("PKR")
-  status      EscrowStatus @default(HELD)
-  createdAt   DateTime     @default(now())
-  releasedAt  DateTime?
-  refundedAt  DateTime?
+  id         String       @id @default(cuid())
+  listingId  String
+  buyerId    String
+  sellerId   String
+  amount     Decimal
+  currency   String       @default("PKR")
+  status     EscrowStatus @default(HELD)
+  createdAt  DateTime     @default(now())
+  releasedAt DateTime?
+  refundedAt DateTime?
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyer   User    @relation("EscrowBuyer", fields: [buyerId], references: [id])
@@ -658,7 +659,7 @@ model ListingPriceHistory {
 // ─── Jobs ────────────────────────────────────────────────────────────────────
 
 model Company {
-  id               String   @id @default(cuid())
+  id               String                   @id @default(cuid())
   ownerId          String
   name             String
   industry         String?
@@ -666,12 +667,12 @@ model Company {
   websiteUrl       String?
   logoUrl          String?
   regionId         String
-  verifiedEmployer Boolean  @default(false)
-  jobPlanKey       String   @default("FREE")
-  jobPostLimit     Int      @default(3)
+  verifiedEmployer Boolean                  @default(false)
+  jobPlanKey       String                   @default("FREE")
+  jobPostLimit     Int                      @default(3)
   jobPlanExpiresAt DateTime?
-  jobPostCredits   Int      @default(0)
-  createdAt        DateTime @default(now())
+  jobPostCredits   Int                      @default(0)
+  createdAt        DateTime                 @default(now())
   searchVector     Unsupported("tsvector")?
 
   owner            User              @relation("CompanyOwner", fields: [ownerId], references: [id])
@@ -696,21 +697,21 @@ model EmployerProfile {
 }
 
 model JobSeekerProfile {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  headline           String?
-  summary            String?
-  currentRoleTitle   String?
-  openToWork         Boolean  @default(true)
-  resumeUrl          String?
-  expectedSalaryMin  Int?
-  expectedSalaryMax  Int?
-  currency           String?
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  headline          String?
+  summary           String?
+  currentRoleTitle  String?
+  openToWork        Boolean @default(true)
+  resumeUrl         String?
+  expectedSalaryMin Int?
+  expectedSalaryMax Int?
+  currency          String?
 
-  recruiterDiscoverable    Boolean    @default(false)
+  recruiterDiscoverable    Boolean     @default(false)
   preferredRemoteType      RemoteType?
-  preferredRegionIds       Json       @default("[]")
-  doNotRecommendCompanyIds Json       @default("[]")
+  preferredRegionIds       Json        @default("[]")
+  doNotRecommendCompanyIds Json        @default("[]")
 
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications    Application[]       @relation("JobSeekerApplications")
@@ -731,34 +732,34 @@ model ResumeParsed {
 }
 
 model JobPosting {
-  id                String     @id @default(cuid())
-  companyId         String
-  postedByUserId    String
-  title             String
-  description       String
-  regionId          String
-  remoteType        RemoteType @default(ONSITE)
-  employmentType    EmploymentType?
-  experienceLevel   ExperienceLevel?
-  salaryMin         Int?
-  salaryMax         Int?
-  currency          String     @default("PKR")
-  country           String?
-  city              String?
-  postCode          String?
-  companyAddress    String?
-  status            JobStatus  @default(DRAFT)
-  expiresAt         DateTime?
-  requiredSkills    Json       @default("[]")
-  niceToHaveSkills  Json       @default("[]")
-  requiredKeywords  Json       @default("[]")
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  searchVector      Unsupported("tsvector")?
+  id               String                   @id @default(cuid())
+  companyId        String
+  postedByUserId   String
+  title            String
+  description      String
+  regionId         String
+  remoteType       RemoteType               @default(ONSITE)
+  employmentType   EmploymentType?
+  experienceLevel  ExperienceLevel?
+  salaryMin        Int?
+  salaryMax        Int?
+  currency         String                   @default("PKR")
+  country          String?
+  city             String?
+  postCode         String?
+  companyAddress   String?
+  status           JobStatus                @default(DRAFT)
+  expiresAt        DateTime?
+  requiredSkills   Json                     @default("[]")
+  niceToHaveSkills Json                     @default("[]")
+  requiredKeywords Json                     @default("[]")
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  searchVector     Unsupported("tsvector")?
 
-  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  postedBy         User              @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
-  region           Region            @relation(fields: [regionId], references: [id])
+  company          Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  postedBy         User                @relation("JobPostingPoster", fields: [postedByUserId], references: [id])
+  region           Region              @relation(fields: [regionId], references: [id])
   applications     Application[]
   hiringTeam       HiringTeam[]
   candidateMatches CandidateMatch[]
@@ -782,32 +783,32 @@ model Application {
   currentStageId  String?
   createdAt       DateTime          @default(now())
 
-  jobPosting       JobPosting       @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
-  jobSeeker        JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id], onDelete: Cascade)
-  currentStage     PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
-  notes            CandidateNote[]
-  applicationTags  ApplicationTag[]
-  emailsSent       EmailSendLog[]
-  candidateMatch   CandidateMatch?
-  testAssignments  TestAssignment[]
+  jobPosting      JobPosting       @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobSeeker       JobSeekerProfile @relation("JobSeekerApplications", fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  currentStage    PipelineStage?   @relation("ApplicationStage", fields: [currentStageId], references: [id])
+  notes           CandidateNote[]
+  applicationTags ApplicationTag[]
+  emailsSent      EmailSendLog[]
+  candidateMatch  CandidateMatch?
+  testAssignments TestAssignment[]
 
   @@unique([jobPostingId, jobSeekerId])
 }
 
 model CandidateMatch {
-  id                 String   @id @default(cuid())
-  jobPostingId       String
-  applicationId      String   @unique
-  score              Int
-  requiredMatched    Int
-  requiredTotal      Int
-  niceToHaveMatched  Int
-  niceToHaveTotal    Int
-  keywordMatched     Int
-  keywordTotal       Int
-  matchedTerms       Json
-  missedTerms        Json
-  computedAt         DateTime @default(now())
+  id                String   @id @default(cuid())
+  jobPostingId      String
+  applicationId     String   @unique
+  score             Int
+  requiredMatched   Int
+  requiredTotal     Int
+  niceToHaveMatched Int
+  niceToHaveTotal   Int
+  keywordMatched    Int
+  keywordTotal      Int
+  matchedTerms      Json
+  missedTerms       Json
+  computedAt        DateTime @default(now())
 
   jobPosting  JobPosting  @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
@@ -930,19 +931,19 @@ model EmailSendLog {
 // ─── Network ─────────────────────────────────────────────────────────────────
 
 model NetworkProfile {
-  id                   String            @id @default(cuid())
-  userId               String            @unique
-  handle               String            @unique
+  id                   String                   @id @default(cuid())
+  userId               String                   @unique
+  handle               String                   @unique
   headline             String?
   summary              String?
   currentRole          String?
   location             String?
   profilePhotoUrl      String?
   bannerUrl            String?
-  visibility           ProfileVisibility @default(PUBLIC)
-  verifiedProfessional Boolean           @default(false)
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  visibility           ProfileVisibility        @default(PUBLIC)
+  verifiedProfessional Boolean                  @default(false)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
   searchVector         Unsupported("tsvector")?
 
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1150,7 +1151,7 @@ model TestQuestion {
   points     Int      @default(1)
   metadata   Json
 
-  template    TestTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  template    TestTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
   submissions TestSubmission[]
 
   @@index([templateId, order])
@@ -1169,9 +1170,9 @@ model TestAssignment {
   autoGraded       Boolean          @default(false)
   createdAt        DateTime         @default(now())
 
-  application Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  template    TestTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  assignedBy  User              @relation("TestAssignedBy", fields: [assignedByUserId], references: [id])
+  application Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  template    TestTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  assignedBy  User             @relation("TestAssignedBy", fields: [assignedByUserId], references: [id])
   submissions TestSubmission[]
   session     TestSession?
 
@@ -1309,27 +1310,27 @@ model Plan {
 }
 
 model Shop {
-  id           String     @id @default(cuid())
+  id           String                   @id @default(cuid())
   ownerUserId  String
   name         String
-  slug         String     @unique
+  slug         String                   @unique
   category     String
   type         String
   description  String
   addressLine  String
   regionId     String
-  countryCode  String     @default("PK")
+  countryCode  String                   @default("PK")
   website      String?
   contactPhone String?
   lat          Float?
   lng          Float?
-  status       ShopStatus @default(DRAFT)
-  verifiedShop Boolean    @default(false)
-  featured     Boolean    @default(false)
+  status       ShopStatus               @default(DRAFT)
+  verifiedShop Boolean                  @default(false)
+  featured     Boolean                  @default(false)
   bannerUrl    String?
   searchVector Unsupported("tsvector")?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 
   // Payment & ordering
   bankName          String?
@@ -1337,8 +1338,8 @@ model Shop {
   bankAccountNumber String?
   jazzcashNumber    String?
   easipaisaNumber   String?
-  acceptsCash       Boolean  @default(false)
-  acceptsDelivery   Boolean  @default(false)
+  acceptsCash       Boolean @default(false)
+  acceptsDelivery   Boolean @default(false)
   deliveryNotes     String?
   workingHours      Json?
 
@@ -1358,7 +1359,7 @@ model Shop {
 }
 
 model ShopImage {
-  id     String       @id @default(cuid())
+  id     String        @id @default(cuid())
   shopId String
   url    String
   kind   ShopImageKind
@@ -1372,21 +1373,21 @@ model ShopImage {
 }
 
 model ShopProduct {
-  id           String   @id @default(cuid())
+  id           String                   @id @default(cuid())
   shopId       String
   name         String
   description  String?
   priceMin     Decimal?
   priceMax     Decimal?
-  currency     String   @default("PKR")
-  order        Int      @default(0)
-  isHidden     Boolean  @default(false)
+  currency     String                   @default("PKR")
+  order        Int                      @default(0)
+  isHidden     Boolean                  @default(false)
   searchVector Unsupported("tsvector")?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 
-  inStock      Boolean  @default(true)
-  stockCount   Int?
+  inStock    Boolean @default(true)
+  stockCount Int?
 
   shop       Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
   images     ShopProductImage[]
@@ -1470,12 +1471,12 @@ model ShopOrder {
 }
 
 model ShopOrderItem {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   orderId       String
   productId     String
   name          String
   priceSnapshot Decimal
-  quantity      Int      @default(1)
+  quantity      Int     @default(1)
 
   order   ShopOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product ShopProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
@@ -1527,10 +1528,10 @@ model ShopFavourite {
 }
 
 model JobFavourite {
-  id           String     @id @default(cuid())
+  id           String   @id @default(cuid())
   jobPostingId String
   userId       String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime @default(now())
 
   jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
   user       User       @relation("JobFavourites", fields: [userId], references: [id], onDelete: Cascade)

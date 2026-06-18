@@ -7,6 +7,7 @@ import { getUserTier, computeTrustScore } from "@/lib/tier";
 import { TrustGauge, VerificationSeal } from "@/components/ui/XplosaleUI";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import QuickLinks from "./_quick-links";
+import ProfileEditCard from "./_profile-edit-card";
 
 export default async function MePage() {
   const session = await getSession();
@@ -21,7 +22,7 @@ export default async function MePage() {
     prisma.networkProfile.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
+      select: { verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, image: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
     }),
     prisma.connection.count({
       where: {
@@ -122,6 +123,13 @@ export default async function MePage() {
         >
           {/* ── Left column ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <ProfileEditCard
+              name={dbUser?.name ?? null}
+              phone={dbUser?.phone ?? null}
+              email={dbUser?.email ?? null}
+              image={dbUser?.image ?? null}
+            />
+
             {/* Trust breakdown card */}
             <div
               style={{

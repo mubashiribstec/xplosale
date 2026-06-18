@@ -33,6 +33,8 @@ export async function PATCH(
     if (!application) return err("Partner application not found", 404);
     if (application.status !== "PENDING") return err("Application is not pending", 400);
 
+    const employerProfile = await prisma.employerProfile.findUnique({ where: { userId }, select: { companyId: true } });
+
     if (action === "approve") {
       await prisma.$transaction([
         prisma.partnerApplication.update({
@@ -43,6 +45,9 @@ export async function PATCH(
           where: { id: userId },
           data: { role: "PARTNER", isPartner: true, partnerType: application.partnerType },
         }),
+        ...(employerProfile
+          ? [prisma.company.update({ where: { id: employerProfile.companyId }, data: { verifiedEmployer: true } })]
+          : []),
         prisma.adminActionLog.create({
           data: {
             adminId,
@@ -64,6 +69,9 @@ export async function PATCH(
           where: { id: userId },
           data: { role: "USER", isPartner: false, partnerType: null },
         }),
+        ...(employerProfile
+          ? [prisma.company.update({ where: { id: employerProfile.companyId }, data: { verifiedEmployer: false } })]
+          : []),
         prisma.adminActionLog.create({
           data: {
             adminId,
