@@ -64,24 +64,25 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 }
 
-/** PATCH /api/shops/[id] — update a shop (owner only) */
+/** PATCH /api/shops/[id] — update a shop (owner, or admin) */
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getSession();
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+    const isAdmin = (session.user as { role?: string }).role === "ADMIN";
 
     const { id } = await params;
     const shop = await prisma.shop.findUnique({ where: { id }, select: { id: true, ownerUserId: true, status: true } });
     if (!shop) return err("Shop not found", 404);
-    if (shop.ownerUserId !== userId) return err("Forbidden", 403);
+    if (shop.ownerUserId !== userId && !isAdmin) return err("Forbidden", 403);
 
     const body = await req.json() as unknown;
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
     const hasStructural = STRUCTURAL_FIELDS.some((f) => parsed.data[f] !== undefined);
-    if (hasStructural && shop.status !== "DRAFT" && shop.status !== "REJECTED") {
+    if (hasStructural && !isAdmin && shop.status !== "DRAFT" && shop.status !== "REJECTED") {
       return err("Only DRAFT or REJECTED shops can have their details edited.", 422);
     }
 
@@ -117,7 +118,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const data: any = {
       ...structural,
       website: website ?? undefined,
-      ...(hasStructural ? { status: "DRAFT" } : {}),
+      // Owner edits reset status to DRAFT for re-review; admin edits keep the current status.
+      ...(hasStructural && !isAdmin ? { status: "DRAFT" } : {}),
       ...paymentData,
     };
     if (regionId) data.regionId = regionId;

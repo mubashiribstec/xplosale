@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
+import AdminJobActions from "@/components/shared/AdminJobActions";
 
 export const metadata: Metadata = { title: "Jobs — Admin", robots: { index: false, follow: false } };
 
@@ -145,13 +146,16 @@ export default async function AdminJobsPage({ searchParams }: Props) {
                     {job.createdAt.toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/jobs/${job.id}`}
-                      target="_blank"
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      View →
-                    </Link>
+                    <div className="flex items-center justify-end gap-3 flex-wrap">
+                      <Link
+                        href={`/jobs/${job.id}`}
+                        target="_blank"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        View →
+                      </Link>
+                      <AdminJobActions jobId={job.id} jobTitle={job.title} status={job.status} />
+                    </div>
                   </td>
                 </tr>
               ))

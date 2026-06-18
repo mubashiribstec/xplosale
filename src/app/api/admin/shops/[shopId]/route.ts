@@ -7,11 +7,13 @@ import { prisma } from "@/lib/prisma";
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("approve") }),
   z.object({ action: z.literal("reject"), reason: z.string().min(4).max(500) }),
+  z.object({ action: z.literal("ban"), reason: z.string().min(4).max(500) }),
+  z.object({ action: z.literal("unban") }),
 ]);
 
 type Params = { params: Promise<{ shopId: string }> };
 
-/** POST /api/admin/shops/[shopId] — approve or reject a PENDING_REVIEW shop */
+/** POST /api/admin/shops/[shopId] — approve/reject a pending shop, or ban/unban any shop */
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const session = await getSession();
@@ -25,22 +27,43 @@ export async function POST(req: NextRequest, { params }: Params) {
       select: { id: true, status: true },
     });
     if (!shop) return err("Shop not found", 404);
-    if (shop.status !== "PENDING_REVIEW") return err("Shop is not pending review.", 422);
 
     const body = await req.json() as unknown;
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
     const { action } = parsed.data;
-    const newStatus = action === "approve" ? "ACTIVE" : "REJECTED";
-    const reason = action === "reject" ? parsed.data.reason : undefined;
+
+    if ((action === "approve" || action === "reject") && shop.status !== "PENDING_REVIEW") {
+      return err("Shop is not pending review.", 422);
+    }
+    if (action === "ban" && shop.status === "SUSPENDED") {
+      return err("Shop is already banned.", 422);
+    }
+    if (action === "unban" && shop.status !== "SUSPENDED") {
+      return err("Shop is not currently banned.", 422);
+    }
+
+    const newStatus =
+      action === "approve" ? "ACTIVE" :
+      action === "reject" ? "REJECTED" :
+      action === "ban" ? "SUSPENDED" :
+      "ACTIVE";
+
+    const logAction =
+      action === "approve" ? "SHOP_APPROVED" :
+      action === "reject" ? "SHOP_REJECTED" :
+      action === "ban" ? "SHOP_BANNED" :
+      "SHOP_UNBANNED";
+
+    const reason = action === "reject" || action === "ban" ? parsed.data.reason : undefined;
 
     await prisma.$transaction([
       prisma.shop.update({ where: { id: shopId }, data: { status: newStatus } }),
       prisma.adminActionLog.create({
         data: {
           adminId,
-          action: action === "approve" ? "SHOP_APPROVED" : "SHOP_REJECTED",
+          action: logAction,
           targetType: "Shop",
           targetId: shopId,
           reason: reason ?? null,
@@ -54,7 +77,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 }
 
-/** DELETE /api/admin/shops/[shopId] — suspend a shop (preserves order history) */
+/** DELETE /api/admin/shops/[shopId] — permanently delete a shop and all its data */
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSession();
@@ -65,24 +88,24 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const { shopId } = await params;
     const shop = await prisma.shop.findUnique({
       where: { id: shopId },
-      select: { id: true, name: true, _count: { select: { orders: true } } },
+      select: { id: true, name: true },
     });
     if (!shop) return err("Shop not found", 404);
 
     await prisma.$transaction([
-      prisma.shop.update({ where: { id: shopId }, data: { status: "SUSPENDED" } }),
+      prisma.shop.delete({ where: { id: shopId } }),
       prisma.adminActionLog.create({
         data: {
           adminId,
           action: "SHOP_DELETED",
           targetType: "Shop",
           targetId: shopId,
-          reason: `Suspended shop: ${shop.name}`,
+          reason: `Deleted shop: ${shop.name}`,
         },
       }),
     ]);
 
-    return ok({ suspended: true });
+    return ok({ deleted: true });
   } catch (e) {
     return parseError(e);
   }

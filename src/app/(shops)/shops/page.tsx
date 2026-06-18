@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, getUserId } from "@/core/auth/session";
 import ShopCard from "@/components/shared/shops/ShopCard";
 import ShopsFilterBar from "@/components/shared/shops/ShopsFilterBar";
-import CategoryGrid from "@/components/shared/shops/CategoryGrid";
+import CategorySidebar from "@/components/shared/shops/CategorySidebar";
 
 export const metadata: Metadata = {
   title: "Shops Directory — Local Shops Near You | Xplosale",
@@ -54,15 +54,12 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
       : {}),
   };
 
-  // Category counts for browse grid (only fetch when no filters applied)
-  const showCategoryGrid = !q && !category && !country && !city && !regionId && page === 1;
-  const categoryCountsRaw = showCategoryGrid
-    ? await prisma.shop.groupBy({
-        by: ["category"],
-        where: { status: "ACTIVE" },
-        _count: { _all: true },
-      })
-    : [];
+  // Category counts for the sidebar nav
+  const categoryCountsRaw = await prisma.shop.groupBy({
+    by: ["category"],
+    where: { status: "ACTIVE" },
+    _count: { _all: true },
+  });
   const categoryCounts: Record<string, number> = Object.fromEntries(
     categoryCountsRaw.map((g) => [g.category, g._count._all])
   );
@@ -110,100 +107,92 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", gap: 24, alignItems: "flex-start" }}>
 
-        {/* Hero */}
-        <div className="reveal" style={{
-          background: "linear-gradient(135deg, var(--paper-2), var(--paper-3))",
-          border: "1px solid var(--line)",
-          borderRadius: 20,
-          padding: "clamp(24px,5vw,40px) clamp(20px,4vw,36px)",
-          marginBottom: 28,
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap",
-        }}>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", margin: "0 0 6px" }}>
-              Shops
-            </p>
-            <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(26px,4vw,40px)", color: "var(--ink)", margin: "0 0 6px", lineHeight: 1.1 }}>
-              Discover local shops near you
-            </h1>
-            <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
-              {total > 0 ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""}` : "No shops"} {q || category || country || city || regionId ? "match your search" : "open for business"} · order online, pay your way
-            </p>
+        <CategorySidebar counts={categoryCounts} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Hero */}
+          <div className="reveal" style={{
+            background: "linear-gradient(135deg, var(--paper-2), var(--paper-3))",
+            border: "1px solid var(--line)",
+            borderRadius: 20,
+            padding: "clamp(20px,4vw,32px) clamp(20px,4vw,32px)",
+            marginBottom: 20,
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap",
+          }}>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", margin: "0 0 6px" }}>
+                Shops
+              </p>
+              <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(22px,3.2vw,32px)", color: "var(--ink)", margin: "0 0 6px", lineHeight: 1.1 }}>
+                Discover local shops near you
+              </h1>
+              <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: 0, fontFamily: "var(--body)" }}>
+                {total > 0 ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""}` : "No shops"} {q || category || country || city || regionId ? "match your search" : "open for business"} · order online, pay your way
+              </p>
+            </div>
+            <Link
+              href={session ? "/shops/manage/new" : "/login?redirect=/shops/manage/new"}
+              style={{
+                padding: "11px 22px", background: "var(--clay)", color: "var(--white)",
+                borderRadius: 11, fontSize: 14, fontWeight: 700, textDecoration: "none",
+                fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              List your shop free →
+            </Link>
           </div>
-          <Link
-            href={session ? "/shops/manage/new" : "/login?redirect=/shops/manage/new"}
-            style={{
-              padding: "11px 22px", background: "var(--clay)", color: "var(--white)",
-              borderRadius: 11, fontSize: 14, fontWeight: 700, textDecoration: "none",
-              fontFamily: "var(--body)", whiteSpace: "nowrap", flexShrink: 0,
-            }}
-          >
-            List your shop free →
-          </Link>
-        </div>
 
-        {/* Category browse grid — shown only on the unfiltered landing view */}
-        {showCategoryGrid && (
-          <div style={{ marginBottom: 36 }}>
-            <h2 style={{
-              fontFamily: "var(--body)", fontWeight: 700, fontSize: 16,
-              color: "var(--ink-soft)", margin: "0 0 14px", letterSpacing: ".01em",
+          {/* Filters */}
+          <div style={{ marginBottom: 24 }}>
+            <ShopsFilterBar initialParams={{ q, category, country, city, regionId }} />
+          </div>
+
+          {/* Grid */}
+          {shops.length === 0 ? (
+            <div style={{
+              background: "var(--white)", border: "1.5px dashed var(--line)", borderRadius: 18,
+              padding: "56px 32px", textAlign: "center", fontFamily: "var(--body)",
             }}>
-              Browse by Category
-            </h2>
-            <CategoryGrid counts={categoryCounts} />
-          </div>
-        )}
+              <p style={{ fontSize: 16, color: "var(--ink-soft)", marginBottom: 6 }}>No shops found.</p>
+              <p style={{ fontSize: 14, color: "var(--ink-faint)" }}>Try adjusting your filters or search term.</p>
+            </div>
+          ) : (
+            <div className="stagger" style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 16,
+              marginBottom: 36,
+            }}>
+              {shops.map((shop) => (
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                  shopId={shop.id}
+                  isFavourite={favouriteIds.has(shop.id)}
+                  isAuthenticated={!!session}
+                />
+              ))}
+            </div>
+          )}
 
-        {/* Filters */}
-        <div style={{ marginBottom: 28 }}>
-          <ShopsFilterBar initialParams={{ q, category, country, city, regionId }} />
+          {/* Pagination */}
+          {pages > 1 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "var(--body)" }}>
+              {page > 1 && (
+                <Link href={buildPageUrl(page - 1)} style={pageLinkStyle}>← Previous</Link>
+              )}
+              <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>
+                Page {page} of {pages}
+              </span>
+              {page < pages && (
+                <Link href={buildPageUrl(page + 1)} style={pageLinkStyle}>Next →</Link>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Grid */}
-        {shops.length === 0 ? (
-          <div style={{
-            background: "var(--white)", border: "1.5px dashed var(--line)", borderRadius: 18,
-            padding: "56px 32px", textAlign: "center", fontFamily: "var(--body)",
-          }}>
-            <p style={{ fontSize: 16, color: "var(--ink-soft)", marginBottom: 6 }}>No shops found.</p>
-            <p style={{ fontSize: 14, color: "var(--ink-faint)" }}>Try adjusting your filters or search term.</p>
-          </div>
-        ) : (
-          <div className="stagger" style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 16,
-            marginBottom: 36,
-          }}>
-            {shops.map((shop) => (
-              <ShopCard
-                key={shop.id}
-                shop={shop}
-                shopId={shop.id}
-                isFavourite={favouriteIds.has(shop.id)}
-                isAuthenticated={!!session}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pages > 1 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "var(--body)" }}>
-            {page > 1 && (
-              <Link href={buildPageUrl(page - 1)} style={pageLinkStyle}>← Previous</Link>
-            )}
-            <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>
-              Page {page} of {pages}
-            </span>
-            {page < pages && (
-              <Link href={buildPageUrl(page + 1)} style={pageLinkStyle}>Next →</Link>
-            )}
-          </div>
-        )}
       </div>
     </main>
   );

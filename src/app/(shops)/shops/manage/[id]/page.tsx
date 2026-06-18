@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ShopForm from "@/components/shared/shops/ShopForm";
 import StorefrontBoardUploader from "@/components/shared/shops/StorefrontBoardUploader";
@@ -52,6 +53,8 @@ interface PlanData {
 export default function EditShopPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: authSession } = useSession();
+  const isAdmin = (authSession?.user as { role?: string } | undefined)?.role === "ADMIN";
   const [shop, setShop] = useState<ShopData | null>(null);
   const [plan, setPlan] = useState<PlanData>({ maxProducts: 2, maxImagesPerProduct: 2, key: "FREE" });
   const [loading, setLoading] = useState(true);
@@ -139,8 +142,8 @@ export default function EditShopPage() {
 
   if (!shop) return null;
 
-  const canEdit = shop.status === "DRAFT" || shop.status === "REJECTED";
-  const canSubmit = shop.status === "DRAFT" || shop.status === "REJECTED";
+  const canEdit = isAdmin || shop.status === "DRAFT" || shop.status === "REJECTED";
+  const canSubmit = !isAdmin && (shop.status === "DRAFT" || shop.status === "REJECTED");
   const isActive = shop.status === "ACTIVE";
   const hasStorefront = !!storefrontImage;
   const isPremium = shop.subscription?.status === "ACTIVE" &&
@@ -156,6 +159,16 @@ export default function EditShopPage() {
         >
           ← My Shops
         </Link>
+
+        {isAdmin && (
+          <div style={{
+            background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 10,
+            padding: "8px 14px", marginBottom: 16, fontSize: 12, fontWeight: 600, color: "#92400e",
+            fontFamily: "var(--body)",
+          }}>
+            🛠 Admin mode — you can edit this shop&apos;s details regardless of its status.
+          </div>
+        )}
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
           <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(24px,4vw,34px)", color: "var(--ink)", margin: 0, lineHeight: 1.1 }}>

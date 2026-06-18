@@ -70,6 +70,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkBanModal, setBulkBanModal] = useState<{ reason: string; duration: number; loading: boolean; error: string } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ userId: string; name: string } | null>(null);
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -167,6 +168,25 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
       else setErrors((prev) => ({ ...prev, [userId]: json.error ?? "Failed" }));
     } catch {
       setErrors((prev) => ({ ...prev, [userId]: "Network error" }));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function submitDelete() {
+    if (!deleteModal) return;
+    setSaving(deleteModal.userId);
+    try {
+      const res = await fetch(`/api/admin/users/${deleteModal.userId}`, { method: "DELETE" });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      if (json.ok) {
+        setDeleteModal(null);
+        router.refresh();
+      } else {
+        setErrors((prev) => ({ ...prev, [deleteModal.userId]: json.error ?? "Failed" }));
+      }
+    } catch {
+      setErrors((prev) => ({ ...prev, [deleteModal.userId]: "Network error" }));
     } finally {
       setSaving(null);
     }
@@ -440,6 +460,35 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
         </div>
       )}
 
+      {/* Delete confirm modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h2 className="font-bold text-gray-900">Delete {deleteModal.name}?</h2>
+            <p className="text-sm text-gray-600">
+              This permanently deletes the user and all their data (shops, listings, applications, messages). This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModal(null)}
+                className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitDelete()}
+                disabled={saving === deleteModal.userId}
+                className="flex-1 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {saving === deleteModal.userId ? "Deleting…" : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3 items-center">
         <input
           type="search"
@@ -572,6 +621,16 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                             className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded hover:bg-red-200 transition-colors"
                           >
                             Ban
+                          </button>
+                        )}
+                        {user.role !== "ADMIN" && (
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModal({ userId: user.id, name: user.name ?? "this user" })}
+                            disabled={saving === user.id}
+                            className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                          >
+                            Delete
                           </button>
                         )}
                         {errors[user.id] && (

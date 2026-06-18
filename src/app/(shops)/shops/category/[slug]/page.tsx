@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, getUserId } from "@/core/auth/session";
 import { CATEGORY_BY_SLUG } from "@/lib/shop-categories";
 import ShopCard from "@/components/shared/shops/ShopCard";
+import CategorySidebar from "@/components/shared/shops/CategorySidebar";
 
 const PAGE_SIZE = 20;
 
@@ -44,7 +45,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const session = await getSession();
   const userId = session ? getUserId(session) : null;
 
-  const [shops, total, favourites] = await Promise.all([
+  const [shops, total, favourites, categoryCountsRaw] = await Promise.all([
     prisma.shop.findMany({
       where,
       include: {
@@ -65,7 +66,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     userId
       ? prisma.shopFavourite.findMany({ where: { userId }, select: { shopId: true } })
       : Promise.resolve([]),
+    prisma.shop.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
   ]);
+  const categoryCounts: Record<string, number> = Object.fromEntries(
+    categoryCountsRaw.map((g) => [g.category, g._count._all])
+  );
 
   const favouriteIds = new Set(favourites.map((f) => f.shopId));
 
@@ -79,112 +84,117 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", gap: 24, alignItems: "flex-start" }}>
 
-        {/* Breadcrumb */}
-        <nav style={{ fontSize: 13, color: "var(--ink-faint)", marginBottom: 24, fontFamily: "var(--body)" }}>
-          <Link href="/shops" style={{ color: "var(--ink-faint)", textDecoration: "none" }}>
-            Shops
-          </Link>
-          <span style={{ margin: "0 6px" }}>›</span>
-          <span style={{ color: "var(--ink-soft)" }}>{cat.label}</span>
-        </nav>
+        <CategorySidebar counts={categoryCounts} activeSlug={slug} />
 
-        {/* Hero */}
-        <div style={{
-          background: `color-mix(in srgb, ${cat.accent} 8%, var(--white))`,
-          border: `1.5px solid color-mix(in srgb, ${cat.accent} 20%, var(--line))`,
-          borderRadius: 20,
-          padding: "28px 32px",
-          marginBottom: 36,
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-        }}>
-          <span style={{ fontSize: 56, lineHeight: 1, flexShrink: 0 }}>{cat.icon}</span>
-          <div>
-            <h1 style={{
-              fontFamily: "var(--display)",
-              fontWeight: 800,
-              fontSize: "clamp(22px,3.5vw,36px)",
-              color: "var(--ink)",
-              margin: "0 0 6px",
-              lineHeight: 1.1,
-            }}>
-              {cat.label}
-            </h1>
-            <p style={{ fontSize: 15, color: "var(--ink-soft)", margin: "0 0 8px", fontFamily: "var(--body)" }}>
-              {cat.description}
-            </p>
-            <p style={{ fontSize: 13, color: cat.accent, fontWeight: 600, margin: 0, fontFamily: "var(--body)" }}>
-              {total > 0
-                ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""} found`
-                : "No shops yet — be the first to list!"}
-            </p>
-          </div>
-        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
 
-        {/* Grid */}
-        {shops.length === 0 ? (
+          {/* Breadcrumb */}
+          <nav style={{ fontSize: 13, color: "var(--ink-faint)", marginBottom: 20, fontFamily: "var(--body)" }}>
+            <Link href="/shops" style={{ color: "var(--ink-faint)", textDecoration: "none" }}>
+              Shops
+            </Link>
+            <span style={{ margin: "0 6px" }}>›</span>
+            <span style={{ color: "var(--ink-soft)" }}>{cat.label}</span>
+          </nav>
+
+          {/* Hero */}
           <div style={{
-            background: "var(--white)", border: "1.5px dashed var(--line)", borderRadius: 18,
-            padding: "56px 32px", textAlign: "center", fontFamily: "var(--body)",
+            background: `color-mix(in srgb, ${cat.accent} 8%, var(--white))`,
+            border: `1.5px solid color-mix(in srgb, ${cat.accent} 20%, var(--line))`,
+            borderRadius: 20,
+            padding: "22px 28px",
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 20,
           }}>
-            <p style={{ fontSize: 16, color: "var(--ink-soft)", marginBottom: 6 }}>No shops in this category yet.</p>
-            <p style={{ fontSize: 14, color: "var(--ink-faint)", marginBottom: 20 }}>
-              Own a {cat.label.toLowerCase()} shop?
-            </p>
-            <Link
-              href="/shops/manage/new"
-              style={{
-                display: "inline-block", padding: "12px 24px",
-                background: cat.accent, color: "#fff", borderRadius: 12,
-                fontSize: 14, fontWeight: 600, textDecoration: "none",
-                fontFamily: "var(--body)",
-              }}
-            >
-              List your shop →
+            <span style={{ fontSize: 48, lineHeight: 1, flexShrink: 0 }}>{cat.icon}</span>
+            <div>
+              <h1 style={{
+                fontFamily: "var(--display)",
+                fontWeight: 800,
+                fontSize: "clamp(20px,3vw,30px)",
+                color: "var(--ink)",
+                margin: "0 0 6px",
+                lineHeight: 1.1,
+              }}>
+                {cat.label}
+              </h1>
+              <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: "0 0 8px", fontFamily: "var(--body)" }}>
+                {cat.description}
+              </p>
+              <p style={{ fontSize: 13, color: cat.accent, fontWeight: 600, margin: 0, fontFamily: "var(--body)" }}>
+                {total > 0
+                  ? `${total.toLocaleString()} shop${total !== 1 ? "s" : ""} found`
+                  : "No shops yet — be the first to list!"}
+              </p>
+            </div>
+          </div>
+
+          {/* Grid */}
+          {shops.length === 0 ? (
+            <div style={{
+              background: "var(--white)", border: "1.5px dashed var(--line)", borderRadius: 18,
+              padding: "56px 32px", textAlign: "center", fontFamily: "var(--body)",
+            }}>
+              <p style={{ fontSize: 16, color: "var(--ink-soft)", marginBottom: 6 }}>No shops in this category yet.</p>
+              <p style={{ fontSize: 14, color: "var(--ink-faint)", marginBottom: 20 }}>
+                Own a {cat.label.toLowerCase()} shop?
+              </p>
+              <Link
+                href="/shops/manage/new"
+                style={{
+                  display: "inline-block", padding: "12px 24px",
+                  background: cat.accent, color: "#fff", borderRadius: 12,
+                  fontSize: 14, fontWeight: 600, textDecoration: "none",
+                  fontFamily: "var(--body)",
+                }}
+              >
+                List your shop →
+              </Link>
+            </div>
+          ) : (
+            <div className="stagger" style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 16,
+              marginBottom: 36,
+            }}>
+              {shops.map((shop) => (
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                  shopId={shop.id}
+                  isFavourite={favouriteIds.has(shop.id)}
+                  isAuthenticated={!!session}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pages > 1 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "var(--body)" }}>
+              {page > 1 && (
+                <Link href={buildPageUrl(page - 1)} style={pageLinkStyle}>← Previous</Link>
+              )}
+              <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>
+                Page {page} of {pages}
+              </span>
+              {page < pages && (
+                <Link href={buildPageUrl(page + 1)} style={pageLinkStyle}>Next →</Link>
+              )}
+            </div>
+          )}
+
+          {/* Back link */}
+          <div style={{ textAlign: "center", marginTop: 32 }}>
+            <Link href="/shops" style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "none", fontFamily: "var(--body)" }}>
+              ← Back to all shops
             </Link>
           </div>
-        ) : (
-          <div className="stagger" style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 16,
-            marginBottom: 36,
-          }}>
-            {shops.map((shop) => (
-              <ShopCard
-                key={shop.id}
-                shop={shop}
-                shopId={shop.id}
-                isFavourite={favouriteIds.has(shop.id)}
-                isAuthenticated={!!session}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pages > 1 && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "var(--body)" }}>
-            {page > 1 && (
-              <Link href={buildPageUrl(page - 1)} style={pageLinkStyle}>← Previous</Link>
-            )}
-            <span style={{ fontSize: 13, color: "var(--ink-faint)" }}>
-              Page {page} of {pages}
-            </span>
-            {page < pages && (
-              <Link href={buildPageUrl(page + 1)} style={pageLinkStyle}>Next →</Link>
-            )}
-          </div>
-        )}
-
-        {/* Back link */}
-        <div style={{ textAlign: "center", marginTop: 32 }}>
-          <Link href="/shops" style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "none", fontFamily: "var(--body)" }}>
-            ← Back to all shops
-          </Link>
         </div>
       </div>
     </main>

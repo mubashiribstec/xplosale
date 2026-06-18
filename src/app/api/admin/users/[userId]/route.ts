@@ -109,3 +109,47 @@ export async function PATCH(
     return parseError(e);
   }
 }
+
+/** DELETE /api/admin/users/[userId] — permanently delete a user and their data */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const session = await requireSession().catch(() => null);
+    if (!session) return err("Unauthorized", 401);
+    if ((session.user as unknown as { role: string }).role !== "ADMIN") return err("Forbidden", 403);
+
+    const adminId = getUserId(session);
+    const { userId } = await params;
+
+    if (userId === adminId) return err("You cannot delete your own account", 409);
+
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, role: true } });
+    if (!user) return err("User not found", 404);
+
+    if (user.role === "ADMIN") {
+      const otherAdmins = await prisma.user.count({ where: { role: "ADMIN", id: { not: userId } } });
+      if (otherAdmins === 0) return err("Cannot delete the last remaining admin", 409);
+    }
+
+    await prisma.$transaction([
+      prisma.user.delete({ where: { id: userId } }),
+      prisma.adminActionLog.create({
+        data: {
+          adminId,
+          action: "USER_DELETED",
+          targetType: "User",
+          targetId: userId,
+          reason: `Deleted user: ${user.name ?? user.email ?? userId}`,
+        },
+      }),
+    ]);
+
+    await kvDel(`banned:${userId}`);
+
+    return ok({ deleted: true });
+  } catch (e) {
+    return parseError(e);
+  }
+}
