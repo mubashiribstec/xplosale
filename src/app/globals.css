@@ -53,10 +53,21 @@
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
+html {
+  /* Stop Android Chrome from auto-inflating text in landscape */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--body);
+  /* Kill the grey tap flash on Android/Chrome touch */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent stray wide elements from causing horizontal scroll on mobile */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* ─── Selection ─────────────────────────────────────────────────────────── */

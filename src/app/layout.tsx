@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
@@ -56,6 +56,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Allow pinch-zoom for accessibility; just don't auto-zoom on load
+  maximumScale: 5,
+  // Android Chrome / installed-PWA address bar follows the active theme
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4F2EC" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1613" },
+  ],
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -86,7 +98,7 @@ export default async function RootLayout({
     >
       <head>
         <link rel="manifest" href="/manifest.webmanifest" />
-        <meta name="theme-color" content="#F4F2EC" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Xplosale" />
