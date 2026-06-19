@@ -4,11 +4,13 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
+  // Guard against open redirects: only allow same-origin relative paths.
+  const callbackUrl = safeInternalPath(searchParams.get("callbackUrl"), "/admin");
   const justSetup = searchParams.get("setup") === "1";
 
   const [username, setUsername] = useState("");

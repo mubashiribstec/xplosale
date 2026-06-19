@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
   action: z.enum(["suspend", "reinstate", "downgrade"]),
-  reason: z.string().optional(),
+  reason: z.string().max(1000).optional(),
 });
 
 export async function PATCH(

@@ -171,6 +171,7 @@ export default function PartnerApplicationPage() {
                 rows={4}
                 required
                 minLength={20}
+                maxLength={5000}
                 placeholder="Describe your business, how long you've been operating, and why you'd like partner status…"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
               />

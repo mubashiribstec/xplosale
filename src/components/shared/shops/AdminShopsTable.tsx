@@ -124,6 +124,7 @@ export default function AdminShopsTable({ shops, total, page, pages }: Props) {
               onChange={(e) => setBanModal((p) => p ? { ...p, reason: e.target.value } : null)}
               placeholder="Reason for ban (required)"
               rows={3}
+              maxLength={1000}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-red-400"
             />
             <div className="flex gap-2">

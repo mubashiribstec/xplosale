@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const remoteType = searchParams.get("remoteType");
     const minSalary = searchParams.get("minSalary");
     const maxSalary = searchParams.get("maxSalary");
-    const keyword = searchParams.get("keyword");
+    const keyword = searchParams.get("keyword")?.slice(0, 100) || null;
     const statusParam = searchParams.get("status");
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));

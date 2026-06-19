@@ -5,7 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/core/messaging/rooms";
 
-const schema = z.object({ reason: z.string().min(5) });
+const schema = z.object({ reason: z.string().min(5).max(1000) });
 
 export async function POST(
   req: NextRequest,

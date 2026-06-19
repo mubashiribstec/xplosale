@@ -215,6 +215,7 @@ export default function AdminListingsQueue({ listings: initial }: AdminListingsQ
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
+              maxLength={1000}
               placeholder="Reason for rejection (min 5 characters)..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />

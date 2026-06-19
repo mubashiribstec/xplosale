@@ -137,6 +137,7 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
           onChange={handleBodyChange}
           placeholder={`Add a note… type @ to mention a team member`}
           rows={3}
+          maxLength={2000}
           className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           style={{ borderColor: "var(--line)" }}
         />

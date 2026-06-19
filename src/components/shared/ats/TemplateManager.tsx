@@ -222,6 +222,7 @@ export default function TemplateManager({
                 value={form.body}
                 onChange={(e) => set("body", e.target.value)}
                 rows={8}
+                maxLength={10000}
                 placeholder={`Hi {{candidate.name}},\n\nThank you for applying to {{job.title}} at {{company.name}}…`}
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
                 style={{ borderColor: "var(--line)", color: "var(--ink)" }}

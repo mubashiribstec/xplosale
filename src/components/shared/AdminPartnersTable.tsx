@@ -100,6 +100,7 @@ export default function AdminPartnersTable({ partners }: AdminPartnersTableProps
                 value={modal.reason}
                 onChange={(e) => setModal((m) => m ? { ...m, reason: e.target.value } : null)}
                 rows={3}
+                maxLength={1000}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
                 placeholder="Explain the reason…"
               />

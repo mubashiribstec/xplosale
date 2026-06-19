@@ -323,6 +323,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                 onChange={(e) => setBanModal((p) => p ? { ...p, reason: e.target.value } : null)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
                 rows={2}
+                maxLength={1000}
                 placeholder="Explain the reason for this ban…"
               />
             </div>
@@ -448,6 +449,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                 onChange={(e) => setBulkBanModal((p) => p ? { ...p, reason: e.target.value } : null)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
                 rows={2}
+                maxLength={1000}
                 placeholder="Explain the reason for this ban…"
               />
             </div>

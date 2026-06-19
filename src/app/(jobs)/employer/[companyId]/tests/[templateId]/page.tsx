@@ -240,6 +240,7 @@ export default function TestEditorPage({
               value={template.description ?? ""}
               onChange={(e) => setTemplate((p) => p ? { ...p, description: e.target.value } : p)}
               rows={2}
+              maxLength={2000}
               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)] resize-none"
               style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}
             />
@@ -345,6 +346,7 @@ export default function TestEditorPage({
                   value={newQ.body}
                   onChange={(e) => setNewQ((p) => ({ ...p, body: e.target.value }))}
                   rows={2}
+                  maxLength={2000}
                   placeholder="Enter the question…"
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--clay)] resize-none"
                   style={{ borderColor: "var(--line)", color: "var(--ink)", background: "var(--white)" }}

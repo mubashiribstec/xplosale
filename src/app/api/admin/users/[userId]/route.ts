@@ -19,7 +19,7 @@ const bodySchema = z.object({
   bannedMarketplaceCategories: z.array(z.string()).optional(),
   bannedJobCategories: z.array(z.string()).optional(),
   forceLogout: z.boolean().optional(),
-  reason: z.string().optional(),
+  reason: z.string().max(1000).optional(),
 });
 
 export async function PATCH(

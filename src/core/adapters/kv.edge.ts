@@ -41,3 +41,13 @@ export async function edgeKvGet(key: string): Promise<string | null> {
 export async function edgeKvSetNx(key: string, value: string, ttlSeconds: number): Promise<void> {
   await upstashRest(["SET", key, value, "EX", ttlSeconds, "NX"]);
 }
+
+// Atomic counter for fixed-window rate limiting. Returns the running count, or
+// null when the REST KV is not configured/reachable (callers MUST fail open).
+export async function edgeKvIncr(key: string, ttlSeconds: number): Promise<number | null> {
+  const count = await upstashRest(["INCR", key]);
+  if (typeof count !== "number") return null;
+  // Set the expiry only on the first hit so the window slides forward cleanly.
+  if (count === 1) await upstashRest(["EXPIRE", key, ttlSeconds]);
+  return count;
+}

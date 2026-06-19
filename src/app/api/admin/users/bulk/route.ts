@@ -12,7 +12,7 @@ const CHUNK_SIZE = 20;
 const schema = z.object({
   userIds: z.array(z.string()).min(1).max(100),
   action: z.enum(["ban", "unban"]),
-  reason: z.string().optional(),
+  reason: z.string().max(1000).optional(),
   bannedUntil: z.string().datetime().optional(),
 });
 

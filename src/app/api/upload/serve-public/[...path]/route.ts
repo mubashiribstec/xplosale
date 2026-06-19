@@ -25,6 +25,9 @@ export async function GET(
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
+        // Never let the browser sniff a different type from the bytes.
+        "X-Content-Type-Options": "nosniff",
+        "Content-Disposition": "inline",
       },
     });
   } catch {
