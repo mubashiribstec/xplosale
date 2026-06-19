@@ -75,7 +75,7 @@ export default function GeoCascadeFilter({ onRegionChange, initialRegionId }: Ge
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+    <div className="x-grid-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
       <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".06em" }}>
           Country

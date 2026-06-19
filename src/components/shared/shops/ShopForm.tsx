@@ -112,7 +112,7 @@ export default function ShopForm({ initialData }: ShopFormProps) {
       </label>
 
       {/* Category + Type */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div className="x-grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <label style={labelStyle}>
           <span style={labelTextStyle}>Category <span style={{ color: "var(--clay)" }}>*</span></span>
           <select

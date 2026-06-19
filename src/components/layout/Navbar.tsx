@@ -196,7 +196,7 @@ export default function Navbar() {
         <Logo />
 
         {/* Center — desktop nav */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="hidden md:flex">
+        <div style={{ alignItems: "center", gap: 4 }} className="hidden md:flex">
           {NAV_LINKS.map(({ href, label }) => {
             const active = pathname.startsWith(href);
             return (
@@ -221,7 +221,7 @@ export default function Navbar() {
         </div>
 
         {/* Right — language + auth */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="hidden md:flex">
+        <div style={{ alignItems: "center", gap: 10 }} className="hidden md:flex">
           <ThemeToggle />
           <LanguageSwitcher />
           {user ? (
@@ -263,8 +263,8 @@ export default function Navbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div
-          style={{ position: "absolute", top: 62, left: 0, right: 0, background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "12px 20px 20px", display: "flex", flexDirection: "column", gap: 4 }}
-          className="md:hidden"
+          style={{ position: "absolute", top: 62, left: 0, right: 0, background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "12px 20px 20px", gap: 4 }}
+          className="flex flex-col md:hidden"
         >
           {NAV_LINKS.map(({ href, label }) => (
             <Link key={href} href={href} onClick={() => setMobileOpen(false)}

@@ -107,7 +107,7 @@ export default async function ShopsDirectoryPage({ searchParams }: PageProps) {
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", padding: "clamp(24px,4vw,48px) clamp(16px,4vw,32px)" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", gap: 24, alignItems: "flex-start" }}>
+      <div className="shop-layout" style={{ maxWidth: 1280, margin: "0 auto", display: "flex", gap: 24, alignItems: "flex-start" }}>
 
         <CategorySidebar counts={categoryCounts} />
 

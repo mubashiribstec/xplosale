@@ -9,6 +9,7 @@ interface Props {
 export default function CategorySidebar({ counts, activeSlug }: Props) {
   return (
     <aside
+      className="shop-sidebar"
       style={{
         width: 230,
         flexShrink: 0,

@@ -277,3 +277,15 @@ html[lang="zh"] body {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ─── Shop directory/category layout ────────────────────────────────────── */
+@media (max-width: 860px) {
+  .shop-layout {
+    flex-direction: column;
+  }
+  .shop-sidebar {
+    width: 100% !important;
+    position: static !important;
+    max-height: 280px;
+  }
+}

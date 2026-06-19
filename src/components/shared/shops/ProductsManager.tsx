@@ -205,7 +205,7 @@ function AddProductForm({
         placeholder="Description (optional)" maxLength={1000} rows={2}
         style={{ ...inputStyle, resize: "vertical" }}
       />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="x-grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <input
           type="number" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
           placeholder="Min price (PKR)" min="0" step="any"
@@ -533,7 +533,7 @@ function EditProductForm({
         placeholder="Description (optional)" maxLength={1000} rows={2}
         style={{ ...inputStyle, resize: "vertical" }}
       />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="x-grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <input
           type="number" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
           placeholder="Min price (PKR)" min="0" step="any" style={inputStyle}
