@@ -281,7 +281,7 @@ export default async function JobDetailPage({
           <span style={{ color: "var(--ink-soft)" }}>{job.title}</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.65fr 1fr", gap: 24, alignItems: "start" }}>
+        <div className="x-grid-2col" style={{ display: "grid", gridTemplateColumns: "1.65fr 1fr", gap: 24, alignItems: "start" }}>
           {/* Left col */}
           <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Job header card */}

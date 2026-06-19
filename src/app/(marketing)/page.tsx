@@ -28,6 +28,7 @@ export default async function MarketingHome() {
 
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
       <section
+        className="x-grid-2col"
         style={{
           maxWidth: "var(--maxw)",
           margin: "0 auto",
@@ -262,6 +263,7 @@ export default async function MarketingHome() {
         }}
       >
         <div
+          className="x-grid-4col"
           style={{
             maxWidth: "var(--maxw)",
             margin: "0 auto",
@@ -324,6 +326,7 @@ export default async function MarketingHome() {
         </div>
 
         <div
+          className="x-grid-3col"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
@@ -465,6 +468,7 @@ export default async function MarketingHome() {
           }}
         >
           <div
+            className="x-grid-2col"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
@@ -624,6 +628,7 @@ export default async function MarketingHome() {
       {false && <section style={{ display: "none" }}>
 
         <div
+          className="x-grid-3col"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",

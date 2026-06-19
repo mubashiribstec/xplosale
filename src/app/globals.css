@@ -2,6 +2,7 @@
 
 /* ─── Design tokens ─────────────────────────────────────────────────────── */
 :root {
+  color-scheme: light dark;
   --ink: #1A1613;
   --ink-soft: #3D362F;
   --ink-faint: #7A7167;
@@ -205,6 +206,7 @@ html[lang="zh"] body {
 /* System preference (default) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --paper: #1A1613;
     --paper-2: #221E1A;
     --paper-3: #2A2521;
@@ -212,7 +214,8 @@ html[lang="zh"] body {
     --ink: #F4F2EC;
     --ink-soft: #D6D0C6;
     --ink-faint: #8C8378;
-    --white: #ECE8DF;
+    /* Card/surface color — must stay dark so var(--ink) text stays readable on it */
+    --white: #241F1A;
   }
 
   :root:not([data-theme="light"]) body {
@@ -223,6 +226,7 @@ html[lang="zh"] body {
 
 /* Manual overrides — set via data-theme attribute on <html> */
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --paper: #1A1613;
   --paper-2: #221E1A;
   --paper-3: #2A2521;
@@ -230,10 +234,35 @@ html[lang="zh"] body {
   --ink: #F4F2EC;
   --ink-soft: #D6D0C6;
   --ink-faint: #8C8378;
-  --white: #ECE8DF;
+  --white: #241F1A;
 }
 
 :root[data-theme="dark"] body {
   background: var(--paper);
   color: var(--ink);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* ─── Mobile-responsive grid helpers ────────────────────────────────────── */
+/* Apply alongside an inline gridTemplateColumns style — these classes
+   override it on small screens (author !important beats inline normal). */
+@media (max-width: 860px) {
+  .x-grid-2col,
+  .x-grid-sidebar {
+    grid-template-columns: 1fr !important;
+  }
+  .x-grid-3col,
+  .x-grid-4col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .x-grid-3col,
+  .x-grid-4col {
+    grid-template-columns: 1fr !important;
+  }
 }

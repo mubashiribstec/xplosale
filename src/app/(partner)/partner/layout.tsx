@@ -28,6 +28,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
     <>
     <Navbar />
     <div
+      className="x-grid-sidebar"
       style={{
         minHeight: "100vh",
         paddingTop: 62,

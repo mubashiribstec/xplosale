@@ -390,7 +390,7 @@ export default async function JobsPage({
 
       {/* Main layout: sidebar + feed */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "256px 1fr", gap: 24, alignItems: "start" }}>
+        <div className="x-grid-sidebar" style={{ display: "grid", gridTemplateColumns: "256px 1fr", gap: 24, alignItems: "start" }}>
           {/* Sidebar */}
           <aside style={{ position: "sticky", top: "calc(62px + 24px)" }}>
             <div

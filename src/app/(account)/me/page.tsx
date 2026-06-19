@@ -114,6 +114,7 @@ export default async function MePage() {
 
         {/* Two-column grid */}
         <div
+          className="x-grid-2col"
           style={{
             display: "grid",
             gridTemplateColumns: "1.5fr 1fr",
