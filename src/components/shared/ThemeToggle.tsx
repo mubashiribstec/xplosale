@@ -41,6 +41,7 @@ export default function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={cycle}
       title={`Theme: ${theme}`}
       aria-label={`Switch theme (current: ${theme})`}

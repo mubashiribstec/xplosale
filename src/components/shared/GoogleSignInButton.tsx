@@ -10,6 +10,7 @@ interface Props {
 export default function GoogleSignInButton({ callbackUrl = "/auth/post-login", className }: Props) {
   return (
     <button
+      type="button"
       onClick={() => signIn("google", { callbackUrl })}
       className={className}
       style={{

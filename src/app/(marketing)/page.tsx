@@ -1,17 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import GlobalSearchBar from "@/components/shared/GlobalSearchBar";
-import { KhatamPattern, VerificationSeal } from "@/components/ui/XplosaleUI";
+import { KhatamPattern, VerificationSeal, TrustGauge } from "@/components/ui/XplosaleUI";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import GoogleSignInButton from "@/components/shared/GoogleSignInButton";
+import Reveal from "@/components/marketing/Reveal";
+import CountUp from "@/components/marketing/CountUp";
+import MarketplacePreview from "@/components/marketing/MarketplacePreview";
+import JobsPreview from "@/components/marketing/JobsPreview";
+import TrustSecurity from "@/components/marketing/TrustSecurity";
+import FaqTeaser from "@/components/marketing/FaqTeaser";
 import { prisma } from "@/lib/prisma";
+import { serializeJsonLd } from "@/lib/json-ld";
 
-function fmt(n: number): string {
-  if (n === 0) return "0";
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(n);
-}
+export const metadata: Metadata = {
+  title: "Xplosale — The marketplace where everyone is who they say they are",
+  description:
+    "Identity-verified marketplace, jobs, and shops. Buy, sell, hire, and apply with confidence — every account is reviewed by our team.",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "Xplosale — Identity-verified marketplace",
+    description: "Buy, sell, hire, and apply with confidence — every account is reviewed by our team.",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: "Xplosale", description: "Identity-verified marketplace, jobs, and shops." },
+};
 
 export default async function MarketingHome() {
   const [verifiedCount, activeListings, activeJobs, totalUsers] = await Promise.all([
@@ -21,8 +37,30 @@ export default async function MarketingHome() {
     prisma.user.count(),
   ]);
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Xplosale",
+    url: "https://xplosale.com",
+    description: "Identity-verified marketplace, jobs, and shops platform.",
+  };
+  const siteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Xplosale",
+    url: "https://xplosale.com",
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd([orgJsonLd, siteJsonLd]) }}
+      />
+      <noscript>
+        Xplosale is an identity-verified marketplace, jobs, and shops platform. Enable JavaScript for the full experience.
+      </noscript>
+
       <Navbar />
     <main style={{ background: "var(--paper)", color: "var(--ink)", fontFamily: "var(--body)", paddingTop: 62 }}>
 
@@ -83,7 +121,19 @@ export default async function MarketingHome() {
             }}
           >
             The marketplace where everyone is{" "}
-            <em style={{ fontStyle: "italic", color: "var(--clay)" }}>who they say</em>{" "}
+            <em
+              style={{
+                fontStyle: "italic",
+                fontWeight: 800,
+                color: "var(--clay)",
+                textDecoration: "underline",
+                textDecorationColor: "rgba(160,78,55,.35)",
+                textDecorationThickness: 4,
+                textUnderlineOffset: 8,
+              }}
+            >
+              who they say
+            </em>{" "}
             they are.
           </h1>
 
@@ -93,7 +143,7 @@ export default async function MarketingHome() {
           </p>
 
           {/* Search bar */}
-          <div style={{ maxWidth: 520 }}>
+          <div style={{ maxWidth: 520, borderRadius: 16, boxShadow: "var(--shadow)" }}>
             <GlobalSearchBar placeholder="Search cars, mobiles, property, remote jobs…" />
           </div>
 
@@ -150,16 +200,30 @@ export default async function MarketingHome() {
             </Link>
           </div>
 
-          {/* Trust line */}
-          <p
-            className="eyebrow"
-            style={{ color: "var(--ink-faint)", margin: 0 }}
-          >
-            {verifiedCount > 0 ? `${verifiedCount.toLocaleString()} verified accounts` : "Be the first verified account"}
-          </p>
+          {/* Trust chip */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex" }}>
+              {["#327AD6", "#A04E37", "#0E9E6E"].map((c, i) => (
+                <span
+                  key={c}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: "50%",
+                    background: c,
+                    border: "2px solid var(--paper)",
+                    marginLeft: i === 0 ? 0 : -8,
+                  }}
+                />
+              ))}
+            </div>
+            <p className="eyebrow" style={{ color: "var(--ink-faint)", margin: 0 }}>
+              {verifiedCount > 0 ? `${verifiedCount.toLocaleString()} verified accounts` : "Be the first verified account"}
+            </p>
+          </div>
         </div>
 
-        {/* Right column — dark hero card */}
+        {/* Right column — dark verification showcase card */}
         <div
           className="reveal"
           style={{
@@ -173,80 +237,64 @@ export default async function MarketingHome() {
           }}
         >
           <KhatamPattern opacity={0.07} />
-          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 28 }}>
-            {/* Big seal visual */}
-            <div style={{ display: "flex", justifyContent: "center", padding: "20px 0" }}>
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+            {/* Seal */}
+            <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+              <VerificationSeal size={104} />
+            </div>
+
+            {/* Mock verified profile chip */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                background: "rgba(251,250,245,.06)",
+                border: "1px solid rgba(251,250,245,.12)",
+                borderRadius: 16,
+                padding: "14px 16px",
+              }}
+            >
               <div
                 style={{
-                  width: 120,
-                  height: 120,
+                  width: 44,
+                  height: 44,
                   borderRadius: "50%",
-                  background: "rgba(14,158,110,.15)",
-                  border: "2px solid rgba(14,158,110,.35)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  background: "var(--clay)",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "var(--white)",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  flexShrink: 0,
                 }}
               >
-                <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden="true">
-                  <path
-                    d="M28 4L34 18L50 20L39 30L42 46L28 38L14 46L17 30L6 20L22 18L28 4Z"
-                    stroke="rgba(14,158,110,0.9)"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                  <path
-                    d="M19 28L24.5 33.5L37 21"
-                    stroke="#16C588"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                AK
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "var(--white)" }}>Verified seller</span>
+                  <VerifiedBadge size="sm" />
+                </div>
+                <span style={{ fontSize: 12, color: "rgba(251,250,245,.5)" }}>Documents reviewed by our team</span>
+              </div>
+              <div style={{ flexShrink: 0 }}>
+                <TrustGauge value={92} size={56} stroke={5} />
               </div>
             </div>
 
-            {/* Label */}
-            <div style={{ textAlign: "center" }}>
-              <VerificationSeal size={110} />
-              <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", marginTop: 10, margin: "10px 0 0" }}>
-                Documents reviewed by our team
-              </p>
-            </div>
-
-            {/* Stats row */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-                borderTop: "1px solid rgba(251,250,245,.1)",
-                paddingTop: 20,
-              }}
-            >
+            {/* Micro trust points */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { val: fmt(verifiedCount), label: "Verified users" },
-                { val: fmt(activeListings), label: "Active listings" },
-                { val: fmt(activeJobs), label: "Open roles" },
-                { val: fmt(totalUsers), label: "Registered" },
-              ].map(({ val, label }) => (
-                <div key={label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <span
-                    className="mono"
-                    style={{
-                      fontFamily: "var(--display)",
-                      fontWeight: 800,
-                      fontSize: 22,
-                      color: "var(--white)",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {val}
-                  </span>
-                  <span style={{ fontSize: 12, color: "rgba(251,250,245,.5)", fontWeight: 500 }}>
-                    {label}
-                  </span>
+                "Government ID checked by a human reviewer",
+                "Trust score visible on every transaction",
+                "Escrow protection on marketplace payments",
+              ].map((point) => (
+                <div key={point} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ marginTop: 2, flexShrink: 0, color: "var(--green-bright)" }}>
+                    <path d="M3 8.5l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span style={{ fontSize: 13, color: "rgba(251,250,245,.7)", lineHeight: 1.5 }}>{point}</span>
                 </div>
               ))}
             </div>
@@ -273,25 +321,42 @@ export default async function MarketingHome() {
           }}
         >
           {[
-            { val: fmt(verifiedCount), label: "Identities verified", sub: "documents reviewed by our team" },
-            { val: fmt(activeListings), label: "Active listings", sub: verifiedCount === 0 ? "post yours first" : "on the marketplace" },
-            { val: fmt(activeJobs), label: "Open roles", sub: activeJobs === 0 ? "post the first job" : "hiring now" },
-            { val: fmt(totalUsers), label: "Registered users", sub: "and growing" },
-          ].map(({ val, label, sub }) => (
+            { value: verifiedCount, label: "Identities verified", sub: "documents reviewed by our team", zero: "Just launched" },
+            { value: activeListings, label: "Active listings", sub: "on the marketplace", zero: "Post yours first" },
+            { value: activeJobs, label: "Open roles", sub: "hiring now", zero: "Post the first job" },
+            { value: totalUsers, label: "Registered users", sub: "and growing", zero: "Be the first to join" },
+          ].map(({ value, label, sub, zero }) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {value === 0 ? (
+                <span
+                  className="mono"
+                  style={{
+                    fontFamily: "var(--display)",
+                    fontWeight: 800,
+                    fontSize: "clamp(22px, 2.8vw, 32px)",
+                    lineHeight: 1,
+                    color: "var(--white)",
+                  }}
+                >
+                  {zero}
+                </span>
+              ) : (
+                <CountUp
+                  value={value}
+                  className="mono"
+                  style={{
+                    fontFamily: "var(--display)",
+                    fontWeight: 800,
+                    fontSize: "clamp(28px, 3.5vw, 44px)",
+                    lineHeight: 1,
+                    color: "var(--white)",
+                  }}
+                />
+              )}
               <span
-                className="mono"
-                style={{
-                  fontFamily: "var(--display)",
-                  fontWeight: 800,
-                  fontSize: "clamp(28px, 3.5vw, 44px)",
-                  lineHeight: 1,
-                  color: "var(--white)",
-                }}
+                style={{ fontSize: 14, fontWeight: 600, color: "rgba(251,250,245,.8)", lineHeight: 1.3 }}
+                aria-label={value > 0 ? `${value.toLocaleString()} ${label.toLowerCase()}` : undefined}
               >
-                {val}
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "rgba(251,250,245,.8)", lineHeight: 1.3 }}>
                 {label}
               </span>
               <span style={{ fontSize: 12, color: "rgba(251,250,245,.45)" }}>{sub}</span>
@@ -350,7 +415,7 @@ export default async function MarketingHome() {
             }}
             className="vertical-card"
           >
-            <div style={{ height: 4, background: "var(--blue)" }} />
+            <div className="vertical-card-bar" style={{ height: 4, background: "var(--blue)", transition: "filter 0.2s" }} />
             <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
               <span className="eyebrow" style={{ color: "var(--blue)" }}>01</span>
               <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
@@ -363,7 +428,7 @@ export default async function MarketingHome() {
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
                   {activeListings > 0 ? `${activeListings.toLocaleString()} active listings` : "Post the first listing"}
                 </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" style={{ color: "var(--blue)" }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--blue)" }}>
                   <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -387,7 +452,7 @@ export default async function MarketingHome() {
             }}
             className="vertical-card"
           >
-            <div style={{ height: 4, background: "var(--ink)" }} />
+            <div className="vertical-card-bar" style={{ height: 4, background: "var(--ink)", transition: "filter 0.2s" }} />
             <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
               <span className="eyebrow" style={{ color: "var(--ink)" }}>02</span>
               <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
@@ -400,7 +465,7 @@ export default async function MarketingHome() {
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
                   {activeJobs > 0 ? `${activeJobs.toLocaleString()} open roles` : "Post the first job"}
                 </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" style={{ color: "var(--ink)" }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--ink)" }}>
                   <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -424,7 +489,7 @@ export default async function MarketingHome() {
             }}
             className="vertical-card"
           >
-            <div style={{ height: 4, background: "var(--green)" }} />
+            <div className="vertical-card-bar" style={{ height: 4, background: "var(--green)", transition: "filter 0.2s" }} />
             <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
               <span className="eyebrow" style={{ color: "var(--green)" }}>03</span>
               <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
@@ -437,7 +502,7 @@ export default async function MarketingHome() {
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
                   {verifiedCount > 0 ? `${verifiedCount.toLocaleString()} verified users` : "Be the first verified user"}
                 </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" style={{ color: "var(--green)" }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--green)" }}>
                   <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -445,6 +510,12 @@ export default async function MarketingHome() {
           </Link>
         </div>
       </section>
+
+      {/* ─── Marketplace Preview ──────────────────────────────────────────── */}
+      <MarketplacePreview />
+
+      {/* ─── Jobs Preview ──────────────────────────────────────────────────── */}
+      <JobsPreview />
 
       {/* ─── How Verification Works ───────────────────────────────────────── */}
       <section
@@ -569,7 +640,7 @@ export default async function MarketingHome() {
               </Link>
             </div>
 
-            {/* Right: seal visual */}
+            {/* Right: composed seal + step indicator visual */}
             <div
               style={{
                 background: "var(--ink)",
@@ -580,42 +651,33 @@ export default async function MarketingHome() {
                 padding: "clamp(32px, 4vw, 56px)",
                 position: "relative",
                 overflow: "hidden",
-                gap: 24,
+                gap: 28,
               }}
             >
               <KhatamPattern opacity={0.06} />
-              <div style={{ position: "relative", zIndex: 1, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-                <div
-                  style={{
-                    width: 100,
-                    height: 100,
-                    borderRadius: "50%",
-                    background: "rgba(14,158,110,.15)",
-                    border: "2px solid rgba(14,158,110,.35)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="46" height="46" viewBox="0 0 56 56" fill="none" aria-hidden="true">
-                    <path
-                      d="M28 4L34 18L50 20L39 30L42 46L28 38L14 46L17 30L6 20L22 18L28 4Z"
-                      stroke="rgba(14,158,110,0.9)"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <path
-                      d="M19 28L24.5 33.5L37 21"
-                      stroke="#16C588"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+              <div style={{ position: "relative", zIndex: 1, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+                <VerificationSeal size={100} />
+
+                {/* Step indicator dots mirroring the left steps */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {["Email", "Documents", "Trust score"].map((label) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span
+                        className="verify-step-dot"
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          background: "var(--green-bright)",
+                          display: "inline-block",
+                        }}
+                      />
+                      <span style={{ fontSize: 11, color: "rgba(251,250,245,.55)", fontWeight: 600 }}>{label}</span>
+                    </div>
+                  ))}
                 </div>
-                <VerificationSeal size={80} />
-                <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", margin: 0, maxWidth: 200 }}>
+
+                <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", margin: 0, maxWidth: 220 }}>
                   Your badge appears on every listing, application, and connection request.
                 </p>
               </div>
@@ -624,99 +686,135 @@ export default async function MarketingHome() {
         </div>
       </section>
 
-      {/* Testimonials removed — will be re-added once real user quotes are collected. */}
-      {false && <section style={{ display: "none" }}>
+      {/* ─── Trust & Security ──────────────────────────────────────────────── */}
+      <TrustSecurity />
 
-        <div
-          className="x-grid-3col"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-          }}
-        >
-          {[
-            {
-              initials: "AK",
-              name: "Asad Khan",
-              role: "Car dealer · Dubai",
-              color: "var(--blue)",
-              quote:
-                "Finally a platform where I know the buyer is real. Sold my first car within 48 hours — no time-wasters.",
-            },
-            {
-              initials: "SR",
-              name: "Sana Rizvi",
-              role: "UX Designer · London",
-              color: "var(--purple)",
-              quote:
-                "Got hired through Xplosale Jobs in two weeks. The verification gave the employer confidence that my credentials were legitimate.",
-            },
-            {
-              initials: "FQ",
-              name: "Fahad Qureshi",
-              role: "Tech Recruiter · Toronto",
-              color: "var(--green)",
-              quote:
-                "We've screened 300 applications this month. Verified profiles save us hours — we skip straight to the interview.",
-            },
-          ].map(({ initials, name, role, color, quote }) => (
-            <div
-              key={name}
-              style={{
-                background: "var(--white)",
-                border: "1px solid var(--line)",
-                borderRadius: 20,
-                padding: "28px 28px 24px",
-                boxShadow: "var(--shadow)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-              }}
-            >
-              <p
+      {/* ─── Testimonials ──────────────────────────────────────────────────── */}
+      {/* Placeholder quotes — swap for real user testimonials before public launch. */}
+      <section
+        style={{
+          background: "var(--paper-2)",
+          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+          padding: "clamp(56px, 7vw, 96px) clamp(20px, 5vw, 80px)",
+        }}
+      >
+        <div style={{ maxWidth: "var(--maxw)", margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ marginBottom: 40, textAlign: "center" }}>
+              <p className="eyebrow" style={{ color: "var(--purple)", marginBottom: 12 }}>
+                What people say
+              </p>
+              <h2
                 style={{
                   fontFamily: "var(--display)",
-                  fontStyle: "italic",
-                  fontSize: 17,
-                  lineHeight: 1.6,
-                  color: "var(--ink)",
+                  fontWeight: 800,
+                  fontSize: "clamp(28px, 3.5vw, 44px)",
+                  letterSpacing: "-0.03em",
                   margin: 0,
-                  flex: 1,
                 }}
               >
-                &ldquo;{quote}&rdquo;
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                Trusted by early adopters.
+              </h2>
+            </div>
+          </Reveal>
+
+          <div
+            className="x-grid-3col"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 20,
+            }}
+          >
+            {[
+              {
+                initials: "AK",
+                name: "Asad Khan",
+                role: "Car dealer · Dubai",
+                color: "var(--blue)",
+                quote:
+                  "Finally a platform where I know the buyer is real. Sold my first car within 48 hours — no time-wasters.",
+              },
+              {
+                initials: "SR",
+                name: "Sana Rizvi",
+                role: "UX Designer · London",
+                color: "var(--purple)",
+                quote:
+                  "Got hired through Xplosale Jobs in two weeks. The verification gave the employer confidence that my credentials were legitimate.",
+              },
+              {
+                initials: "FQ",
+                name: "Fahad Qureshi",
+                role: "Tech Recruiter · Toronto",
+                color: "var(--green)",
+                quote:
+                  "We've screened 300 applications this month. Verified profiles save us hours — we skip straight to the interview.",
+              },
+            ].map(({ initials, name, role, color, quote }, i) => (
+              <Reveal key={name} delay={i * 0.08}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: color,
-                    color: "var(--white)",
+                    background: "var(--white)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 20,
+                    padding: "28px 28px 24px",
+                    boxShadow: "var(--shadow)",
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    flexShrink: 0,
+                    flexDirection: "column",
+                    gap: 20,
+                    height: "100%",
                   }}
                 >
-                  {initials}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{name}</span>
-                    <VerifiedBadge size="sm" />
+                  <p
+                    style={{
+                      fontFamily: "var(--display)",
+                      fontStyle: "italic",
+                      fontSize: 17,
+                      lineHeight: 1.6,
+                      color: "var(--ink)",
+                      margin: 0,
+                      flex: 1,
+                    }}
+                  >
+                    &ldquo;{quote}&rdquo;
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: color,
+                        color: "var(--white)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {initials}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{name}</span>
+                        <VerifiedBadge size="sm" />
+                      </div>
+                      <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>{role}</span>
+                    </div>
                   </div>
-                  <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>{role}</span>
                 </div>
-              </div>
-            </div>
-          ))}
+              </Reveal>
+            ))}
+          </div>
         </div>
-      </section>}
+      </section>
+
+      {/* ─── FAQ Teaser ────────────────────────────────────────────────────── */}
+      <FaqTeaser />
 
       {/* ─── CTA Band ─────────────────────────────────────────────────────── */}
       <section
@@ -727,12 +825,13 @@ export default async function MarketingHome() {
         }}
       >
         <div
+          className="cta-gradient"
           style={{
             maxWidth: "var(--maxw)",
             margin: "0 auto",
             background: "var(--brand-grad)",
             borderRadius: 24,
-            padding: "clamp(40px, 5vw, 64px) clamp(28px, 4vw, 60px)",
+            padding: "clamp(44px, 6vw, 72px) clamp(28px, 4vw, 60px)",
             textAlign: "center",
             position: "relative",
             overflow: "hidden",
@@ -759,16 +858,16 @@ export default async function MarketingHome() {
             <p style={{ fontSize: 17, color: "rgba(251,250,245,.75)", maxWidth: 480, margin: 0, lineHeight: 1.6 }}>
               Every transaction is safer when both sides are verified. Create your account and get your badge today — free, forever.
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", marginTop: 8 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center", marginTop: 10 }}>
               <Link
                 href="/me/verify-identity"
                 style={{
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: 700,
                   color: "var(--ink)",
                   background: "var(--white)",
-                  borderRadius: 12,
-                  padding: "14px 30px",
+                  borderRadius: 14,
+                  padding: "16px 34px",
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
@@ -783,13 +882,13 @@ export default async function MarketingHome() {
               <Link
                 href="/m"
                 style={{
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: 600,
                   color: "var(--white)",
                   background: "rgba(251,250,245,.15)",
                   border: "1.5px solid rgba(251,250,245,.3)",
-                  borderRadius: 12,
-                  padding: "13px 28px",
+                  borderRadius: 14,
+                  padding: "15px 32px",
                   textDecoration: "none",
                 }}
               >

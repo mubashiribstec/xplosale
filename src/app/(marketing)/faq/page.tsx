@@ -16,13 +16,13 @@ export const metadata: Metadata = {
   },
 };
 
-interface Faq {
+export interface Faq {
   section: string;
   q: string;
   a: string;
 }
 
-const FAQS: Faq[] = [
+export const FAQS: Faq[] = [
   // ── For buyers ──
   {
     section: "For buyers",

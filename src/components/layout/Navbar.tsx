@@ -46,7 +46,10 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
         style={{
           display: "flex",
           alignItems: "center",
@@ -130,6 +133,7 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
             </Link>
           )}
           <button
+            type="button"
             onClick={() => { setOpen(false); void signOut({ callbackUrl: "/" }); }}
             style={{
               display: "block",
@@ -159,11 +163,21 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 40);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const user = session?.user as { name?: string; image?: string; role?: string } | undefined;
 
@@ -175,9 +189,11 @@ export default function Navbar() {
         zIndex: 100,
         height: 62,
         background: "var(--white)",
-        borderBottom: "1px solid var(--line)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        borderBottom: scrolled ? "1px solid var(--line)" : "1px solid transparent",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        boxShadow: scrolled ? "var(--shadow)" : "none",
+        transition: "background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease",
       }}
     >
       <div
@@ -243,8 +259,10 @@ export default function Navbar() {
 
         {/* Mobile hamburger */}
         <button
+          type="button"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
           className="flex md:hidden"
           style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: "var(--ink)" }}
         >
@@ -288,7 +306,7 @@ export default function Navbar() {
                 {user.role === "ADMIN" && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Admin Panel</Link>
                 )}
-                <button onClick={() => { setMobileOpen(false); void signOut({ callbackUrl: "/" }); }}
+                <button type="button" onClick={() => { setMobileOpen(false); void signOut({ callbackUrl: "/" }); }}
                   style={{ background: "none", border: "none", textAlign: "left", padding: 0, fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", cursor: "pointer", fontFamily: "var(--body)" }}>
                   Sign out
                 </button>

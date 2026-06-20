@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 
 /* ─── KhatamPattern ──────────────────────────────────────────────────────── */
 export function KhatamPattern({
@@ -14,7 +14,7 @@ export function KhatamPattern({
   scale?: number;
   className?: string;
 }) {
-  const id = "kh" + Math.round(scale);
+  const id = useId();
   const c = scale / 2;
   const pts: string[] = [];
   for (let i = 0; i < 16; i++) {
@@ -111,11 +111,12 @@ export function TrustGauge({
 
 /* ─── VerificationSeal ───────────────────────────────────────────────────── */
 export function VerificationSeal({ size = 132 }: { size?: number }) {
+  const id = useId();
   const ticks = Array.from({ length: 48 });
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Verified seal">
       <defs>
-        <linearGradient id="sealG" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="var(--green-bright)" />
           <stop offset="1" stopColor="var(--green-deep)" />
         </linearGradient>
@@ -142,7 +143,7 @@ export function VerificationSeal({ size = 132 }: { size?: number }) {
       <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ink)" strokeWidth="1" opacity="0.25" />
       <path
         d="M60 22l26 10v17c0 16-11 27-26 33-15-6-26-17-26-33V32l26-10Z"
-        fill="url(#sealG)"
+        fill={`url(#${id})`}
         stroke="var(--ink)"
         strokeWidth="2"
       />
