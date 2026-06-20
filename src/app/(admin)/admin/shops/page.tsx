@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import ShopReviewQueue from "@/components/shared/shops/ShopReviewQueue";
 import AdminShopsTable from "@/components/shared/shops/AdminShopsTable";
+import AdminCommissionTable from "@/components/shared/shops/AdminCommissionTable";
 
 export const metadata: Metadata = { title: "Shops — Admin" };
 export const dynamic = "force-dynamic";
@@ -51,6 +53,42 @@ export default async function AdminShopsPage({ searchParams }: PageProps) {
           </p>
         </div>
         <ShopReviewQueue initialShops={serialized} />
+      </div>
+    );
+  }
+
+  if (tab === "commission") {
+    const defaultRate = env.DEFAULT_COMMISSION_RATE_PCT;
+    const [commissionShops, balances] = await Promise.all([
+      prisma.shop.findMany({
+        where: { billingMode: "COMMISSION" },
+        select: { id: true, name: true, commissionRate: true, owner: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
+      prisma.commissionLedgerEntry.groupBy({
+        by: ["shopId"],
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const balanceByShop = new Map(balances.map((b) => [b.shopId, Number(b._sum.amount ?? 0)]));
+
+    const serialized = commissionShops.map((s) => ({
+      id: s.id,
+      name: s.name,
+      customRate: s.commissionRate != null ? Number(s.commissionRate) : null,
+      rate: s.commissionRate != null ? Number(s.commissionRate) : defaultRate,
+      balance: balanceByShop.get(s.id) ?? 0,
+      owner: s.owner,
+    }));
+
+    return (
+      <div>
+        <Tabs tab={tab} />
+        <div className="mt-4">
+          <AdminCommissionTable shops={serialized} defaultRate={defaultRate} />
+        </div>
       </div>
     );
   }
@@ -119,6 +157,14 @@ function Tabs({ tab }: { tab: string }) {
           }`}
         >
           All Shops
+        </Link>
+        <Link
+          href="/admin/shops?tab=commission"
+          className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+            tab === "commission" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+          }`}
+        >
+          Commission
         </Link>
       </div>
     </div>

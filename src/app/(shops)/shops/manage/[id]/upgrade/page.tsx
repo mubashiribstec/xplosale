@@ -5,6 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import CheckoutButton from "@/components/shared/shops/CheckoutButton";
 import CancelSubscriptionButton from "@/components/shared/shops/CancelSubscriptionButton";
+import BillingModeSwitch from "@/components/shared/shops/BillingModeSwitch";
 import { env } from "@/lib/env";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -24,6 +25,7 @@ export default async function UpgradePage({ params }: PageProps) {
     select: {
       ownerUserId: true,
       name: true,
+      billingMode: true,
       subscription: {
         select: { planKey: true, status: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
       },
@@ -34,6 +36,8 @@ export default async function UpgradePage({ params }: PageProps) {
 
   const sub = shop.subscription;
   const activePlanKey = sub?.status === "ACTIVE" ? sub.planKey : "FREE";
+  const hasActivePaidSub = sub?.status === "ACTIVE" && (sub.planKey === "PREMIUM" || sub.planKey === "PROMOTION");
+  const isCommission = shop.billingMode === "COMMISSION";
   const periodEnd = sub?.currentPeriodEnd;
   const priceMonthly = env.PREMIUM_PRICE_PKR;
   const promotionPrice = Math.round(priceMonthly * 5 / 3); // ~PKR 2500 if premium is PKR 1500
@@ -86,12 +90,14 @@ export default async function UpgradePage({ params }: PageProps) {
         </Link>
 
         <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(24px,4vw,34px)", color: "var(--ink)", margin: "0 0 6px" }}>
-          {activePlanKey !== "FREE" ? "Your Subscription" : "Choose a Plan"}
+          {isCommission ? "Your Billing" : activePlanKey !== "FREE" ? "Your Subscription" : "Choose a Plan"}
         </h1>
         <p style={{ fontSize: 15, color: "var(--ink-faint)", margin: "0 0 36px", fontFamily: "var(--body)" }}>
-          {activePlanKey !== "FREE"
+          {isCommission
+            ? "You're on commission billing — Premium features with no monthly fee."
+            : activePlanKey !== "FREE"
             ? `${activePlanKey === "PROMOTION" ? "Promotion" : "Premium"} plan active${periodEnd ? ` · renews ${new Date(periodEnd).toLocaleDateString()}` : ""}`
-            : "Unlock more products, images, and featured placement."}
+            : "Unlock more products, images, and featured placement — pay monthly or by commission."}
         </p>
 
         {/* Plan cards */}
@@ -146,28 +152,33 @@ export default async function UpgradePage({ params }: PageProps) {
           </p>
         </div>
 
-        {/* CTA */}
-        <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, padding: "22px 24px", fontFamily: "var(--body)" }}>
-          {activePlanKey !== "FREE" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Manage Subscription</p>
-              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
-                Your {activePlanKey === "PROMOTION" ? "Promotion" : "Premium"} subscription is active
-                {periodEnd ? ` and renews on ${new Date(periodEnd).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
-              </p>
-              <CancelSubscriptionButton shopId={shopId} />
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Upgrade Now</p>
-              <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
-                PKR {priceMonthly.toLocaleString()} / month for Premium · PKR {promotionPrice.toLocaleString()} / month for Promotion.
-                {" "}Cancel anytime. Payment is simulated in this environment.
-              </p>
-              <CheckoutButton shopId={shopId} />
-            </div>
-          )}
-        </div>
+        {/* Subscription CTA — hidden while on commission billing */}
+        {!isCommission && (
+          <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, padding: "22px 24px", fontFamily: "var(--body)", marginBottom: 16 }}>
+            {activePlanKey !== "FREE" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Manage Subscription</p>
+                <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
+                  Your {activePlanKey === "PROMOTION" ? "Promotion" : "Premium"} subscription is active
+                  {periodEnd ? ` and renews on ${new Date(periodEnd).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}` : ""}.
+                </p>
+                <CancelSubscriptionButton shopId={shopId} />
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", margin: 0 }}>Upgrade Now</p>
+                <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
+                  PKR {priceMonthly.toLocaleString()} / month for Premium · PKR {promotionPrice.toLocaleString()} / month for Promotion.
+                  {" "}Cancel anytime. Payment is simulated in this environment.
+                </p>
+                <CheckoutButton shopId={shopId} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Commission billing — alternative to a monthly subscription */}
+        <BillingModeSwitch shopId={shopId} hasActivePaidSub={!!hasActivePaidSub} />
       </div>
     </main>
   );

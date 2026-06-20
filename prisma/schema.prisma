@@ -129,6 +129,17 @@ enum ShopImageKind {
   GENERAL
 }
 
+enum ShopBillingMode {
+  SUBSCRIPTION
+  COMMISSION
+}
+
+enum CommissionEntryType {
+  ACCRUAL
+  SETTLEMENT
+  ADJUSTMENT
+}
+
 enum PlanKey {
   FREE
   PREMIUM
@@ -1196,6 +1207,8 @@ model Shop {
   status       ShopStatus               @default(DRAFT)
   verifiedShop Boolean                  @default(false)
   featured     Boolean                  @default(false)
+  billingMode    ShopBillingMode        @default(SUBSCRIPTION)
+  commissionRate Decimal?               @db.Decimal(5, 2)
   bannerUrl    String?
   searchVector Unsupported("tsvector")?
   createdAt    DateTime                 @default(now())
@@ -1222,9 +1235,27 @@ model Shop {
   reports      ShopReport[]
   reviews      ShopReview[]
   favourites   ShopFavourite[]
+  commissionLedger CommissionLedgerEntry[]
 
   @@index([status, regionId, featured, createdAt])
   @@index([ownerUserId, status])
+}
+
+model CommissionLedgerEntry {
+  id          String              @id @default(cuid())
+  shopId      String
+  orderId     String?             @unique
+  type        CommissionEntryType
+  amount      Decimal             @db.Decimal(12, 2)
+  rate        Decimal?            @db.Decimal(5, 2)
+  orderTotal  Decimal?            @db.Decimal(12, 2)
+  note        String?
+  createdById String?
+  createdAt   DateTime            @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
 }
 
 model ShopImage {

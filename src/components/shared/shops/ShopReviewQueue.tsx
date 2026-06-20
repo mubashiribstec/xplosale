@@ -135,15 +135,18 @@ export default function ShopReviewQueue({ initialShops }: Props) {
                     <textarea
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      placeholder="Reason for rejection (required)"
+                      placeholder="Reason for rejection (required, min 4 characters)"
                       rows={3}
-                      maxLength={1000}
+                      maxLength={500}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-red-400"
                     />
+                    {reason.trim().length > 0 && reason.trim().length < 4 && (
+                      <p className="text-xs text-red-500">Reason must be at least 4 characters.</p>
+                    )}
                     <div className="flex gap-2">
                       <button
                         onClick={() => void handleAction(shop.id, "reject")}
-                        disabled={isLoading || !reason.trim()}
+                        disabled={isLoading || reason.trim().length < 4}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
                       >
                         {isLoading ? "Rejecting…" : "Confirm Reject"}

@@ -20,7 +20,8 @@ export interface EffectivePlan {
 
 /** Returns the active plan for a shop, defaulting to FREE if no active subscription. */
 export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
-  const [sub, freePlan] = await Promise.all([
+  const [shop, sub, freePlan] = await Promise.all([
+    prisma.shop.findUnique({ where: { id: shopId }, select: { billingMode: true } }),
     prisma.subscription.findUnique({
       where: { shopId },
       select: { planKey: true, status: true, currentPeriodEnd: true },
@@ -29,6 +30,12 @@ export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
   ]);
 
   if (!freePlan) throw new Error("Plan table not seeded — run prisma db seed");
+
+  // Commission-billed shops get PREMIUM-equivalent limits with no monthly fee.
+  if (shop?.billingMode === "COMMISSION") {
+    const premium = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
+    return { ...(premium ?? freePlan), isPromotion: false } as EffectivePlan;
+  }
 
   const now = new Date();
   const isPaidActive =
@@ -44,7 +51,7 @@ export async function getEffectivePlan(shopId: string): Promise<EffectivePlan> {
 /** Returns the effective plan for a user (based on their shops' subscriptions). */
 export async function getEffectivePlanForUser(userId: string): Promise<EffectivePlan> {
   const now = new Date();
-  const [sub, freePlan] = await Promise.all([
+  const [sub, commissionShop, freePlan] = await Promise.all([
     prisma.subscription.findFirst({
       where: {
         shop: { ownerUserId: userId },
@@ -54,10 +61,20 @@ export async function getEffectivePlanForUser(userId: string): Promise<Effective
       },
       select: { planKey: true },
     }),
+    prisma.shop.findFirst({
+      where: { ownerUserId: userId, billingMode: "COMMISSION", status: { notIn: ["REJECTED", "SUSPENDED"] } },
+      select: { id: true },
+    }),
     prisma.plan.findUnique({ where: { key: "FREE" } }),
   ]);
 
   if (!freePlan) throw new Error("Plan table not seeded — run prisma db seed");
+
+  // A commission shop (with no paid subscription) still grants PREMIUM-level limits.
+  if (!sub && commissionShop) {
+    const premium = await prisma.plan.findUnique({ where: { key: "PREMIUM" } });
+    return { ...(premium ?? freePlan), isPromotion: false } as EffectivePlan;
+  }
 
   if (!sub) return { ...freePlan, isPromotion: false } as EffectivePlan;
 

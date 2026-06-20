@@ -41,6 +41,8 @@ interface ShopData {
   acceptsDelivery: boolean;
   deliveryNotes: string | null;
   workingHours: Record<string, string> | null;
+  billingMode: "SUBSCRIPTION" | "COMMISSION";
+  commissionRate: string | number | null;
   _count?: { products: number };
 }
 
@@ -166,6 +168,7 @@ export default function EditShopPage() {
   const canSubmit = !isAdmin && (shop.status === "DRAFT" || shop.status === "REJECTED");
   const isActive = shop.status === "ACTIVE";
   const hasStorefront = !!storefrontImage;
+  const isCommission = shop.billingMode === "COMMISSION";
   const isPremium = shop.subscription?.status === "ACTIVE" &&
     (shop.subscription?.planKey === "PREMIUM" || shop.subscription?.planKey === "PROMOTION");
   const isPromotion = shop.subscription?.status === "ACTIVE" && shop.subscription?.planKey === "PROMOTION";
@@ -352,8 +355,19 @@ export default function EditShopPage() {
           />
         </div>
 
-        {/* Subscription banner */}
+        {/* Subscription / billing banner */}
         {(() => {
+          if (isCommission) {
+            const rate = shop.commissionRate != null ? Number(shop.commissionRate) : null;
+            return (
+              <div style={{ background: "rgba(37,99,235,.05)", border: "1px solid rgba(37,99,235,.3)", borderRadius: 14, padding: "14px 18px", marginBottom: 16, fontFamily: "var(--body)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                <p style={{ fontSize: 13, color: "#1d4ed8", fontWeight: 600, margin: 0 }}>
+                  💼 Commission billing{rate != null ? ` · ${rate}% per sale` : ""} · Premium features unlocked
+                </p>
+                <Link href={`/shops/manage/${shop.id}/upgrade`} style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "none" }}>View balance →</Link>
+              </div>
+            );
+          }
           if (isPremium) {
             const end = shop.subscription?.currentPeriodEnd;
             return (

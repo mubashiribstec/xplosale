@@ -68,7 +68,7 @@ export default function AdminShopsTable({ shops, total, page, pages }: Props) {
   }
 
   async function submitBan() {
-    if (!banModal || !banModal.reason.trim()) return;
+    if (!banModal || banModal.reason.trim().length < 4) return;
     setLoading(banModal.shopId);
     try {
       const res = await fetch(`/api/admin/shops/${banModal.shopId}`, {
@@ -122,11 +122,14 @@ export default function AdminShopsTable({ shops, total, page, pages }: Props) {
             <textarea
               value={banModal.reason}
               onChange={(e) => setBanModal((p) => p ? { ...p, reason: e.target.value } : null)}
-              placeholder="Reason for ban (required)"
+              placeholder="Reason for ban (required, min 4 characters)"
               rows={3}
-              maxLength={1000}
+              maxLength={500}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-red-400"
             />
+            {banModal.reason.trim().length > 0 && banModal.reason.trim().length < 4 && (
+              <p className="text-xs text-red-500">Reason must be at least 4 characters.</p>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -138,7 +141,7 @@ export default function AdminShopsTable({ shops, total, page, pages }: Props) {
               <button
                 type="button"
                 onClick={() => void submitBan()}
-                disabled={loading === banModal.shopId || !banModal.reason.trim()}
+                disabled={loading === banModal.shopId || banModal.reason.trim().length < 4}
                 className="flex-1 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
                 {loading === banModal.shopId ? "Banning…" : "Ban Shop"}

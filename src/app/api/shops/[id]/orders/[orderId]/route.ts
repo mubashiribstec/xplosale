@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
+import { accrueCommissionForOrder } from "@/verticals/shops/commission";
 
 const SHOPKEEPER_TRANSITIONS: Record<string, string[]> = {
   PENDING:           ["CONFIRMED", "CANCELLED"],
@@ -32,13 +33,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const userId = getUserId(session);
 
     const { id: shopId, orderId } = await params;
-    const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { ownerUserId: true } });
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId },
+      select: { ownerUserId: true, billingMode: true, commissionRate: true },
+    });
     if (!shop) return err("Shop not found", 404);
     if (shop.ownerUserId !== userId) return err("Forbidden", 403);
 
     const order = await prisma.shopOrder.findUnique({
       where: { id: orderId, shopId },
-      select: { status: true },
+      select: { status: true, totalAmount: true },
     });
     if (!order) return err("Order not found", 404);
 
@@ -51,10 +55,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!allowed.includes(status))
       return err(`Cannot transition from ${order.status} to ${status}`, 422);
 
-    const updated = await prisma.shopOrder.update({
-      where: { id: orderId },
-      data: { status },
-      select: { id: true, status: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.shopOrder.update({
+        where: { id: orderId },
+        data: { status },
+        select: { id: true, status: true },
+      });
+      // Commission-billed shops accrue a platform fee once an order completes.
+      if (status === "COMPLETED" && shop.billingMode === "COMMISSION") {
+        await accrueCommissionForOrder(tx, { id: orderId, shopId, totalAmount: order.totalAmount }, shop);
+      }
+      return result;
     });
 
     return ok(updated);

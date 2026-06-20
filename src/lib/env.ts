@@ -56,6 +56,9 @@ const envSchema = z.object({
   PAYMENT_PROVIDER: z.enum(["mock", "stripe", "jazzcash", "easypaisa"]).default("mock"),
   PAYMENT_MOCK: z.coerce.boolean().default(true),
   PREMIUM_PRICE_PKR: z.coerce.number().int().positive().default(1500),
+  // Default platform commission rate (%) applied to a shop that opts into
+  // commission billing until an admin sets a per-shop rate.
+  DEFAULT_COMMISSION_RATE_PCT: z.coerce.number().min(0).max(100).default(5),
   BILLING_CURRENCY: z.string().default("PKR"),
   BILLING_WEBHOOK_SECRET: z.string().min(8).default("REPLACE"),
 
