@@ -236,6 +236,24 @@ export default async function ShopPublicPage({ params }: PageProps) {
               contactPhone={shop.contactPhone}
               website={shop.website}
             />
+            {isOwner && (
+              <Link
+                href={`/shops/manage/${shop.id}`}
+                style={{
+                  padding: "11px 22px",
+                  background: "var(--clay)",
+                  color: "var(--white)",
+                  borderRadius: 11,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  fontFamily: "var(--body)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                ⚙ Manage Shop
+              </Link>
+            )}
             {!isOwner && (
               <MessageShopButton
                 shopId={shop.id}
