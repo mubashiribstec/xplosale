@@ -9,16 +9,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { accrueCommissionForOrder } from "@/verticals/shops/commission";
-
-const SHOPKEEPER_TRANSITIONS: Record<string, string[]> = {
-  PENDING:           ["CONFIRMED", "CANCELLED"],
-  PAYMENT_SUBMITTED: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED:         ["PREPARING", "CANCELLED"],
-  PREPARING:         ["READY", "CANCELLED"],
-  READY:             ["COMPLETED"],
-  COMPLETED:         [],
-  CANCELLED:         [],
-};
+import { canTransitionOrder } from "@/verticals/shops/orders";
 
 const patchSchema = z.object({
   status: z.enum(["CONFIRMED", "PREPARING", "READY", "COMPLETED", "CANCELLED"]),
@@ -51,8 +42,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!parsed.success) return err("Invalid status", 422);
 
     const { status } = parsed.data;
-    const allowed = SHOPKEEPER_TRANSITIONS[order.status] ?? [];
-    if (!allowed.includes(status))
+    if (!canTransitionOrder(order.status, status))
       return err(`Cannot transition from ${order.status} to ${status}`, 422);
 
     const updated = await prisma.$transaction(async (tx) => {

@@ -31,6 +31,11 @@ export default function SupportChatWidget() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
+  // Move focus into the panel when it opens (screen-reader / keyboard users).
+  useEffect(() => {
+    if (open) panelRef.current?.focus();
+  }, [open, roomId, loading]);
+
   if (!user || user.role === "ADMIN") return null;
 
   async function openWidget() {
@@ -65,6 +70,10 @@ export default function SupportChatWidget() {
       {open && (
         <div
           ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Support chat"
+          tabIndex={-1}
           style={{
             width: "min(360px, calc(100vw - 32px))",
             height: "min(500px, calc(100vh - 120px))",

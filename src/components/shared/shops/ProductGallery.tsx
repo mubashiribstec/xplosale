@@ -30,6 +30,8 @@ export default function ProductGallery({ images, alt }: ProductGalleryProps) {
         <img
           src={current.url}
           alt={alt}
+          width={800}
+          height={600}
           style={{ width: "100%", height: "100%", objectFit: "cover", animation: "fade .25s ease" }}
         />
       </div>
@@ -49,7 +51,7 @@ export default function ProductGallery({ images, alt }: ProductGalleryProps) {
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={img.url} alt={`${alt} — thumbnail ${i + 1}`} width={64} height={52} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </button>
           ))}
         </div>

@@ -166,7 +166,7 @@ export default async function ShopsManagePage() {
                   >
                     {boardImg ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={boardImg} alt={shop.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={boardImg} alt={`${shop.name} storefront`} width={64} height={64} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       "🏪"
                     )}

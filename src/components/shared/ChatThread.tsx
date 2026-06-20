@@ -214,7 +214,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
           Support team · typically replies within a few hours
         </div>
       )}
-      <div className="flex-1 overflow-y-auto space-y-2 pb-4">
+      <div className="flex-1 overflow-y-auto space-y-2 pb-4" role="log" aria-live="polite" aria-relevant="additions text">
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUserId;
           const isSystem = msg.kind === "SYSTEM";
@@ -254,8 +254,11 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={meta.url}
-                      alt="Attachment"
-                      style={{ maxWidth: 240, maxHeight: 320, display: "block", borderRadius: 12 }}
+                      alt={`Attachment from ${msg.sender.name ?? "sender"}`}
+                      width={meta.width ?? 240}
+                      height={meta.height ?? 320}
+                      loading="lazy"
+                      style={{ maxWidth: 240, maxHeight: 320, height: "auto", display: "block", borderRadius: 12 }}
                     />
                   </a>
                 ) : (

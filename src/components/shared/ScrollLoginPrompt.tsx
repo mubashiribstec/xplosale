@@ -36,11 +36,20 @@ export default function ScrollLoginPrompt({ isAuthenticated }: ScrollLoginPrompt
     try { sessionStorage.setItem("loginPromptShown", "1"); } catch { /* ignore */ }
   }
 
+  // Close on Escape while the prompt is open.
+  useEffect(() => {
+    if (!visible) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") dismiss(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible]);
+
   if (!visible) return null;
 
   return (
     <div
       role="dialog"
+      aria-modal="true"
       aria-label="Join Xplosale"
       style={{
         position: "fixed",
