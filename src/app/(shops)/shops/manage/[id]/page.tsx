@@ -10,6 +10,7 @@ import ProductsManager from "@/components/shared/shops/ProductsManager";
 import ShopPaymentSettings from "@/components/shared/shops/ShopPaymentSettings";
 import ShopSetupChecklist from "@/components/shared/shops/ShopSetupChecklist";
 import WorkingHoursEditor from "@/components/shared/shops/WorkingHoursEditor";
+import ShopOverviewDashboard from "@/components/shared/shops/ShopOverviewDashboard";
 
 interface ShopImage {
   id: string;
@@ -72,6 +73,8 @@ export default function EditShopPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [tab, setTab] = useState<"overview" | "products" | "settings" | "subscription">("overview");
+  const [pendingCount, setPendingCount] = useState(0);
 
   const fetchShop = useCallback(async () => {
     setLoading(true);
@@ -208,18 +211,53 @@ export default function EditShopPage() {
           {isActive ? "Your shop is live. Manage products, orders, and payment settings below." : canEdit ? "Edit your shop details below." : "This shop cannot be edited in its current status."}
         </p>
 
-        {/* Quick links for active shops */}
+        {/* Tab navigation (active shops only) */}
         {isActive && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24, borderBottom: "1px solid var(--line)" }}>
+            {([["overview", "Overview"], ["products", "Products & Details"], ["settings", "Settings"], ["subscription", "Subscription"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                style={{
+                  padding: "8px 14px", background: "none", border: "none", marginBottom: -1,
+                  borderBottom: tab === key ? "2px solid var(--clay)" : "2px solid transparent",
+                  cursor: "pointer", fontFamily: "var(--body)", fontSize: 13, fontWeight: 600,
+                  color: tab === key ? "var(--clay)" : "var(--ink-faint)",
+                }}
+              >
+                {label}{key === "overview" && pendingCount > 0 ? ` (${pendingCount})` : ""}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Overview dashboard (active shops, overview tab) */}
+        {isActive && tab === "overview" && (
+          <ShopOverviewDashboard shopId={shop.id} onStats={(s) => setPendingCount(s.pending)} />
+        )}
+
+        {/* Quick links for active shops */}
+        {isActive && tab === "overview" && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
             <Link
               href={`/shops/manage/${shop.id}/orders`}
               style={{
+                position: "relative",
                 padding: "9px 18px", background: "var(--clay)", color: "var(--white)",
                 borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: "none",
                 display: "inline-flex", alignItems: "center", gap: 6,
               }}
             >
               📦 Manage Orders
+              {pendingCount > 0 && (
+                <span style={{
+                  background: "var(--white)", color: "var(--clay)", borderRadius: 99,
+                  fontSize: 11, fontWeight: 800, padding: "1px 7px", marginLeft: 2,
+                }}>
+                  {pendingCount}
+                </span>
+              )}
             </Link>
             <Link
               href={`/shops/manage/${shop.id}/analytics`}
@@ -269,6 +307,7 @@ export default function EditShopPage() {
         />
 
         {/* Storefront photo */}
+        {(!isActive || tab === "products") && (
         <div id="storefront" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
           <StorefrontBoardUploader
             shopId={shop.id}
@@ -277,15 +316,17 @@ export default function EditShopPage() {
             onUpdate={(img) => setStorefrontImage(img)}
           />
         </div>
+        )}
 
         {/* Shop details form (DRAFT / REJECTED only) */}
-        {canEdit && (
+        {canEdit && (!isActive || tab === "products") && (
           <div id="details" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(24px,4vw,40px)", marginBottom: 16 }}>
             <ShopForm initialData={shop} />
           </div>
         )}
 
         {/* Working hours (all statuses) */}
+        {(!isActive || tab === "settings") && (
         <div style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
           <button
             type="button"
@@ -324,9 +365,10 @@ export default function EditShopPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Products — shown for DRAFT/REJECTED and ACTIVE shops */}
-        {(canEdit || isActive) && (
+        {(canEdit || isActive) && (!isActive || tab === "products") && (
           <div id="products" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
             <ProductsManager
               shopId={shop.id}
@@ -339,6 +381,7 @@ export default function EditShopPage() {
         )}
 
         {/* Payment settings (all statuses) */}
+        {(!isActive || tab === "settings") && (
         <div id="payments" style={{ background: "var(--white)", border: "1px solid var(--line)", borderRadius: 20, padding: "clamp(20px,4vw,32px)", marginBottom: 16 }}>
           <ShopPaymentSettings
             shopId={shop.id}
@@ -354,9 +397,10 @@ export default function EditShopPage() {
             }}
           />
         </div>
+        )}
 
         {/* Subscription / billing banner */}
-        {(() => {
+        {(!isActive || tab === "subscription") && (() => {
           if (isCommission) {
             const rate = shop.commissionRate != null ? Number(shop.commissionRate) : null;
             return (
@@ -432,6 +476,7 @@ export default function EditShopPage() {
         )}
 
         {/* Danger zone */}
+        {(!isActive || tab === "settings") && (
         <div style={{
           marginTop: 16, background: "var(--white)", border: "1px solid rgba(220,38,38,.25)", borderRadius: 16, padding: "20px 24px",
           fontFamily: "var(--body)", display: "flex", flexDirection: "column", gap: 12,
@@ -468,6 +513,7 @@ export default function EditShopPage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </main>
   );

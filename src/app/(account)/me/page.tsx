@@ -404,6 +404,14 @@ export default async function MePage() {
             Quick Links
           </p>
           <QuickLinks role={dbUser?.role ?? "USER"} />
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+            <Link
+              href="/me/settings"
+              style={{ fontFamily: "var(--body)", fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}
+            >
+              Account &amp; Settings →
+            </Link>
+          </div>
         </div>
       </div>
     </main>

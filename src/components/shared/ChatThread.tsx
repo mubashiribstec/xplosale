@@ -26,8 +26,11 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
   const [sendError, setSendError] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [typingName, setTypingName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const typingClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef(0);
   const isSupport = contextType === "ADMIN_DM";
   const isShopInquiry = contextType === "SHOP_INQUIRY";
 
@@ -74,7 +77,24 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
       es = new EventSource(`/api/chat/sse?roomId=${roomId}`);
       es.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data as string) as MessageWithSender;
+          const evt = JSON.parse(event.data as string) as
+            | { t: "msg"; m: MessageWithSender }
+            | { t: "typing"; userId: string; name: string | null }
+            | MessageWithSender; // tolerate any legacy raw-message payloads
+
+          // Typing signal from the other participant.
+          if ("t" in evt && evt.t === "typing") {
+            if (evt.userId === currentUserId) return;
+            setTypingName(evt.name ?? "Someone");
+            if (typingClearTimer.current) clearTimeout(typingClearTimer.current);
+            typingClearTimer.current = setTimeout(() => setTypingName(null), 4000);
+            return;
+          }
+
+          const msg = ("t" in evt && evt.t === "msg" ? evt.m : evt) as MessageWithSender;
+          if (!msg?.id) return;
+          // A real message from the other side clears their typing indicator.
+          if (msg.senderId !== currentUserId) setTypingName(null);
           setMessages((prev) => {
             if (prev.some((m) => m.id === msg.id)) return prev;
             return [...prev, msg];
@@ -94,9 +114,18 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
     return () => {
       closed = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (typingClearTimer.current) clearTimeout(typingClearTimer.current);
       es?.close();
     };
-  }, [roomId]);
+  }, [roomId, currentUserId]);
+
+  // Tell the other participant we're typing (throttled to once per ~2s).
+  function notifyTyping() {
+    const now = Date.now();
+    if (now - lastTypingSent.current < 2000) return;
+    lastTypingSent.current = now;
+    void fetch(`/api/chat/rooms/${roomId}/typing`, { method: "POST" }).catch(() => {});
+  }
 
   async function handleSend() {
     const text = input.trim();
@@ -236,6 +265,18 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
             </div>
           );
         })}
+        {typingName && (
+          <div className="flex justify-start">
+            <div className="px-4 py-2 rounded-2xl rounded-bl-none bg-gray-100 text-gray-500 text-sm inline-flex items-center gap-1">
+              <span className="text-xs font-medium opacity-70">{typingName}</span>
+              <span className="typing-dots inline-flex gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </span>
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -284,7 +325,7 @@ export function ChatThread({ roomId, initialMessages, currentUserId, contextType
         <input
           type="text"
           value={input}
-          onChange={(e) => { setInput(e.target.value); if (sendError) setSendError(""); }}
+          onChange={(e) => { setInput(e.target.value); if (e.target.value) notifyTyping(); if (sendError) setSendError(""); }}
           onKeyDown={handleKeyDown}
           placeholder={sending ? "Sending…" : "Type a message…"}
           disabled={sending}

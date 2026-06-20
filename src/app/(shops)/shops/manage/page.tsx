@@ -38,6 +38,16 @@ export default async function ShopsManagePage() {
     prisma.user.findUnique({ where: { id: userId }, select: { hasShopkeeperBadge: true } }),
   ]);
 
+  // Pending-order counts per shop (orders that need the shopkeeper's attention).
+  const pendingGroups = shops.length
+    ? await prisma.shopOrder.groupBy({
+        by: ["shopId"],
+        where: { shopId: { in: shops.map((s) => s.id) }, status: { in: ["PENDING", "PAYMENT_SUBMITTED"] } },
+        _count: { _all: true },
+      })
+    : [];
+  const pendingByShop = new Map(pendingGroups.map((g) => [g.shopId, g._count._all]));
+
   const activeShopCount = shops.filter((s) => !["REJECTED", "SUSPENDED"].includes(s.status)).length;
   const atLimit = activeShopCount >= plan.maxShops;
 
@@ -182,6 +192,14 @@ export default async function ShopsManagePage() {
                         <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99, background: "rgba(15,184,126,.12)", color: "var(--green-deep)" }}>
                           Verified Shop
                         </span>
+                      )}
+                      {(pendingByShop.get(shop.id) ?? 0) > 0 && (
+                        <Link
+                          href={`/shops/manage/${shop.id}/orders`}
+                          style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: "rgba(160,78,55,.12)", color: "var(--clay)", textDecoration: "none" }}
+                        >
+                          📦 {pendingByShop.get(shop.id)} pending
+                        </Link>
                       )}
                     </div>
                     <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>

@@ -14,8 +14,6 @@ const LINKS = [
   { label: "Saved searches", href: "/me/saved-searches" },
   { label: "Invites", href: "/me/invites" },
   { label: "Recommendations", href: "/me/job-seeker/recommendations" },
-  { label: "Identity verification", href: "/me/verify-identity" },
-  { label: "Partner application", href: "/me/partner-application" },
 ];
 
 const linkStyle: React.CSSProperties = {

@@ -108,7 +108,7 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
             My Shops
           </Link>
           <Link
-            href="/me"
+            href="/me/settings"
             onClick={() => setOpen(false)}
             style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink-soft)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500, borderTop: "1px solid var(--line)" }}
           >
@@ -299,7 +299,7 @@ export default function Navbar() {
               <>
                 <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>
                 <Link href="/shops/manage" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>My Shops</Link>
-                <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>Account &amp; Settings</Link>
+                <Link href="/me/settings" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>Account &amp; Settings</Link>
                 {user.role === "PARTNER" && (
                   <Link href="/partner" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--clay)", textDecoration: "none" }}>Partner Dashboard</Link>
                 )}

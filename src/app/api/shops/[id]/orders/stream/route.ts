@@ -1,35 +1,27 @@
 import { type NextRequest } from "next/server";
 import { err } from "@/lib/http";
-import { requireSession, getUserId } from "@/core/auth/session";
+import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { canAccessChatRoom, roomChannel } from "@/core/messaging/rooms";
 import { subscribe } from "@/core/realtime/bus";
 
 const SSE_TIMEOUT_MS = 5 * 60 * 1000;
 const HEARTBEAT_MS = 15_000;
 
-export async function GET(req: NextRequest) {
-  const session = await requireSession().catch(() => null);
+type Params = { params: Promise<{ id: string }> };
+
+/** GET /api/shops/[id]/orders/stream — live order events for the shop owner. */
+export async function GET(_req: NextRequest, { params }: Params) {
+  const session = await getSession();
   if (!session) return err("Unauthorized", 401);
   const userId = getUserId(session);
-  const userRole = (session.user as { role?: string }).role;
 
-  const roomId = req.nextUrl.searchParams.get("roomId");
-  if (!roomId) return err("roomId is required", 400);
-
-  const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
-  if (!room) return err("Room not found", 404);
-  if (!canAccessChatRoom(room, userId, userRole)) {
-    return err("Forbidden", 403);
-  }
-
-  const bannedAt = (session.user as { bannedAt?: string | null }).bannedAt;
-  if (bannedAt && room.contextType !== "ADMIN_DM") {
-    return err("Account suspended", 403);
-  }
+  const { id: shopId } = await params;
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { ownerUserId: true } });
+  if (!shop) return err("Shop not found", 404);
+  if (shop.ownerUserId !== userId) return err("Forbidden", 403);
 
   const encoder = new TextEncoder();
-  const channel = roomChannel(roomId);
+  const channel = `rt:shop:${shopId}:orders`;
   let unsubscribe: (() => void) | undefined;
 
   const stream = new ReadableStream({
@@ -73,8 +65,6 @@ export async function GET(req: NextRequest) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
-      // Stop reverse proxies (nginx, etc.) from buffering the stream, which
-      // otherwise withholds events until the connection closes.
       "X-Accel-Buffering": "no",
     },
   });

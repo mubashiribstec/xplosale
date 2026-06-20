@@ -1,6 +1,11 @@
 import { type ChatContext, type ChatRoom, type NotificationKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { kv } from "@/core/adapters/kv";
+import { publish } from "@/core/realtime/bus";
+
+/** Real-time channel for a chat room. */
+export function roomChannel(roomId: string): string {
+  return `rt:chat:${roomId}`;
+}
 
 /** Any admin may access an ADMIN_DM room, not just the two pinned participants. */
 export function canAccessChatRoom(
@@ -49,12 +54,14 @@ export async function getOrCreateRoom(
   });
 }
 
+/** Broadcast a new message to everyone watching the room (live, no refresh). */
 export async function publishMessage(roomId: string, message: object): Promise<void> {
-  try {
-    await kv.publish(`chat:room:${roomId}`, JSON.stringify(message));
-  } catch {
-    // Redis pub/sub may not be available in all envs
-  }
+  publish(roomChannel(roomId), JSON.stringify({ t: "msg", m: message }));
+}
+
+/** Broadcast a transient "user is typing" signal (not persisted). */
+export function publishTyping(roomId: string, user: { userId: string; name: string | null }): void {
+  publish(roomChannel(roomId), JSON.stringify({ t: "typing", userId: user.userId, name: user.name }));
 }
 
 export async function createNotification(

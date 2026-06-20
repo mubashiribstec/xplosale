@@ -9,6 +9,12 @@ import { ok, err, parseError } from "@/lib/http";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateRoom, publishMessage } from "@/core/messaging/rooms";
+import { publish } from "@/core/realtime/bus";
+
+/** Real-time channel a shopkeeper's manage page listens on for new orders. */
+export function shopOrdersChannel(shopId: string): string {
+  return `rt:shop:${shopId}:orders`;
+}
 
 const itemSchema = z.object({
   productId: z.string().cuid(),
@@ -103,6 +109,15 @@ export async function POST(req: NextRequest, { params }: Params) {
       },
       include: { items: true },
     });
+
+    // Live alert to the shopkeeper's open manage page (toast + badge bump).
+    publish(shopOrdersChannel(shopId), JSON.stringify({
+      t: "order",
+      orderId: order.id,
+      total: totalAmount,
+      items: orderItems.length,
+      at: order.createdAt.toISOString(),
+    }));
 
     // Fire-and-forget: send a SYSTEM message to the SHOP_INQUIRY chat thread
     void (async () => {
