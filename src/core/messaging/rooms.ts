@@ -1,6 +1,27 @@
-import { type ChatContext, type NotificationKind, Prisma } from "@prisma/client";
+import { type ChatContext, type ChatRoom, type NotificationKind, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { kv } from "@/core/adapters/kv";
+
+/** Any admin may access an ADMIN_DM room, not just the two pinned participants. */
+export function canAccessChatRoom(
+  room: Pick<ChatRoom, "participantAId" | "participantBId" | "contextType">,
+  userId: string,
+  userRole?: string
+): boolean {
+  if (room.participantAId === userId || room.participantBId === userId) return true;
+  return room.contextType === "ADMIN_DM" && userRole === "ADMIN";
+}
+
+/** For ADMIN_DM rooms, resolve the non-admin participant (the customer). */
+export async function getSupportCustomerId(room: Pick<ChatRoom, "participantAId" | "participantBId">): Promise<string> {
+  const [a, b] = await Promise.all([
+    prisma.user.findUnique({ where: { id: room.participantAId }, select: { role: true } }),
+    prisma.user.findUnique({ where: { id: room.participantBId }, select: { role: true } }),
+  ]);
+  if (a?.role !== "ADMIN") return room.participantAId;
+  if (b?.role !== "ADMIN") return room.participantBId;
+  return room.participantBId;
+}
 
 export async function getOrCreateRoom(
   contextType: ChatContext,

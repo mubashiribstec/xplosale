@@ -67,6 +67,9 @@ export default function EditShopPage() {
   const [hoursOpen, setHoursOpen] = useState(false);
   const [hoursSaving, setHoursSaving] = useState(false);
   const [hoursSaved, setHoursSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const fetchShop = useCallback(async () => {
     setLoading(true);
@@ -109,6 +112,23 @@ export default function EditShopPage() {
       setSubmitError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteShop() {
+    if (!shop) return;
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/shops/${shop.id}`, { method: "DELETE" });
+      const json = await res.json() as { ok: boolean; error?: string };
+      if (!res.ok || !json.ok) { setDeleteError(json.error ?? "Failed to delete shop."); return; }
+      router.push("/shops/manage");
+    } catch {
+      setDeleteError("Network error. Please try again.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -396,6 +416,44 @@ export default function EditShopPage() {
             )}
           </div>
         )}
+
+        {/* Danger zone */}
+        <div style={{
+          marginTop: 16, background: "var(--white)", border: "1px solid rgba(220,38,38,.25)", borderRadius: 16, padding: "20px 24px",
+          fontFamily: "var(--body)", display: "flex", flexDirection: "column", gap: 12,
+        }}>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 15, color: "#dc2626", margin: "0 0 4px" }}>Danger Zone</p>
+            <p style={{ fontSize: 13, color: "var(--ink-faint)", margin: 0 }}>
+              Permanently delete this shop and all its products, images, and orders. This cannot be undone.
+            </p>
+          </div>
+          {deleteError && (
+            <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>{deleteError}</p>
+          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => void handleDeleteShop()}
+              disabled={deleting}
+              style={{
+                padding: "10px 24px", background: confirmDelete ? "#dc2626" : "transparent",
+                color: confirmDelete ? "var(--white)" : "#dc2626",
+                border: "1px solid #dc2626", borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: "var(--body)",
+                cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1,
+              }}
+            >
+              {deleting ? "Deleting…" : confirmDelete ? "Click again to confirm delete" : "Delete shop"}
+            </button>
+            {confirmDelete && !deleting && (
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{ padding: "10px 16px", background: "transparent", color: "var(--ink-faint)", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: "var(--body)", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </main>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import SupportBanActions from "@/components/shared/SupportBanActions";
 
 function relativeTime(date: Date): string {
   const diff = Date.now() - date.getTime();
@@ -20,8 +21,8 @@ export default async function AdminSupportPage() {
         take: 1,
         include: { sender: { select: { role: true } } },
       },
-      participantA: { select: { id: true, name: true, role: true } },
-      participantB: { select: { id: true, name: true, role: true } },
+      participantA: { select: { id: true, name: true, role: true, bannedAt: true } },
+      participantB: { select: { id: true, name: true, role: true, bannedAt: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -86,12 +87,15 @@ export default async function AdminSupportPage() {
                         : relativeTime(new Date(room.createdAt))}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <Link
-                        href={`/chat/${room.id}`}
-                        className={`font-medium ${awaitingReply ? "text-amber-700 hover:text-amber-900" : "text-blue-600 hover:underline"}`}
-                      >
-                        {awaitingReply ? "Reply ↗" : "View"}
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <SupportBanActions roomId={room.id} userId={user.id} banned={!!user.bannedAt} />
+                        <Link
+                          href={`/chat/${room.id}`}
+                          className={`font-medium ${awaitingReply ? "text-amber-700 hover:text-amber-900" : "text-blue-600 hover:underline"}`}
+                        >
+                          {awaitingReply ? "Reply ↗" : "View"}
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );

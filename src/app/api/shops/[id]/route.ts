@@ -137,3 +137,23 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return parseError(e);
   }
 }
+
+/** DELETE /api/shops/[id] — permanently delete a shop (owner, or admin) */
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  try {
+    const session = await getSession();
+    if (!session) return err("Unauthorized", 401);
+    const userId = getUserId(session);
+    const isAdmin = (session.user as { role?: string }).role === "ADMIN";
+
+    const { id } = await params;
+    const shop = await prisma.shop.findUnique({ where: { id }, select: { id: true, ownerUserId: true } });
+    if (!shop) return err("Shop not found", 404);
+    if (shop.ownerUserId !== userId && !isAdmin) return err("Forbidden", 403);
+
+    await prisma.shop.delete({ where: { id } });
+    return ok({ deleted: true });
+  } catch (e) {
+    return parseError(e);
+  }
+}

@@ -3,13 +3,13 @@ import { z } from "zod";
 import { ok, err, parseError } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
-import { publishMessage, createNotification } from "@/core/messaging/rooms";
+import { publishMessage, createNotification, canAccessChatRoom, getSupportCustomerId } from "@/core/messaging/rooms";
 import { rateLimit } from "@/lib/rate-limit";
 
-async function getParticipantRoom(roomId: string, userId: string) {
+async function getParticipantRoom(roomId: string, userId: string, userRole?: string) {
   const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
   if (!room) return null;
-  if (room.participantAId !== userId && room.participantBId !== userId) return null;
+  if (!canAccessChatRoom(room, userId, userRole)) return null;
   return room;
 }
 
@@ -21,9 +21,10 @@ export async function GET(
     const session = await requireSession().catch(() => null);
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+    const userRole = (session.user as { role?: string }).role;
 
     const { roomId } = await params;
-    const room = await getParticipantRoom(roomId, userId);
+    const room = await getParticipantRoom(roomId, userId, userRole);
     if (!room) return err("Room not found", 404);
 
     const { searchParams } = req.nextUrl;
@@ -59,13 +60,18 @@ export async function POST(
     const session = await requireSession().catch(() => null);
     if (!session) return err("Unauthorized", 401);
     const userId = getUserId(session);
+    const userRole = (session.user as { role?: string }).role;
 
     const limited = await rateLimit(`chat:message:${userId}`, 60, 60);
     if (!limited.allowed) return err("Too many requests", 429);
 
     const { roomId } = await params;
-    const room = await getParticipantRoom(roomId, userId);
+    const room = await getParticipantRoom(roomId, userId, userRole);
     if (!room) return err("Room not found", 404);
+
+    // Banned users may only message support (ADMIN_DM) threads.
+    const bannedAt = (session.user as { bannedAt?: string | null }).bannedAt;
+    if (bannedAt && room.contextType !== "ADMIN_DM") return err("Account suspended", 403);
 
     const body = await req.json();
     const parsed = sendMessageSchema.safeParse(body);
@@ -85,8 +91,15 @@ export async function POST(
 
     await publishMessage(roomId, message);
 
-    const otherUserId =
-      room.participantAId === userId ? room.participantBId : room.participantAId;
+    let otherUserId: string;
+    if (room.contextType === "ADMIN_DM") {
+      const customerId = await getSupportCustomerId(room);
+      otherUserId = userId === customerId
+        ? (room.participantAId === customerId ? room.participantBId : room.participantAId)
+        : customerId;
+    } else {
+      otherUserId = room.participantAId === userId ? room.participantBId : room.participantAId;
+    }
 
     await createNotification(otherUserId, "MESSAGE", {
       roomId,

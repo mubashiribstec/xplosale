@@ -1,12 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession, getUserId } from "@/core/auth/session";
+import { prisma } from "@/lib/prisma";
+import BannedSupportChat from "@/components/shared/BannedSupportChat";
 
 export const metadata: Metadata = {
   title: "Account Suspended | Xplosale",
   robots: { index: false, follow: false },
 };
 
-export default function BannedPage() {
+export default async function BannedPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = getUserId(session);
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { bannedAt: true, banReason: true, bannedUntil: true },
+  });
+
+  // No longer banned — send them back to the site.
+  if (!dbUser?.bannedAt) redirect("/");
+
   return (
     <main
       style={{
@@ -22,26 +37,24 @@ export default function BannedPage() {
       <div
         style={{
           width: "100%",
-          maxWidth: 460,
+          maxWidth: 480,
           background: "var(--white)",
           border: "1px solid var(--line)",
           borderRadius: 22,
           boxShadow: "var(--shadow-lg)",
-          padding: "clamp(32px, 5vw, 48px) clamp(28px, 5vw, 44px)",
-          textAlign: "center",
+          padding: "clamp(28px, 5vw, 40px)",
           display: "flex",
           flexDirection: "column",
-          gap: 20,
+          gap: 18,
         }}
       >
-        <div style={{ fontSize: 48, lineHeight: 1 }}>🚫</div>
-
-        <div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 40, lineHeight: 1, marginBottom: 8 }}>🚫</div>
           <h1
             style={{
               fontFamily: "var(--display)",
               fontWeight: 800,
-              fontSize: 26,
+              fontSize: 24,
               color: "var(--ink)",
               margin: "0 0 8px",
             }}
@@ -49,36 +62,14 @@ export default function BannedPage() {
             Account Suspended
           </h1>
           <p style={{ fontSize: 14, color: "var(--ink-soft)", margin: 0, lineHeight: 1.6 }}>
-            Your account has been suspended due to a violation of our{" "}
-            <Link href="/terms" style={{ color: "var(--clay)", textDecoration: "underline" }}>
-              Terms of Service
-            </Link>
-            . If you believe this is an error, please contact support.
+            {dbUser.banReason ?? "Your account has been suspended due to a violation of our Terms of Service."}
+            {dbUser.bannedUntil
+              ? ` This suspension is temporary and lifts automatically.`
+              : ` Chat with our support team below to appeal this decision.`}
           </p>
         </div>
 
-        <a
-          href="mailto:support@xplosale.com"
-          style={{
-            display: "inline-block",
-            padding: "12px 24px",
-            background: "var(--clay)",
-            color: "#fff",
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 14,
-            textDecoration: "none",
-          }}
-        >
-          Contact Support
-        </a>
-
-        <Link
-          href="/"
-          style={{ fontSize: 13, color: "var(--ink-faint)", textDecoration: "underline" }}
-        >
-          Return to homepage
-        </Link>
+        <BannedSupportChat />
       </div>
     </main>
   );

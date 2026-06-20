@@ -131,7 +131,6 @@ export default async function PartnerDashboard() {
           {[
             { label: "My listings", href: "/me/listings" },
             { label: "My jobs", href: "/me/employer/jobs" },
-            { label: "Applications", href: "/me/applications" },
             { label: "Identity verification", href: "/me/verify-identity" },
             { label: "Account settings", href: "/me" },
           ].map(({ label, href }) => (

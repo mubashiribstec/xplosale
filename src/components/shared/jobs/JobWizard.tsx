@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import SkillsChipInput from "@/components/shared/SkillsChipInput";
 import JobLocationPicker, { type JobLocation } from "@/components/shared/jobs/JobLocationPicker";
 import { EMPLOYMENT_TYPE_OPTIONS, EXPERIENCE_LEVEL_OPTIONS } from "@/lib/job-facets";
@@ -414,9 +415,19 @@ export default function JobWizard() {
       </div>
 
       {error && (
-        <p style={{ fontSize: 13, color: "var(--clay)", margin: "16px 0 0", padding: "10px 14px", background: "rgba(160,78,55,.06)", borderRadius: 9 }}>
-          {error}
-        </p>
+        <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(160,78,55,.06)", borderRadius: 9 }}>
+          <p style={{ fontSize: 13, color: "var(--clay)", margin: 0 }}>{error}</p>
+          {error.includes("admin-verified") && (
+            <Link href="/me/partner-application" style={{ display: "block", marginTop: 6, fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "underline" }}>
+              Apply for partner verification →
+            </Link>
+          )}
+          {error.includes("Employer profile not found") && (
+            <Link href="/me/employer" style={{ display: "block", marginTop: 6, fontSize: 13, fontWeight: 600, color: "var(--clay)", textDecoration: "underline" }}>
+              Set up your company profile →
+            </Link>
+          )}
+        </div>
       )}
 
       {/* Navigation */}

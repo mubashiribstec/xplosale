@@ -4,6 +4,7 @@ import { err } from "@/lib/http";
 import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { canAccessChatRoom } from "@/core/messaging/rooms";
 
 const SSE_TIMEOUT_MS = 5 * 60 * 1000;
 const HEARTBEAT_MS = 15_000;
@@ -12,14 +13,20 @@ export async function GET(req: NextRequest) {
   const session = await requireSession().catch(() => null);
   if (!session) return err("Unauthorized", 401);
   const userId = getUserId(session);
+  const userRole = (session.user as { role?: string }).role;
 
   const roomId = req.nextUrl.searchParams.get("roomId");
   if (!roomId) return err("roomId is required", 400);
 
   const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
   if (!room) return err("Room not found", 404);
-  if (room.participantAId !== userId && room.participantBId !== userId) {
+  if (!canAccessChatRoom(room, userId, userRole)) {
     return err("Forbidden", 403);
+  }
+
+  const bannedAt = (session.user as { bannedAt?: string | null }).bannedAt;
+  if (bannedAt && room.contextType !== "ADMIN_DM") {
+    return err("Account suspended", 403);
   }
 
   const subscriber = new Redis(env.UPSTASH_REDIS_URL, {

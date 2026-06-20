@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { ChatThread } from "@/components/shared/ChatThread";
+import { canAccessChatRoom } from "@/core/messaging/rooms";
 
 export default async function ChatRoomPage({
   params,
@@ -11,12 +12,13 @@ export default async function ChatRoomPage({
   const session = await getSession();
   if (!session) redirect("/login");
   const userId = getUserId(session);
+  const userRole = (session.user as { role?: string }).role;
 
   const { roomId } = await params;
 
   const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
   if (!room) notFound();
-  if (room.participantAId !== userId && room.participantBId !== userId) {
+  if (!canAccessChatRoom(room, userId, userRole)) {
     redirect("/chat");
   }
 

@@ -3,10 +3,13 @@ import { NextResponse } from "next/server";
 import { edgeKvGet, edgeKvSetNx, edgeKvIncr } from "@/core/adapters/kv.edge";
 
 const BANNED_PAGE = "/banned";
-const OPEN_PATHS = [BANNED_PAGE, "/login", "/"];
+const OPEN_PATHS = [BANNED_PAGE, "/login"];
+// Banned users may still reach the support chat embedded in /banned.
+const OPEN_PREFIXES = ["/api/support/room", "/api/chat"];
 
 function isBannedSafe(pathname: string): boolean {
-  return OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(p + "?"));
+  if (OPEN_PATHS.some((p) => pathname === p || pathname.startsWith(p + "?"))) return true;
+  return OPEN_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 /* ─── DoS / abuse guard (runs first, before any session work) ───────────────
