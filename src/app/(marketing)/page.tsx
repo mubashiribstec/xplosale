@@ -5,36 +5,33 @@ import { KhatamPattern, VerificationSeal, TrustGauge } from "@/components/ui/Xpl
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import GoogleSignInButton from "@/components/shared/GoogleSignInButton";
 import Reveal from "@/components/marketing/Reveal";
 import CountUp from "@/components/marketing/CountUp";
 import MarketplacePreview from "@/components/marketing/MarketplacePreview";
 import JobsPreview from "@/components/marketing/JobsPreview";
-import TrustSecurity from "@/components/marketing/TrustSecurity";
-import FaqTeaser from "@/components/marketing/FaqTeaser";
 import { prisma } from "@/lib/prisma";
 import { serializeJsonLd } from "@/lib/json-ld";
 
 export const metadata: Metadata = {
   title: "Xplosale — The marketplace where everyone is who they say they are",
   description:
-    "Identity-verified marketplace, jobs, and shops. Buy, sell, hire, and apply with confidence — every account is reviewed by our team.",
+    "Identity-verified marketplace, jobs, and local shops. Buy, sell, hire, apply, and shop with confidence — every account is reviewed by our team.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
-    title: "Xplosale — Identity-verified marketplace",
-    description: "Buy, sell, hire, and apply with confidence — every account is reviewed by our team.",
+    title: "Xplosale — Identity-verified marketplace, jobs & shops",
+    description: "Buy, sell, hire, apply, and shop with confidence — every account is reviewed by our team.",
     type: "website",
   },
   twitter: { card: "summary_large_image", title: "Xplosale", description: "Identity-verified marketplace, jobs, and shops." },
 };
 
 export default async function MarketingHome() {
-  const [verifiedCount, activeListings, activeJobs, totalUsers] = await Promise.all([
+  const [verifiedCount, activeListings, activeJobs, activeShops] = await Promise.all([
     prisma.user.count({ where: { hasVerifiedBadge: true } }),
     prisma.listing.count({ where: { status: "ACTIVE" } }),
     prisma.jobPosting.count({ where: { status: "ACTIVE" } }),
-    prisma.user.count(),
+    prisma.shop.count({ where: { status: "ACTIVE" } }),
   ]);
 
   const orgJsonLd = {
@@ -50,6 +47,65 @@ export default async function MarketingHome() {
     name: "Xplosale",
     url: "https://xplosale.com",
   };
+
+  // Public sections — every visitor is funnelled into all three.
+  const sections = [
+    {
+      num: "01",
+      href: "/m",
+      color: "var(--blue)",
+      title: "Buy & sell anything.",
+      desc: "Post listings, negotiate, and pay through escrow — every counterparty is identity-verified, so no scams and no time-wasters.",
+      stat: activeListings > 0 ? `${activeListings.toLocaleString()} active listings` : "Post the first listing",
+      cta: "Browse marketplace",
+    },
+    {
+      num: "02",
+      href: "/jobs",
+      color: "var(--ink)",
+      title: "Real jobs, real employers.",
+      desc: "Every role comes from a company with a confirmed identity. Apply with confidence — no ghost postings, no fake recruiters.",
+      stat: activeJobs > 0 ? `${activeJobs.toLocaleString()} open roles` : "Post the first job",
+      cta: "Find jobs",
+    },
+    {
+      num: "03",
+      href: "/shops",
+      color: "var(--clay)",
+      title: "Discover local shops.",
+      desc: "Order from verified local storefronts and pay your way — cash, JazzCash, EasyPaisa, or bank. Your neighbourhood, online.",
+      stat: activeShops > 0 ? `${activeShops.toLocaleString()} shops open` : "Open the first shop",
+      cta: "Explore shops",
+    },
+  ];
+
+  // The problems Xplosale exists to solve.
+  const problems = [
+    {
+      color: "var(--clay)",
+      title: "No more fake accounts",
+      desc: "Every identity document is reviewed by a real person before a badge is issued — you always know who you're dealing with.",
+      icon: (
+        <path d="M8 1.5L2 4v4c0 3.3 2.5 6.2 6 7 3.5-.8 6-3.7 6-7V4L8 1.5z M5.5 8l1.8 1.8 3.2-3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      ),
+    },
+    {
+      color: "var(--blue)",
+      title: "No scams or ghost listings",
+      desc: "Sellers, employers, and shopkeepers are verified, so listings and roles are real — not bait from anonymous accounts.",
+      icon: (
+        <path d="M8 1.5l5.5 2v3.2c0 3.4-2.3 6.5-5.5 7.3-3.2-.8-5.5-3.9-5.5-7.3V3.5L8 1.5z M8 5v3.5 M8 11h.01" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      ),
+    },
+    {
+      color: "var(--green)",
+      title: "Safer payments with escrow",
+      desc: "Marketplace payments are held in escrow and released only when both sides are happy — your money is protected end to end.",
+      icon: (
+        <path d="M2.5 5.5h11v7h-11z M2.5 8h11 M5 10.5h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      ),
+    },
+  ];
 
   return (
     <>
@@ -138,13 +194,14 @@ export default async function MarketingHome() {
           </h1>
 
           {/* Subtitle */}
-          <p style={{ fontSize: 19, lineHeight: 1.6, color: "var(--ink-soft)", maxWidth: 520, margin: 0 }}>
-            Xplosale reviews every identity document — so buyers, sellers, employers, and professionals can trust each other from day one.
+          <p style={{ fontSize: 19, lineHeight: 1.6, color: "var(--ink-soft)", maxWidth: 540, margin: 0 }}>
+            Buy &amp; sell, find jobs, and shop local — with one verified identity that everyone can trust.
+            We review every account by hand, so you always know who&apos;s on the other side.
           </p>
 
           {/* Search bar */}
-          <div style={{ maxWidth: 520, borderRadius: 16, boxShadow: "var(--shadow)" }}>
-            <GlobalSearchBar placeholder="Search cars, mobiles, property, remote jobs…" />
+          <div style={{ maxWidth: 540, borderRadius: 16, boxShadow: "var(--shadow)" }}>
+            <GlobalSearchBar placeholder="Search cars, mobiles, jobs, local shops…" />
           </div>
 
           {/* Quick-link pills */}
@@ -154,6 +211,7 @@ export default async function MarketingHome() {
               { label: "Mobiles", href: "/m?category=mobiles" },
               { label: "Property", href: "/m?category=property" },
               { label: "Remote jobs", href: "/jobs?remote=true" },
+              { label: "Shops", href: "/shops" },
             ].map(({ label, href }) => (
               <Link
                 key={label}
@@ -175,9 +233,8 @@ export default async function MarketingHome() {
             ))}
           </div>
 
-          {/* CTAs */}
+          {/* CTAs — no third-party sign-in on the landing page */}
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-            <GoogleSignInButton />
             <Link
               href="/me/verify-identity"
               style={{
@@ -197,6 +254,21 @@ export default async function MarketingHome() {
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+            </Link>
+            <Link
+              href="/m"
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: "var(--ink)",
+                background: "var(--white)",
+                border: "1.5px solid var(--line)",
+                borderRadius: 12,
+                padding: "13px 26px",
+                textDecoration: "none",
+              }}
+            >
+              Explore marketplace
             </Link>
           </div>
 
@@ -324,7 +396,7 @@ export default async function MarketingHome() {
             { value: verifiedCount, label: "Identities verified", sub: "documents reviewed by our team", zero: "Just launched" },
             { value: activeListings, label: "Active listings", sub: "on the marketplace", zero: "Post yours first" },
             { value: activeJobs, label: "Open roles", sub: "hiring now", zero: "Post the first job" },
-            { value: totalUsers, label: "Registered users", sub: "and growing", zero: "Be the first to join" },
+            { value: activeShops, label: "Shops open", sub: "ready to take orders", zero: "Open the first shop" },
           ].map(({ value, label, sub, zero }) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {value === 0 ? (
@@ -365,7 +437,7 @@ export default async function MarketingHome() {
         </div>
       </div>
 
-      {/* ─── Three Verticals ──────────────────────────────────────────────── */}
+      {/* ─── Explore every section ────────────────────────────────────────── */}
       <section
         style={{
           maxWidth: "var(--maxw)",
@@ -386,128 +458,136 @@ export default async function MarketingHome() {
               margin: 0,
             }}
           >
-            Two verticals. One verified identity.
+            Three ways to use your verified identity.
           </h2>
         </div>
 
         <div
-          className="x-grid-3col"
+          className="x-grid-3col stagger"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: 20,
           }}
         >
-          {/* Vertical 1 — Marketplace */}
-          <Link
-            href="/m"
-            style={{
-              background: "var(--white)",
-              border: "1px solid var(--line)",
-              borderRadius: 20,
-              overflow: "hidden",
-              textDecoration: "none",
-              color: "var(--ink)",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "var(--shadow)",
-              transition: "box-shadow 0.2s, transform 0.2s",
-            }}
-            className="vertical-card"
-          >
-            <div className="vertical-card-bar" style={{ height: 4, background: "var(--blue)", transition: "filter 0.2s" }} />
-            <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-              <span className="eyebrow" style={{ color: "var(--blue)" }}>01</span>
-              <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
-                Buy &amp; sell anything.
-              </h3>
-              <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
-                Post listings, negotiate securely, and complete transactions knowing every counterparty has been identity-verified.
-              </p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
-                  {activeListings > 0 ? `${activeListings.toLocaleString()} active listings` : "Post the first listing"}
-                </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--blue)" }}>
-                  <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+          {sections.map(({ num, href, color, title, desc, stat, cta }) => (
+            <Link
+              key={num}
+              href={href}
+              className="vertical-card"
+              style={{
+                background: "var(--white)",
+                border: "1px solid var(--line)",
+                borderRadius: 20,
+                overflow: "hidden",
+                textDecoration: "none",
+                color: "var(--ink)",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "var(--shadow)",
+                transition: "box-shadow 0.2s, transform 0.2s",
+              }}
+            >
+              <div className="vertical-card-bar" style={{ height: 4, background: color, transition: "filter 0.2s" }} />
+              <div style={{ padding: "28px 28px 22px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+                <span className="eyebrow" style={{ color }}>{num}</span>
+                <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
+                  {desc}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color }}>
+                    {cta}
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color }}>
+                    <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-faint)" }}>{stat}</span>
               </div>
-            </div>
-          </Link>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          {/* Vertical 2 — Jobs */}
-          <Link
-            href="/jobs"
-            style={{
-              background: "var(--white)",
-              border: "1px solid var(--line)",
-              borderRadius: 20,
-              overflow: "hidden",
-              textDecoration: "none",
-              color: "var(--ink)",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "var(--shadow)",
-              transition: "box-shadow 0.2s, transform 0.2s",
-            }}
-            className="vertical-card"
-          >
-            <div className="vertical-card-bar" style={{ height: 4, background: "var(--ink)", transition: "filter 0.2s" }} />
-            <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-              <span className="eyebrow" style={{ color: "var(--ink)" }}>02</span>
-              <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
-                Verified employers, real roles.
-              </h3>
-              <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
-                Every job listing comes from a company with a confirmed identity. Apply with confidence — no ghost postings.
+      {/* ─── Problems we solve ────────────────────────────────────────────── */}
+      <section
+        style={{
+          background: "var(--paper-2)",
+          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+          padding: "clamp(56px, 7vw, 96px) clamp(20px, 5vw, 80px)",
+        }}
+      >
+        <div style={{ maxWidth: "var(--maxw)", margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ marginBottom: 40, textAlign: "center" }}>
+              <p className="eyebrow" style={{ color: "var(--clay)", marginBottom: 12 }}>
+                Why Xplosale
               </p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
-                  {activeJobs > 0 ? `${activeJobs.toLocaleString()} open roles` : "Post the first job"}
-                </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--ink)" }}>
-                  <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              <h2
+                style={{
+                  fontFamily: "var(--display)",
+                  fontWeight: 800,
+                  fontSize: "clamp(28px, 3.5vw, 44px)",
+                  letterSpacing: "-0.03em",
+                  margin: "0 auto",
+                  maxWidth: 720,
+                  lineHeight: 1.15,
+                }}
+              >
+                Online deals are full of strangers. We fix that.
+              </h2>
             </div>
-          </Link>
+          </Reveal>
 
-          {/* Trust layer — not a separate vertical, a cross-cutting feature */}
-          <Link
-            href="/me/verify-identity"
-            style={{
-              background: "var(--white)",
-              border: "1px solid var(--line)",
-              borderRadius: 20,
-              overflow: "hidden",
-              textDecoration: "none",
-              color: "var(--ink)",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "var(--shadow)",
-              transition: "box-shadow 0.2s, transform 0.2s",
-            }}
-            className="vertical-card"
+          <div
+            className="x-grid-3col"
+            style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}
           >
-            <div className="vertical-card-bar" style={{ height: 4, background: "var(--green)", transition: "filter 0.2s" }} />
-            <div style={{ padding: "28px 28px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-              <span className="eyebrow" style={{ color: "var(--green)" }}>03</span>
-              <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.2 }}>
-                Your identity, verified.
-              </h3>
-              <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
-                Upload your CNIC or passport — our team reviews it and allocates your verified badge. One badge, trusted everywhere on the platform.
-              </p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-faint)" }}>
-                  {verifiedCount > 0 ? `${verifiedCount.toLocaleString()} verified users` : "Be the first verified user"}
-                </span>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="vertical-card-arrow" style={{ color: "var(--green)" }}>
-                  <path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-          </Link>
+            {problems.map(({ color, title, desc, icon }, i) => (
+              <Reveal key={title} delay={i * 0.08}>
+                <div
+                  style={{
+                    background: "var(--white)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 20,
+                    padding: "28px 26px",
+                    boxShadow: "var(--shadow)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                    height: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      display: "grid",
+                      placeItems: "center",
+                      background: "var(--paper-2)",
+                      color,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      {icon}
+                    </svg>
+                  </div>
+                  <h3 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: 20, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.25 }}>
+                    {title}
+                  </h3>
+                  <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-soft)", margin: 0 }}>
+                    {desc}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -685,136 +765,6 @@ export default async function MarketingHome() {
           </div>
         </div>
       </section>
-
-      {/* ─── Trust & Security ──────────────────────────────────────────────── */}
-      <TrustSecurity />
-
-      {/* ─── Testimonials ──────────────────────────────────────────────────── */}
-      {/* Placeholder quotes — swap for real user testimonials before public launch. */}
-      <section
-        style={{
-          background: "var(--paper-2)",
-          borderTop: "1px solid var(--line)",
-          borderBottom: "1px solid var(--line)",
-          padding: "clamp(56px, 7vw, 96px) clamp(20px, 5vw, 80px)",
-        }}
-      >
-        <div style={{ maxWidth: "var(--maxw)", margin: "0 auto" }}>
-          <Reveal>
-            <div style={{ marginBottom: 40, textAlign: "center" }}>
-              <p className="eyebrow" style={{ color: "var(--purple)", marginBottom: 12 }}>
-                What people say
-              </p>
-              <h2
-                style={{
-                  fontFamily: "var(--display)",
-                  fontWeight: 800,
-                  fontSize: "clamp(28px, 3.5vw, 44px)",
-                  letterSpacing: "-0.03em",
-                  margin: 0,
-                }}
-              >
-                Trusted by early adopters.
-              </h2>
-            </div>
-          </Reveal>
-
-          <div
-            className="x-grid-3col"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 20,
-            }}
-          >
-            {[
-              {
-                initials: "AK",
-                name: "Asad Khan",
-                role: "Car dealer · Dubai",
-                color: "var(--blue)",
-                quote:
-                  "Finally a platform where I know the buyer is real. Sold my first car within 48 hours — no time-wasters.",
-              },
-              {
-                initials: "SR",
-                name: "Sana Rizvi",
-                role: "UX Designer · London",
-                color: "var(--purple)",
-                quote:
-                  "Got hired through Xplosale Jobs in two weeks. The verification gave the employer confidence that my credentials were legitimate.",
-              },
-              {
-                initials: "FQ",
-                name: "Fahad Qureshi",
-                role: "Tech Recruiter · Toronto",
-                color: "var(--green)",
-                quote:
-                  "We've screened 300 applications this month. Verified profiles save us hours — we skip straight to the interview.",
-              },
-            ].map(({ initials, name, role, color, quote }, i) => (
-              <Reveal key={name} delay={i * 0.08}>
-                <div
-                  style={{
-                    background: "var(--white)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 20,
-                    padding: "28px 28px 24px",
-                    boxShadow: "var(--shadow)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 20,
-                    height: "100%",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--display)",
-                      fontStyle: "italic",
-                      fontSize: 17,
-                      lineHeight: 1.6,
-                      color: "var(--ink)",
-                      margin: 0,
-                      flex: 1,
-                    }}
-                  >
-                    &ldquo;{quote}&rdquo;
-                  </p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        background: color,
-                        color: "var(--white)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: 14,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {initials}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{name}</span>
-                        <VerifiedBadge size="sm" />
-                      </div>
-                      <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>{role}</span>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FAQ Teaser ────────────────────────────────────────────────────── */}
-      <FaqTeaser />
 
       {/* ─── CTA Band ─────────────────────────────────────────────────────── */}
       <section
