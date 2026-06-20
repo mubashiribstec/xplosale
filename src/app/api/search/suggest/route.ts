@@ -4,7 +4,7 @@ import { ok, err, parseError } from "@/lib/http";
 import { searchClient } from "@/core/search/postgres";
 
 const schema = z.object({
-  vertical: z.enum(["universal", "marketplace", "jobs", "network", "companies"]).default("universal"),
+  vertical: z.enum(["universal", "marketplace", "jobs", "companies"]).default("universal"),
   prefix: z.string().max(60).default(""),
   limit: z.coerce.number().int().min(1).max(10).default(6),
 });

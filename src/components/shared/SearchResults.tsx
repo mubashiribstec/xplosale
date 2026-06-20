@@ -27,21 +27,10 @@ interface JobResult {
   type: 'job';
 }
 
-interface ProfileResult {
-  id: string;
-  handle: string;
-  headline: string | null;
-  profilePhotoUrl: string | null;
-  name: string | null;
-  location: string | null;
-  type: 'profile';
-}
-
 interface SearchResultsProps {
   q: string;
   listings: ListingResult[];
   jobs: JobResult[];
-  profiles: ProfileResult[];
 }
 
 function formatPrice(price: string, currency: string): string {
@@ -49,8 +38,8 @@ function formatPrice(price: string, currency: string): string {
   return `${currency} ${num.toLocaleString("en-PK")}`;
 }
 
-export default function SearchResults({ q, listings, jobs, profiles }: SearchResultsProps) {
-  const isEmpty = listings.length === 0 && jobs.length === 0 && profiles.length === 0;
+export default function SearchResults({ q, listings, jobs }: SearchResultsProps) {
+  const isEmpty = listings.length === 0 && jobs.length === 0;
 
   if (isEmpty) {
     return (
@@ -163,53 +152,6 @@ export default function SearchResults({ q, listings, jobs, profiles }: SearchRes
         </section>
       )}
 
-      {profiles.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">People ({profiles.length})</h2>
-            <Link href="/profile" className="text-sm text-blue-600 hover:underline">
-              View all people →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {profiles.map((profile) => {
-              const photoUrl = profile.profilePhotoUrl ? getPublicUrl(profile.profilePhotoUrl) : null;
-              return (
-                <Link
-                  key={profile.id}
-                  href={`/n/${profile.handle}`}
-                  className="group flex items-start gap-3 bg-white rounded-xl border border-gray-200 px-4 py-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  {photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={photoUrl}
-                      alt={profile.name ?? profile.handle}
-                      className="w-11 h-11 rounded-full object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-base shrink-0">
-                      {(profile.name ?? profile.handle)[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                      {profile.name ?? profile.handle}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">@{profile.handle}</p>
-                    {profile.headline && (
-                      <p className="text-xs text-gray-400 truncate mt-0.5">{profile.headline}</p>
-                    )}
-                    {profile.location && (
-                      <p className="text-xs text-gray-400 truncate">{profile.location}</p>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

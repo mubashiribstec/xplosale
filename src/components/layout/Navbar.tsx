@@ -94,7 +94,7 @@ function UserDropdown({ name, image, role }: { name: string; image?: string | nu
           }}
         >
           <Link
-            href="/profile"
+            href="/me"
             onClick={() => setOpen(false)}
             style={{ display: "block", padding: "11px 16px", fontSize: 14, color: "var(--ink)", textDecoration: "none", fontFamily: "var(--body)", fontWeight: 500 }}
           >
@@ -297,7 +297,7 @@ export default function Navbar() {
             </div>
             {user ? (
               <>
-                <Link href="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>
+                <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>My Profile</Link>
                 <Link href="/shops/manage" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>My Shops</Link>
                 <Link href="/me" onClick={() => setMobileOpen(false)} style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", textDecoration: "none" }}>Account &amp; Settings</Link>
                 {user.role === "PARTNER" && (

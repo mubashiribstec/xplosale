@@ -56,7 +56,6 @@ export async function GET(
             name: true,
             email: true,
             phone: true,
-            networkProfile: { select: { handle: true, profilePhotoUrl: true } },
           },
         },
       },
@@ -87,14 +86,13 @@ export async function POST(
     const parsed = addMemberSchema.safeParse(body);
     if (!parsed.success) return err("Validation error", 422, parsed.error.flatten().fieldErrors);
 
-    // Lookup user by phone or email or handle
+    // Lookup user by phone or email
     const { identifier, role } = parsed.data;
     const targetUser = await prisma.user.findFirst({
       where: {
         OR: [
           { phone: identifier },
           { email: identifier },
-          { networkProfile: { handle: identifier } },
         ],
       },
       select: { id: true, name: true, email: true, phone: true },

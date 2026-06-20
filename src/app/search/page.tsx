@@ -31,15 +31,6 @@ interface SearchApiResponse {
       currency: string;
       type: "job";
     }[];
-    profiles: {
-      id: string;
-      handle: string;
-      headline: string | null;
-      profilePhotoUrl: string | null;
-      name: string | null;
-      location: string | null;
-      type: "profile";
-    }[];
   };
 }
 
@@ -53,7 +44,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Search</h1>
-          <GlobalSearchBar placeholder="Search properties, jobs, people..." />
+          <GlobalSearchBar placeholder="Search properties, jobs..." />
           <p className="text-gray-400 mt-6 text-center">Enter at least 2 characters to search.</p>
         </div>
       </main>
@@ -66,7 +57,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   type SearchData = NonNullable<SearchApiResponse["data"]>;
   let listings: SearchData["listings"] = [];
   let jobs: SearchData["jobs"] = [];
-  let profiles: SearchData["profiles"] = [];
 
   try {
     const res = await fetch(apiUrl, { cache: "no-store" });
@@ -75,20 +65,19 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       if (json.ok && json.data) {
         listings = json.data.listings;
         jobs = json.data.jobs;
-        profiles = json.data.profiles;
       }
     }
   } catch {
     // Gracefully degrade — show empty results
   }
 
-  const total = listings.length + jobs.length + profiles.length;
+  const total = listings.length + jobs.length;
 
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <GlobalSearchBar placeholder="Search properties, jobs, people..." initialQ={q} />
+          <GlobalSearchBar placeholder="Search properties, jobs..." initialQ={q} />
         </div>
 
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
@@ -102,7 +91,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           />
         </div>
 
-        <SearchResults q={q} listings={listings} jobs={jobs} profiles={profiles} />
+        <SearchResults q={q} listings={listings} jobs={jobs} />
       </div>
     </main>
   );

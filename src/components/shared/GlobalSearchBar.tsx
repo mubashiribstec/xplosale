@@ -27,21 +27,10 @@ interface JobHit {
   type: 'job';
 }
 
-interface ProfileHit {
-  id: string;
-  handle: string;
-  headline: string | null;
-  profilePhotoUrl: string | null;
-  name: string;
-  location: string | null;
-  type: 'profile';
-}
-
 interface SearchData {
   q: string;
   listings: ListingHit[];
   jobs: JobHit[];
-  profiles: ProfileHit[];
 }
 
 interface GlobalSearchBarProps {
@@ -109,7 +98,7 @@ export default function GlobalSearchBar({ placeholder = "Search...", initialQ = 
   }
 
   const hasResults =
-    data && (data.listings.length > 0 || data.jobs.length > 0 || data.profiles.length > 0);
+    data && (data.listings.length > 0 || data.jobs.length > 0);
 
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
@@ -206,32 +195,6 @@ export default function GlobalSearchBar({ placeholder = "Search...", initialQ = 
                     <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
                     <p className="text-xs text-gray-500 truncate">
                       {item.company.name} &middot; {item.region.city}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {data && data.profiles.length > 0 && (
-            <div>
-              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                People
-              </p>
-              {data.profiles.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/n/${item.handle}`}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-semibold shrink-0">
-                    {item.name[0]?.toUpperCase() ?? "?"}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-500 truncate">
-                      @{item.handle}{item.headline ? ` · ${item.headline}` : ""}
                     </p>
                   </div>
                 </Link>

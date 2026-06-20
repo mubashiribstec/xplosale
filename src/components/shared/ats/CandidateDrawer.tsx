@@ -5,7 +5,7 @@ import NoteThread from "./NoteThread";
 
 type Tag = { id: string; name: string; color: string };
 type Stage = { id: string; name: string; color: string };
-type TeamMember = { id: string; role: string; user: { id: string; name: string | null; networkProfile: { handle: string; profilePhotoUrl: string | null } | null } };
+type TeamMember = { id: string; role: string; user: { id: string; name: string | null } };
 
 type Application = {
   id: string;
@@ -346,7 +346,6 @@ export default function CandidateDrawer({ applicationId, companyId, onClose }: P
               team={team.map((m) => ({
                 id: m.user.id,
                 name: m.user.name,
-                handle: m.user.networkProfile?.handle ?? null,
               }))}
             />
           )}

@@ -8,6 +8,12 @@ const schema = z.object({
   name: z.string().min(1).max(100).optional(),
   phone: z.string().max(20).optional(),
   image: z.string().url().optional(),
+  secondaryPhone: z.string().max(20).optional(),
+  whatsapp: z.string().max(20).optional(),
+  addressLine: z.string().max(120).optional(),
+  city: z.string().max(120).optional(),
+  stateProvince: z.string().max(120).optional(),
+  postcode: z.string().max(16).optional(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -25,7 +31,10 @@ export async function PATCH(req: NextRequest) {
       const user = await prisma.user.update({
         where: { id: userId },
         data: parsed.data,
-        select: { id: true, name: true, phone: true, image: true, email: true },
+        select: {
+          id: true, name: true, phone: true, image: true, email: true,
+          secondaryPhone: true, whatsapp: true, addressLine: true, city: true, stateProvince: true, postcode: true,
+        },
       });
       return ok(user);
     } catch (updateErr) {

@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from "react";
 type TeamMember = {
   id: string;
   name: string | null;
-  handle: string | null;
 };
 
 type Note = {
@@ -15,7 +14,6 @@ type Note = {
   author: {
     id: string;
     name: string | null;
-    networkProfile: { handle: string; profilePhotoUrl: string | null } | null;
   };
 };
 
@@ -53,11 +51,7 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
     if (match) {
       const query = match[1].toLowerCase();
       setAutocomplete(
-        team.filter(
-          (m) =>
-            m.handle?.toLowerCase().includes(query) ||
-            m.name?.toLowerCase().includes(query)
-        )
+        team.filter((m) => m.name?.toLowerCase().includes(query))
       );
     } else {
       setAutocomplete([]);
@@ -65,11 +59,11 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
   }
 
   function selectMention(member: TeamMember) {
-    const handle = member.handle ?? member.name ?? member.id;
+    const label = member.name ?? member.id;
     const cursor = textareaRef.current?.selectionStart ?? body.length;
     const before = body.slice(0, cursor);
     const after = body.slice(cursor);
-    const replaced = before.replace(/@(\w*)$/, `@${handle} `);
+    const replaced = before.replace(/@(\w*)$/, `@${label} `);
     setBody(replaced + after);
     setAutocomplete([]);
     if (!mentions.includes(member.id)) {
@@ -112,12 +106,12 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5"
                 style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}
               >
-                {(note.author.name ?? note.author.networkProfile?.handle ?? "?")[0].toUpperCase()}
+                {(note.author.name ?? "?")[0].toUpperCase()}
               </div>
               <div className="flex-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>
-                    {note.author.name ?? `@${note.author.networkProfile?.handle ?? "unknown"}`}
+                    {note.author.name ?? "Unknown"}
                   </span>
                   <span className="text-xs" style={{ color: "var(--ink-faint)" }}>
                     {new Date(note.createdAt).toLocaleString()}
@@ -159,9 +153,9 @@ export default function NoteThread({ applicationId, team }: NoteThreadProps) {
                   className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold"
                   style={{ background: "rgba(50,122,214,.12)", color: "var(--blue)" }}
                 >
-                  {(m.name ?? m.handle ?? "?")[0].toUpperCase()}
+                  {(m.name ?? "?")[0].toUpperCase()}
                 </span>
-                <span className="truncate">{m.name ?? `@${m.handle}`}</span>
+                <span className="truncate">{m.name ?? m.id}</span>
               </button>
             ))}
           </div>

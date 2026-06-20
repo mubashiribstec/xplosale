@@ -42,7 +42,7 @@ export default function SetupPage() {
         setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
-      router.push("/profile");
+      router.push("/me");
     } catch {
       setError("Network error. Please try again.");
     } finally {

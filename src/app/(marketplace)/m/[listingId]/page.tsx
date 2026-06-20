@@ -85,7 +85,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
             sellerRatingCount: true,
             responseRate: true,
             badges: true,
-            user: { select: { id: true, name: true, image: true, verificationStatus: true, isPartner: true } },
+            user: {
+              select: {
+                id: true, name: true, image: true, verificationStatus: true, isPartner: true,
+                phone: true, secondaryPhone: true, whatsapp: true,
+              },
+            },
           },
         },
         reviews: {
@@ -403,6 +408,24 @@ export default async function ListingDetailPage({ params }: PageProps) {
                       ? <OfferButton listingId={listing.id} sellerName={listing.sellerProfile.user.name ?? "Seller"} currency={listing.currency} />
                       : <p style={{ fontSize: 12, textAlign: "center", color: "var(--ink-faint)", margin: 0 }}>This listing has a fixed price.</p>}
                     <MessageSellerButton listingId={listing.id} sellerUserId={listing.sellerProfile.user.id} />
+                    {(listing.sellerProfile.user.phone ?? listing.sellerProfile.user.secondaryPhone) && (
+                      <a
+                        href={`tel:${listing.sellerProfile.user.phone ?? listing.sellerProfile.user.secondaryPhone}`}
+                        style={{ display: "block", width: "100%", textAlign: "center", padding: "11px 0", background: "var(--white)", border: "1.5px solid var(--line)", color: "var(--ink)", fontWeight: 700, borderRadius: 11, textDecoration: "none", fontSize: 14, boxSizing: "border-box" }}
+                      >
+                        Call seller
+                      </a>
+                    )}
+                    {(listing.sellerProfile.user.whatsapp ?? listing.sellerProfile.user.phone) && (
+                      <a
+                        href={`https://wa.me/${(listing.sellerProfile.user.whatsapp ?? listing.sellerProfile.user.phone ?? "").replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "block", width: "100%", textAlign: "center", padding: "11px 0", background: "#25D366", color: "var(--white)", fontWeight: 700, borderRadius: 11, textDecoration: "none", fontSize: 14, boxSizing: "border-box" }}
+                      >
+                        WhatsApp seller
+                      </a>
+                    )}
                   </>
                 )}
 

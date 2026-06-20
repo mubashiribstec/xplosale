@@ -14,7 +14,6 @@ interface AdminUser {
   bannedAt: string | null;
   createdAt: string;
   sellerProfile: { id: string } | null;
-  networkProfile: { handle: string } | null;
 }
 
 interface AdminUsersTableProps {
@@ -26,7 +25,7 @@ interface AdminUsersTableProps {
 
 const MARKETPLACE_CATEGORIES = ["Vehicles", "Mobiles", "Electronics", "Property", "Home & Living", "Appliances", "Fashion", "Gaming", "Other"];
 const JOB_CATEGORIES = ["Technology", "Finance", "Healthcare", "Education", "Marketing", "Sales", "Engineering", "Design", "Operations", "HR", "Legal", "Other"];
-const SECTIONS = ["MARKETPLACE", "JOBS", "SHOPS", "NETWORK"];
+const SECTIONS = ["MARKETPLACE", "JOBS", "SHOPS"];
 const DURATION_OPTIONS = [
   { label: "1 day", hours: 24 },
   { label: "7 days", hours: 168 },
@@ -602,9 +601,6 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {user.name ?? "—"}
-                      {user.networkProfile && (
-                        <span className="ml-1 text-xs text-gray-400">@{user.networkProfile.handle}</span>
-                      )}
                       {isBanned && (
                         <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded font-medium">BANNED</span>
                       )}

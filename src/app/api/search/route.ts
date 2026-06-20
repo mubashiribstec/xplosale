@@ -6,7 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 
 const querySchema = z.object({
   q: z.string().min(2, "Query must be at least 2 characters").max(100),
-  type: z.enum(["listing", "job", "profile", "all"]).default("all"),
+  type: z.enum(["listing", "job", "all"]).default("all"),
   limit: z.coerce.number().int().min(1).max(20).default(5),
 });
 
@@ -35,9 +35,8 @@ export async function GET(req: NextRequest) {
 
     const runListings = type === "listing" || type === "all";
     const runJobs = type === "job" || type === "all";
-    const runProfiles = type === "profile" || type === "all";
 
-    const [rawListings, rawJobs, rawProfiles] = await Promise.all([
+    const [rawListings, rawJobs] = await Promise.all([
       runListings
         ? prisma.listing.findMany({
             where: {
@@ -72,23 +71,6 @@ export async function GET(req: NextRequest) {
             orderBy: { createdAt: "desc" },
           })
         : Promise.resolve([]),
-      runProfiles
-        ? prisma.networkProfile.findMany({
-            where: {
-              visibility: "PUBLIC",
-              OR: [
-                { handle: { contains: q, mode: "insensitive" } },
-                { headline: { contains: q, mode: "insensitive" } },
-                { currentRole: { contains: q, mode: "insensitive" } },
-                { user: { name: { contains: q, mode: "insensitive" } } },
-              ],
-            },
-            include: {
-              user: { select: { name: true } },
-            },
-            take: limit,
-          })
-        : Promise.resolve([]),
     ]);
 
     const listings = rawListings.map((listing) => ({
@@ -118,17 +100,7 @@ export async function GET(req: NextRequest) {
       type: "job" as const,
     }));
 
-    const profiles = rawProfiles.map((profile) => ({
-      id: profile.id,
-      handle: profile.handle,
-      headline: profile.headline,
-      profilePhotoUrl: profile.profilePhotoUrl,
-      name: profile.user.name,
-      location: profile.location,
-      type: "profile" as const,
-    }));
-
-    return ok({ q, listings, jobs, profiles });
+    return ok({ q, listings, jobs });
   } catch (e) {
     return parseError(e);
   }

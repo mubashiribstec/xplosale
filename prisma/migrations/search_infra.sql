@@ -10,7 +10,6 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 ALTER TABLE "Listing"        ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
 ALTER TABLE "JobPosting"     ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
-ALTER TABLE "NetworkProfile" ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
 ALTER TABLE "Company"        ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
 
 -- ─── GIN indexes on searchVector ─────────────────────────────────────────────
@@ -20,9 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_listing_search
 
 CREATE INDEX IF NOT EXISTS idx_jobposting_search
   ON "JobPosting" USING GIN("searchVector");
-
-CREATE INDEX IF NOT EXISTS idx_networkprofile_search
-  ON "NetworkProfile" USING GIN("searchVector");
 
 CREATE INDEX IF NOT EXISTS idx_company_search
   ON "Company" USING GIN("searchVector");
@@ -34,9 +30,6 @@ CREATE INDEX IF NOT EXISTS idx_listing_title_trgm
 
 CREATE INDEX IF NOT EXISTS idx_jobposting_title_trgm
   ON "JobPosting" USING GIN(title gin_trgm_ops);
-
-CREATE INDEX IF NOT EXISTS idx_networkprofile_handle_trgm
-  ON "NetworkProfile" USING GIN(handle gin_trgm_ops);
 
 CREATE INDEX IF NOT EXISTS idx_company_name_trgm
   ON "Company" USING GIN(name gin_trgm_ops);
@@ -76,21 +69,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_networkprofile_search_vector() RETURNS trigger AS $$
-DECLARE
-  user_name TEXT;
-BEGIN
-  SELECT name INTO user_name FROM "User" WHERE id = NEW."userId";
-  NEW."searchVector" :=
-    setweight(to_tsvector('simple', coalesce(NEW.handle, '')), 'A') ||
-    setweight(to_tsvector('simple', coalesce(user_name, '')), 'A') ||
-    setweight(to_tsvector('simple', coalesce(NEW.headline, '')), 'B') ||
-    setweight(to_tsvector('simple', coalesce(NEW."currentRole", '')), 'C') ||
-    setweight(to_tsvector('simple', coalesce(NEW.summary, '')), 'C');
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION update_company_search_vector() RETURNS trigger AS $$
 BEGIN
   NEW."searchVector" :=
@@ -104,7 +82,6 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS listing_search_vector_trigger    ON "Listing";
 DROP TRIGGER IF EXISTS jobposting_search_vector_trigger ON "JobPosting";
-DROP TRIGGER IF EXISTS networkprofile_search_vector_trigger ON "NetworkProfile";
 DROP TRIGGER IF EXISTS company_search_vector_trigger    ON "Company";
 
 CREATE TRIGGER listing_search_vector_trigger
@@ -114,10 +91,6 @@ CREATE TRIGGER listing_search_vector_trigger
 CREATE TRIGGER jobposting_search_vector_trigger
   BEFORE INSERT OR UPDATE ON "JobPosting"
   FOR EACH ROW EXECUTE FUNCTION update_jobposting_search_vector();
-
-CREATE TRIGGER networkprofile_search_vector_trigger
-  BEFORE INSERT OR UPDATE ON "NetworkProfile"
-  FOR EACH ROW EXECUTE FUNCTION update_networkprofile_search_vector();
 
 CREATE TRIGGER company_search_vector_trigger
   BEFORE INSERT OR UPDATE ON "Company"

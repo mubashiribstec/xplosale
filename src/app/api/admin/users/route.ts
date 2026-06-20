@@ -67,7 +67,6 @@ export async function GET(req: NextRequest) {
           lastSeenAt: true,
           createdAt: true,
           sellerProfile: { select: { id: true } },
-          networkProfile: { select: { handle: true } },
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,

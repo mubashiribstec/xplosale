@@ -34,7 +34,7 @@ export async function GET(
     const notes = await prisma.candidateNote.findMany({
       where: { applicationId },
       include: {
-        author: { select: { id: true, name: true, networkProfile: { select: { handle: true, profilePhotoUrl: true } } } },
+        author: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -77,7 +77,7 @@ export async function POST(
         mentions: parsed.data.mentions.length > 0 ? parsed.data.mentions : undefined,
       },
       include: {
-        author: { select: { id: true, name: true, networkProfile: { select: { handle: true, profilePhotoUrl: true } } } },
+        author: { select: { id: true, name: true } },
       },
     });
 

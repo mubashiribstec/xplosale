@@ -39,7 +39,6 @@ export default async function HiringTeamPage({
           name: true,
           email: true,
           phone: true,
-          networkProfile: { select: { handle: true, profilePhotoUrl: true } },
         },
       },
     },

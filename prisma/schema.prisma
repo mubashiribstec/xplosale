@@ -99,13 +99,6 @@ enum ApplicationStatus {
   HIRED
 }
 
-enum ConnectionStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  BLOCKED
-}
-
 enum IdentityDocType {
   CNIC
   PASSPORT
@@ -193,11 +186,6 @@ enum AnalyticsEventKind {
   PRODUCT_CLICK
   CONTACT_CLICK
   WEBSITE_CLICK
-}
-
-enum ProfileVisibility {
-  PUBLIC
-  CONNECTIONS
 }
 
 enum ChatContext {
@@ -315,6 +303,12 @@ model User {
   emailVerified               DateTime?
   name                        String?
   image                       String?
+  secondaryPhone              String?
+  whatsapp                    String?
+  addressLine                 String?
+  city                        String?
+  stateProvince               String?
+  postcode                    String?
   cnHash                      String?            @unique
   role                        Role               @default(USER)
   isPhoneVerified             Boolean            @default(false)
@@ -344,7 +338,6 @@ model User {
   sellerProfile          SellerProfile?
   employerProfile        EmployerProfile?
   jobSeekerProfile       JobSeekerProfile?
-  networkProfile         NetworkProfile?
   sentMessages           Message[]              @relation("SentMessages")
   notifications          Notification[]
   adminActions           AdminActionLog[]       @relation("AdminActions")
@@ -353,10 +346,6 @@ model User {
   listingReviews         ListingReview[]        @relation("ReviewAuthor")
   ownedCompanies         Company[]              @relation("CompanyOwner")
   postedJobPostings      JobPosting[]           @relation("JobPostingPoster")
-  postLikes              PostLike[]
-  postComments           PostComment[]
-  connectionsAsRequester Connection[]           @relation("ConnectionRequester")
-  connectionsAsRecipient Connection[]           @relation("ConnectionRecipient")
   chatRoomsAsA           ChatRoom[]             @relation("ChatParticipantA")
   chatRoomsAsB           ChatRoom[]             @relation("ChatParticipantB")
   accounts               Account[]
@@ -926,143 +915,6 @@ model EmailSendLog {
 
   @@index([applicationId])
   @@index([sentAt])
-}
-
-// ─── Network ─────────────────────────────────────────────────────────────────
-
-model NetworkProfile {
-  id                   String                   @id @default(cuid())
-  userId               String                   @unique
-  handle               String                   @unique
-  headline             String?
-  summary              String?
-  currentRole          String?
-  location             String?
-  profilePhotoUrl      String?
-  bannerUrl            String?
-  visibility           ProfileVisibility        @default(PUBLIC)
-  verifiedProfessional Boolean                  @default(false)
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  searchVector         Unsupported("tsvector")?
-
-  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  experiences          Experience[]
-  educations           Education[]
-  profileSkills        ProfileSkill[]
-  posts                Post[]
-  endorsementsGiven    Endorsement[]  @relation("EndorsementGiver")
-  endorsementsReceived Endorsement[]  @relation("EndorsementReceiver")
-}
-
-model Experience {
-  id          String    @id @default(cuid())
-  profileId   String
-  company     String
-  title       String
-  start       DateTime
-  end         DateTime?
-  description String?
-
-  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-}
-
-model Education {
-  id          String    @id @default(cuid())
-  profileId   String
-  institution String
-  degree      String?
-  start       DateTime
-  end         DateTime?
-
-  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-}
-
-model Skill {
-  id   String @id @default(cuid())
-  name String @unique
-
-  profileSkills ProfileSkill[]
-  endorsements  Endorsement[]
-}
-
-model ProfileSkill {
-  id        String @id @default(cuid())
-  profileId String
-  skillId   String
-
-  profile NetworkProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  skill   Skill          @relation(fields: [skillId], references: [id])
-
-  @@unique([profileId, skillId])
-}
-
-model Endorsement {
-  id                String   @id @default(cuid())
-  giverProfileId    String
-  receiverProfileId String
-  skillId           String
-  createdAt         DateTime @default(now())
-
-  giverProfile    NetworkProfile @relation("EndorsementGiver", fields: [giverProfileId], references: [id], onDelete: Cascade)
-  receiverProfile NetworkProfile @relation("EndorsementReceiver", fields: [receiverProfileId], references: [id], onDelete: Cascade)
-  skill           Skill          @relation(fields: [skillId], references: [id])
-
-  @@unique([giverProfileId, receiverProfileId, skillId])
-}
-
-model Connection {
-  id          String           @id @default(cuid())
-  requesterId String
-  recipientId String
-  status      ConnectionStatus @default(PENDING)
-  createdAt   DateTime         @default(now())
-  acceptedAt  DateTime?
-
-  requester User @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  recipient User @relation("ConnectionRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-
-  // INVARIANT: before inserting, check both (A,B) and (B,A) directions don't exist.
-  // Use src/core/network/connectionGuard.ts — DB-level bidirectional uniqueness
-  // cannot be expressed in Prisma schema DSL and is enforced at the application layer.
-  @@unique([requesterId, recipientId])
-}
-
-model Post {
-  id              String   @id @default(cuid())
-  authorProfileId String
-  body            String
-  mediaUrls       Json?
-  createdAt       DateTime @default(now())
-
-  authorProfile NetworkProfile @relation(fields: [authorProfileId], references: [id], onDelete: Cascade)
-  likes         PostLike[]
-  comments      PostComment[]
-
-  @@index([authorProfileId, createdAt])
-}
-
-model PostLike {
-  id        String   @id @default(cuid())
-  postId    String
-  userId    String
-  createdAt DateTime @default(now())
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, userId])
-}
-
-model PostComment {
-  id        String   @id @default(cuid())
-  postId    String
-  authorId  String
-  body      String
-  createdAt DateTime @default(now())
-
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // ─── NextAuth Adapter ─────────────────────────────────────────────────────────

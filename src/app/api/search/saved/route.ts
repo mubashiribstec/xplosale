@@ -5,7 +5,7 @@ import { requireSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
-  vertical: z.enum(["jobs", "marketplace", "network", "companies"]),
+  vertical: z.enum(["jobs", "marketplace", "companies"]),
   name: z.string().min(1).max(100),
   queryJson: z.record(z.string(), z.unknown()),
   frequency: z.enum(["DAILY", "WEEKLY", "OFF"]).default("OFF"),

@@ -8,7 +8,7 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://xplosale.com";
 
-  const [listings, jobs, profiles, shops, products] = await Promise.all([
+  const [listings, jobs, shops, products] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "ACTIVE" },
       select: { id: true, updatedAt: true },
@@ -18,12 +18,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.jobPosting.findMany({
       where: { status: "ACTIVE" },
       select: { id: true, updatedAt: true },
-      orderBy: { updatedAt: "desc" },
-      take: 2000,
-    }),
-    prisma.networkProfile.findMany({
-      where: { visibility: "PUBLIC" },
-      select: { handle: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       take: 2000,
     }),
@@ -46,7 +40,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/m`, lastModified: new Date(), changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/jobs`, lastModified: new Date(), changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/shops`, lastModified: new Date(), changeFrequency: "hourly", priority: 0.9 },
-    { url: `${base}/n`, lastModified: new Date(), changeFrequency: "daily", priority: 0.7 },
     { url: `${base}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/guide`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   ];
@@ -82,12 +75,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: p.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,
-    })),
-    ...profiles.map((p) => ({
-      url: `${base}/n/${p.handle}`,
-      lastModified: p.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
     })),
   ];
 }

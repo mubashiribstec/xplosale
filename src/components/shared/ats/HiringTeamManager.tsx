@@ -11,7 +11,6 @@ type TeamMember = {
     name: string | null;
     email: string | null;
     phone: string | null;
-    networkProfile: { handle: string; profilePhotoUrl: string | null } | null;
   };
 };
 
@@ -99,9 +98,6 @@ export default function HiringTeamManager({
                 <p className="text-sm font-medium truncate" style={{ color: "var(--ink)" }}>
                   {member.user.name ?? member.user.email ?? member.user.phone ?? "Unknown"}
                 </p>
-                {member.user.networkProfile && (
-                  <p className="text-xs" style={{ color: "var(--ink-faint)" }}>@{member.user.networkProfile.handle}</p>
-                )}
               </div>
               <span
                 className="text-xs font-medium px-2 py-0.5 rounded-full"

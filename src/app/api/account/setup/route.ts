@@ -54,19 +54,6 @@ export async function POST(req: NextRequest) {
 
       // PARTNER: EmployerProfile requires a companyId that doesn't exist at setup time.
       // Role is set above; the profile is created when the user creates their first company.
-
-      // Always create a NetworkProfile so the user is discoverable.
-      const handle = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
-        .slice(0, 30);
-      const uniqueHandle = `${handle}-${userId.slice(-6)}`;
-      await tx.networkProfile.upsert({
-        where:  { userId },
-        update: {},
-        create: { user: { connect: { id: userId } }, handle: uniqueHandle },
-      });
     });
 
     return ok({ ok: true });

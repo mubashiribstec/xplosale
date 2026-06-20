@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         include: {
           jobPosting: { select: { id: true, title: true } },
-          candidate: { select: { id: true, name: true, networkProfile: { select: { handle: true } } } },
+          candidate: { select: { id: true, name: true } },
         },
       }),
       prisma.inviteToApply.count({ where: { companyId } }),

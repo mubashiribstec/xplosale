@@ -1,4 +1,4 @@
-export type SearchVertical = "marketplace" | "jobs" | "network" | "companies";
+export type SearchVertical = "marketplace" | "jobs" | "companies";
 
 export interface SearchInput {
   vertical: SearchVertical;
@@ -40,7 +40,6 @@ export interface UniversalInput {
 export interface UniversalResult {
   marketplace: unknown[];
   jobs: unknown[];
-  network: unknown[];
   companies: unknown[];
   took_ms: number;
 }

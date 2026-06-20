@@ -15,36 +15,26 @@ export default async function MePage() {
 
   const user = session.user as { id: string; phone?: string | null; name?: string | null; role: string };
 
-  const [sellerProfile, jobSeekerProfile, employerProfile, networkProfile, dbUser, connectionCount] = await Promise.all([
+  const [sellerProfile, jobSeekerProfile, employerProfile, dbUser] = await Promise.all([
     prisma.sellerProfile.findUnique({ where: { userId: user.id } }),
     prisma.jobSeekerProfile.findUnique({ where: { userId: user.id } }),
     prisma.employerProfile.findUnique({ where: { userId: user.id }, include: { company: true } }),
-    prisma.networkProfile.findUnique({ where: { userId: user.id } }),
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, image: true, role: true, isPartner: true, emailVerified: true, createdAt: true },
-    }),
-    prisma.connection.count({
-      where: {
-        OR: [
-          { requesterId: user.id, status: "ACCEPTED" },
-          { recipientId: user.id, status: "ACCEPTED" },
-        ],
+      select: {
+        verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, image: true,
+        role: true, isPartner: true, emailVerified: true, createdAt: true,
+        secondaryPhone: true, whatsapp: true, addressLine: true, city: true, stateProvince: true, postcode: true,
       },
     }),
   ]);
 
-  const [endorsementCount, listingCount] = await Promise.all([
-    networkProfile
-      ? prisma.endorsement.count({ where: { receiverProfileId: networkProfile.id } })
-      : Promise.resolve(0),
-    sellerProfile
-      ? prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } })
-      : Promise.resolve(0),
-  ]);
+  const listingCount = sellerProfile
+    ? await prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } })
+    : 0;
 
   // New Google users who haven't chosen an account type → setup wizard
-  const hasAnyProfile = sellerProfile || jobSeekerProfile || networkProfile;
+  const hasAnyProfile = sellerProfile || jobSeekerProfile;
   const accountIsNew = !hasAnyProfile && dbUser?.email && !dbUser?.phone;
   if (accountIsNew) redirect("/me/setup");
 
@@ -61,7 +51,7 @@ export default async function MePage() {
   const verificationStatus = isAdmin ? "VERIFIED" : (dbUser?.verificationStatus ?? "UNVERIFIED");
   const emailVerified = isAdmin || !!dbUser?.emailVerified;
 
-  const trustScore = computeTrustScore({ emailVerified, verificationStatus, listingCount, endorsementCount });
+  const trustScore = computeTrustScore({ emailVerified, verificationStatus, listingCount });
 
   return (
     <main
@@ -129,6 +119,12 @@ export default async function MePage() {
               phone={dbUser?.phone ?? null}
               email={dbUser?.email ?? null}
               image={dbUser?.image ?? null}
+              secondaryPhone={dbUser?.secondaryPhone ?? null}
+              whatsapp={dbUser?.whatsapp ?? null}
+              addressLine={dbUser?.addressLine ?? null}
+              city={dbUser?.city ?? null}
+              stateProvince={dbUser?.stateProvince ?? null}
+              postcode={dbUser?.postcode ?? null}
             />
 
             {/* Trust breakdown card */}
@@ -198,14 +194,6 @@ export default async function MePage() {
                   barValue={Math.min(100, listingCount * 10)}
                   detail={`${listingCount} active listing${listingCount !== 1 ? "s" : ""}`}
                 />
-
-                {/* Endorsements */}
-                <TrustRow
-                  label="Endorsements"
-                  status="bar"
-                  barValue={Math.min(100, endorsementCount * 20)}
-                  detail={`${endorsementCount} endorsement${endorsementCount !== 1 ? "s" : ""} received`}
-                />
               </div>
             </div>
 
@@ -243,12 +231,6 @@ export default async function MePage() {
                   href="/me/job-seeker"
                   active={!!jobSeekerProfile}
                   detail={jobSeekerProfile?.openToWork ? "Open to work" : "Not seeking"}
-                />
-                <FacetPill
-                  label="Network"
-                  href="/me/network"
-                  active={!!networkProfile}
-                  detail={`${connectionCount} connection${connectionCount !== 1 ? "s" : ""}`}
                 />
                 <FacetPill
                   label="Employer"

@@ -9,14 +9,32 @@ interface ProfileEditCardProps {
   phone: string | null;
   email: string | null;
   image: string | null;
+  secondaryPhone: string | null;
+  whatsapp: string | null;
+  addressLine: string | null;
+  city: string | null;
+  stateProvince: string | null;
+  postcode: string | null;
 }
 
-export default function ProfileEditCard({ name, phone, email, image }: ProfileEditCardProps) {
+export default function ProfileEditCard({
+  name, phone, email, image,
+  secondaryPhone, whatsapp, addressLine, city, stateProvince, postcode,
+}: ProfileEditCardProps) {
   const router = useRouter();
   const { update } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({ name: name ?? "", phone: phone ?? "" });
+  const [form, setForm] = useState({
+    name: name ?? "",
+    phone: phone ?? "",
+    secondaryPhone: secondaryPhone ?? "",
+    whatsapp: whatsapp ?? "",
+    addressLine: addressLine ?? "",
+    city: city ?? "",
+    stateProvince: stateProvince ?? "",
+    postcode: postcode ?? "",
+  });
   const [avatarUrl, setAvatarUrl] = useState(image);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +81,16 @@ export default function ProfileEditCard({ name, phone, email, image }: ProfileEd
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, phone: form.phone || undefined }),
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone || undefined,
+          secondaryPhone: form.secondaryPhone || undefined,
+          whatsapp: form.whatsapp || undefined,
+          addressLine: form.addressLine || undefined,
+          city: form.city || undefined,
+          stateProvince: form.stateProvince || undefined,
+          postcode: form.postcode || undefined,
+        }),
       });
       const json = (await res.json()) as { ok: boolean; error?: string };
       if (!json.ok) {
@@ -184,6 +211,56 @@ export default function ProfileEditCard({ name, phone, email, image }: ProfileEd
               style={{ ...inputStyle, color: "var(--ink-faint)", background: "var(--paper-2)", cursor: "not-allowed" }}
             />
           </Field>
+          <Field label="Additional number">
+            <input
+              type="tel"
+              value={form.secondaryPhone}
+              onChange={(e) => setForm((p) => ({ ...p, secondaryPhone: e.target.value }))}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="WhatsApp number">
+            <input
+              type="tel"
+              value={form.whatsapp}
+              onChange={(e) => setForm((p) => ({ ...p, whatsapp: e.target.value }))}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="Address">
+            <input
+              type="text"
+              value={form.addressLine}
+              onChange={(e) => setForm((p) => ({ ...p, addressLine: e.target.value }))}
+              style={inputStyle}
+            />
+          </Field>
+          <div className="x-grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+            <Field label="City">
+              <input
+                type="text"
+                value={form.city}
+                onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="State">
+              <input
+                type="text"
+                value={form.stateProvince}
+                onChange={(e) => setForm((p) => ({ ...p, stateProvince: e.target.value }))}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Postcode">
+              <input
+                type="text"
+                value={form.postcode}
+                onChange={(e) => setForm((p) => ({ ...p, postcode: e.target.value }))}
+                style={inputStyle}
+              />
+            </Field>
+          </div>
 
           {error && <p style={{ fontFamily: "var(--body)", fontSize: 12, color: "var(--clay)" }}>{error}</p>}
           {success && !error && (

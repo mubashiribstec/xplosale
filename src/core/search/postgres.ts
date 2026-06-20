@@ -34,13 +34,6 @@ export interface JobHit {
   logoUrl: string | null; verifiedEmployer: boolean;
 }
 
-export interface NetworkHit {
-  id: string; handle: string; handle_hl: string;
-  userId: string; headline: string | null;
-  currentRole: string | null; verifiedProfessional: boolean;
-  rank: number;
-}
-
 export interface CompanyHit {
   id: string; name: string; name_hl: string;
   industry: string | null; logoUrl: string | null;
@@ -85,14 +78,13 @@ export class PostgresSearchClient implements SearchClient {
     const start = Date.now();
     const { query, limitPerVertical = 4 } = input;
 
-    const [marketplace, jobs, network, companies] = await Promise.all([
+    const [marketplace, jobs, companies] = await Promise.all([
       this.searchListings(query, {}, "relevance", 0, limitPerVertical),
       this.searchJobs(query, {}, "relevance", 0, limitPerVertical),
-      this.searchProfiles(query, {}, "relevance", 0, limitPerVertical),
       this.searchCompanies(query, {}, "relevance", 0, limitPerVertical),
     ]);
 
-    return { marketplace, jobs, network, companies, took_ms: Date.now() - start };
+    return { marketplace, jobs, companies, took_ms: Date.now() - start };
   }
 
   // ─── Per-vertical dispatchers ──────────────────────────────────────────────
@@ -104,7 +96,6 @@ export class PostgresSearchClient implements SearchClient {
     switch (vertical) {
       case "marketplace": return this.searchListings(query, filters, sort, offset, limit);
       case "jobs":        return this.searchJobs(query, filters, sort, offset, limit);
-      case "network":     return this.searchProfiles(query, filters, sort, offset, limit);
       case "companies":   return this.searchCompanies(query, filters, sort, offset, limit);
       default:            return Promise.resolve([]);
     }
@@ -312,56 +303,6 @@ export class PostgresSearchClient implements SearchClient {
     `;
   }
 
-  // ─── Network Profiles ─────────────────────────────────────────────────────
-
-  private async searchProfiles(
-    query: string, filters: Record<string, unknown>,
-    _sort: string, offset: number, limit: number
-  ): Promise<NetworkHit[]> {
-    const conditions: (Prisma.Sql | false | null | undefined)[] = [
-      Prisma.sql`np.visibility = 'PUBLIC'`,
-    ];
-    const where = andConditions(conditions);
-
-    if (query.trim()) {
-      const q = buildTsQuery(query);
-      const results = await prisma.$queryRaw<NetworkHit[]>`
-        SELECT
-          np.id, np.handle,
-          ts_headline('simple', np.handle, ${q}, 'MaxWords=4,MinWords=1') AS handle_hl,
-          np."userId", np.headline, np."currentRole", np."verifiedProfessional",
-          ts_rank_cd(np."searchVector", ${q}) AS rank
-        FROM "NetworkProfile" np
-        WHERE ${where} AND np."searchVector" @@ ${q}
-        ORDER BY rank DESC, np."createdAt" DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      if (results.length > 0) return results;
-
-      return prisma.$queryRaw<NetworkHit[]>`
-        SELECT
-          np.id, np.handle, np.handle AS handle_hl,
-          np."userId", np.headline, np."currentRole", np."verifiedProfessional",
-          similarity(np.handle, ${query}) AS rank
-        FROM "NetworkProfile" np
-        WHERE ${where} AND similarity(np.handle, ${query}) > 0.1
-        ORDER BY rank DESC, np."createdAt" DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-    }
-
-    return prisma.$queryRaw<NetworkHit[]>`
-      SELECT
-        np.id, np.handle, np.handle AS handle_hl,
-        np."userId", np.headline, np."currentRole", np."verifiedProfessional",
-        0::float AS rank
-      FROM "NetworkProfile" np
-      WHERE ${where}
-      ORDER BY np."createdAt" DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-  }
-
   // ─── Companies ───────────────────────────────────────────────────────────
 
   private async searchCompanies(
@@ -443,16 +384,6 @@ export class PostgresSearchClient implements SearchClient {
         LIMIT ${limit}
       `;
       return rows.map((r) => ({ text: r.title, type: "job", id: r.id }));
-    }
-
-    if (vertical === "network") {
-      const rows = await prisma.$queryRaw<{ handle: string; id: string }[]>`
-        SELECT handle, id FROM "NetworkProfile"
-        WHERE visibility = 'PUBLIC' AND handle ILIKE ${safe + "%"}
-        ORDER BY similarity(handle, ${safe}) DESC
-        LIMIT ${limit}
-      `;
-      return rows.map((r) => ({ text: r.handle, type: "profile", id: r.id }));
     }
 
     if (vertical === "companies") {
