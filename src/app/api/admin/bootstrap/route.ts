@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
         role: "ADMIN",
         verificationStatus: "VERIFIED",
         hasVerifiedBadge: true,
+        isSuperAdmin: true,
         name: username,
       },
       select: { id: true, username: true, role: true },

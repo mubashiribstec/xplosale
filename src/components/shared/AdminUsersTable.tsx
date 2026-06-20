@@ -11,6 +11,7 @@ interface AdminUser {
   role: string;
   verificationStatus: string;
   canCreateShop: boolean;
+  isSuperAdmin: boolean;
   bannedAt: string | null;
   createdAt: string;
   sellerProfile: { id: string } | null;
@@ -601,6 +602,9 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {user.name ?? "—"}
+                      {user.isSuperAdmin && (
+                        <span className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded font-medium">SUPER ADMIN</span>
+                      )}
                       {isBanned && (
                         <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded font-medium">BANNED</span>
                       )}
@@ -624,7 +628,9 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                         <select
                           value={pendingRoles[user.id] ?? user.role}
                           onChange={(e) => setPendingRoles((prev) => ({ ...prev, [user.id]: e.target.value }))}
-                          className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          disabled={user.isSuperAdmin}
+                          title={user.isSuperAdmin ? "The Super Admin's role cannot be changed" : undefined}
+                          className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                         >
                           <option value="USER">USER</option>
                           <option value="PARTNER">PARTNER</option>
@@ -682,7 +688,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                           >
                             {saving === user.id ? "…" : "Unban"}
                           </button>
-                        ) : (
+                        ) : !user.isSuperAdmin ? (
                           <button
                             type="button"
                             onClick={() => openBanModal(user)}
@@ -690,7 +696,7 @@ export default function AdminUsersTable({ users, total, page, pages }: AdminUser
                           >
                             Ban
                           </button>
-                        )}
+                        ) : null}
                         {user.role !== "ADMIN" && (
                           <button
                             type="button"

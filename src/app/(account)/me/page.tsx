@@ -23,7 +23,7 @@ export default async function MePage() {
       where: { id: user.id },
       select: {
         verificationStatus: true, hasVerifiedBadge: true, name: true, phone: true, email: true, image: true,
-        role: true, isPartner: true, emailVerified: true, createdAt: true,
+        role: true, isPartner: true, canCreateShop: true, emailVerified: true, createdAt: true,
         secondaryPhone: true, whatsapp: true, addressLine: true, city: true, stateProvince: true, postcode: true,
       },
     }),
@@ -31,6 +31,10 @@ export default async function MePage() {
 
   const listingCount = sellerProfile
     ? await prisma.listing.count({ where: { sellerProfileId: sellerProfile.id, status: "ACTIVE" } })
+    : 0;
+
+  const shopCount = dbUser?.canCreateShop
+    ? await prisma.shop.count({ where: { ownerUserId: user.id } })
     : 0;
 
   // New Google users who haven't chosen an account type → setup wizard
@@ -237,6 +241,12 @@ export default async function MePage() {
                   href="/me/employer"
                   active={!!employerProfile}
                   detail={employerProfile?.company.name ?? "Not set up"}
+                />
+                <FacetPill
+                  label="Shop"
+                  href={dbUser?.canCreateShop ? "/shops/manage" : "/me/shop-application"}
+                  active={!!dbUser?.canCreateShop}
+                  detail={dbUser?.canCreateShop ? `${shopCount} shop${shopCount !== 1 ? "s" : ""}` : "Not a shopkeeper yet"}
                 />
               </div>
             </div>

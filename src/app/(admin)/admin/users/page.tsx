@@ -36,6 +36,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         role: true,
         verificationStatus: true,
         canCreateShop: true,
+        isSuperAdmin: true,
         bannedAt: true,
         createdAt: true,
         sellerProfile: { select: { id: true } },

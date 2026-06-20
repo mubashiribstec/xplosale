@@ -1,14 +1,15 @@
 interface VerifiedBadgeProps {
   label?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "verified" | "partner";
+  variant?: "verified" | "partner" | "shopkeeper";
   tier?: "VERIFIED" | "PARTNER" | "BASIC";
 }
 
 /**
- * Trust badge. variant/tier="partner" → gold star. Default → green shield.
- * Only render when the badge is actually allocated (don't conditionally hide
- * here — callers are responsible for the show/hide guard).
+ * Trust badge. variant/tier="partner" → gold star. variant="shopkeeper" → blue
+ * storefront. Default → green shield. Only render when the badge is actually
+ * allocated (don't conditionally hide here — callers are responsible for the
+ * show/hide guard).
  */
 export function VerifiedBadge({
   label,
@@ -17,7 +18,8 @@ export function VerifiedBadge({
   tier,
 }: VerifiedBadgeProps) {
   const isPartner = variant === "partner" || tier === "PARTNER";
-  const defaultLabel = isPartner ? "Partner" : "Verified";
+  const isShopkeeper = variant === "shopkeeper";
+  const defaultLabel = isPartner ? "Partner" : isShopkeeper ? "Shopkeeper" : "Verified";
   const displayLabel = label ?? defaultLabel;
 
   const fs = size === "lg" ? "13.5px" : size === "md" ? "12.5px" : "11.5px";
@@ -28,6 +30,59 @@ export function VerifiedBadge({
       ? "5px 10px 5px 7px"
       : "4px 9px 4px 6px";
   const iconSize = size === "lg" ? 15 : size === "md" ? 13 : 12;
+
+  if (isShopkeeper) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: size === "sm" ? 4 : 5,
+          background: "rgba(37,99,235,.11)",
+          border: "1px solid rgba(37,99,235,.30)",
+          color: "#1d4ed8",
+          borderRadius: 999,
+          fontSize: fs,
+          fontWeight: 600,
+          padding: pad,
+          fontFamily: "var(--body)",
+          lineHeight: 1,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {/* Storefront icon */}
+        <svg
+          width={iconSize}
+          height={iconSize}
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M2 5.5L3 2h10l1 3.5M2 5.5v1.2c0 .9.7 1.6 1.6 1.6s1.6-.7 1.6-1.6c0 .9.7 1.6 1.6 1.6s1.6-.7 1.6-1.6c0 .9.7 1.6 1.6 1.6s1.6-.7 1.6-1.6V5.5M2 5.5h12"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            fill="rgba(37,99,235,.18)"
+          />
+          <path
+            d="M3 8v5.5h10V8"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6.5 13.5V10h3v3.5"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+        {displayLabel}
+      </span>
+    );
+  }
 
   if (isPartner) {
     return (

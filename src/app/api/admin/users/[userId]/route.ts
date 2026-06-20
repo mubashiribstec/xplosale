@@ -47,6 +47,12 @@ export async function PATCH(
       if (otherAdmins === 0) return err("Cannot demote the last remaining admin", 409);
     }
 
+    // The Super Admin can never be demoted or banned
+    if (user.isSuperAdmin) {
+      if (body.role !== undefined && body.role !== "ADMIN") return err("Cannot change the Super Admin's role", 409);
+      if (body.ban === true) return err("Cannot ban the Super Admin", 409);
+    }
+
     const data: Record<string, unknown> = {};
     if (body.role !== undefined) {
       data.role = body.role;
@@ -58,7 +64,10 @@ export async function PATCH(
     }
     if (body.verificationStatus !== undefined) data.verificationStatus = body.verificationStatus;
     if (body.hasVerifiedBadge !== undefined) data.hasVerifiedBadge = body.hasVerifiedBadge;
-    if (body.canCreateShop !== undefined) data.canCreateShop = body.canCreateShop;
+    if (body.canCreateShop !== undefined) {
+      data.canCreateShop = body.canCreateShop;
+      data.hasShopkeeperBadge = body.canCreateShop;
+    }
     if (body.ban !== undefined) {
       data.bannedAt = body.ban ? new Date() : null;
       if (!body.ban) {
@@ -128,8 +137,10 @@ export async function DELETE(
 
     if (userId === adminId) return err("You cannot delete your own account", 409);
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, role: true } });
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, role: true, isSuperAdmin: true } });
     if (!user) return err("User not found", 404);
+
+    if (user.isSuperAdmin) return err("Cannot delete the Super Admin", 409);
 
     if (user.role === "ADMIN") {
       const otherAdmins = await prisma.user.count({ where: { role: "ADMIN", id: { not: userId } } });

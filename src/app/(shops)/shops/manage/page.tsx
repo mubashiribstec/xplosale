@@ -5,6 +5,7 @@ import { getSession, getUserId } from "@/core/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getEffectivePlanForUser } from "@/verticals/shops/tier";
 import UpgradePrompt from "@/components/shared/shops/UpgradePrompt";
+import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -21,7 +22,7 @@ export default async function ShopsManagePage() {
   if (!session) redirect("/login?callbackUrl=/shops/manage");
   const userId = getUserId(session);
 
-  const [shops, plan] = await Promise.all([
+  const [shops, plan, dbUser] = await Promise.all([
     prisma.shop.findMany({
       where: { ownerUserId: userId },
       include: {
@@ -34,6 +35,7 @@ export default async function ShopsManagePage() {
       take: 20,
     }),
     getEffectivePlanForUser(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { hasShopkeeperBadge: true } }),
   ]);
 
   const activeShopCount = shops.filter((s) => !["REJECTED", "SUSPENDED"].includes(s.status)).length;
@@ -48,9 +50,12 @@ export default async function ShopsManagePage() {
             <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", margin: "0 0 6px" }}>
               Shops
             </p>
-            <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(26px,4vw,38px)", color: "var(--ink)", margin: 0, lineHeight: 1.1 }}>
-              My Shops
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <h1 style={{ fontFamily: "var(--display)", fontWeight: 800, fontSize: "clamp(26px,4vw,38px)", color: "var(--ink)", margin: 0, lineHeight: 1.1 }}>
+                My Shops
+              </h1>
+              {dbUser?.hasShopkeeperBadge && <VerifiedBadge variant="shopkeeper" size="md" />}
+            </div>
           </div>
           {!atLimit ? (
             <Link

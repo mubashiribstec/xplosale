@@ -317,6 +317,8 @@ model User {
   docType                     IdentityDocType?
   isPartner                   Boolean            @default(false)
   canCreateShop               Boolean            @default(false)
+  hasShopkeeperBadge          Boolean            @default(false)
+  isSuperAdmin                Boolean            @default(false)
   partnerType                 PartnerType?
   partnerSuspendedAt          DateTime?
   bannedAt                    DateTime?
@@ -351,6 +353,7 @@ model User {
   accounts               Account[]
   sessions               Session[]
   partnerApplication     PartnerApplication?
+  shopApplication        ShopApplication?
   hiringTeamMemberships  HiringTeam[]
   candidateNotes         CandidateNote[]        @relation("NoteAuthor")
   testAssignmentsGiven   TestAssignment[]       @relation("TestAssignedBy")
@@ -963,6 +966,20 @@ model PartnerApplication {
   partnerType  PartnerType
   businessName String?
   website      String?
+  description  String
+  status       PartnerApplicationStatus @default(PENDING)
+  reviewedAt   DateTime?
+  reviewedById String?
+  reason       String?
+  createdAt    DateTime                 @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ShopApplication {
+  id           String                   @id @default(cuid())
+  userId       String                   @unique
+  businessName String?
   description  String
   status       PartnerApplicationStatus @default(PENDING)
   reviewedAt   DateTime?
