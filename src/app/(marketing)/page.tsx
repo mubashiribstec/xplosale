@@ -299,12 +299,12 @@ export default async function MarketingHome() {
         <div
           className="reveal"
           style={{
-            background: "var(--ink)",
+            background: "var(--surface-dark)",
             borderRadius: 24,
             padding: "clamp(28px, 4vw, 44px)",
             position: "relative",
             overflow: "hidden",
-            color: "var(--white)",
+            color: "var(--on-dark)",
             animationDelay: "0.18s",
           }}
         >
@@ -335,7 +335,7 @@ export default async function MarketingHome() {
                   background: "var(--clay)",
                   display: "grid",
                   placeItems: "center",
-                  color: "var(--white)",
+                  color: "var(--on-dark)",
                   fontWeight: 700,
                   fontSize: 16,
                   flexShrink: 0,
@@ -345,10 +345,10 @@ export default async function MarketingHome() {
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: "var(--white)" }}>Verified seller</span>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: "var(--on-dark)" }}>Verified seller</span>
                   <VerifiedBadge size="sm" />
                 </div>
-                <span style={{ fontSize: 12, color: "rgba(251,250,245,.5)" }}>Documents reviewed by our team</span>
+                <span style={{ fontSize: 12, color: "var(--on-dark-faint)" }}>Documents reviewed by our team</span>
               </div>
               <div style={{ flexShrink: 0 }}>
                 <TrustGauge value={92} size={56} stroke={5} />
@@ -366,7 +366,7 @@ export default async function MarketingHome() {
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ marginTop: 2, flexShrink: 0, color: "var(--green-bright)" }}>
                     <path d="M3 8.5l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span style={{ fontSize: 13, color: "rgba(251,250,245,.7)", lineHeight: 1.5 }}>{point}</span>
+                  <span style={{ fontSize: 13, color: "var(--on-dark-soft)", lineHeight: 1.5 }}>{point}</span>
                 </div>
               ))}
             </div>
@@ -377,8 +377,8 @@ export default async function MarketingHome() {
       {/* ─── Trust Stats Bar ──────────────────────────────────────────────── */}
       <div
         style={{
-          background: "var(--ink)",
-          color: "var(--white)",
+          background: "var(--surface-dark)",
+          color: "var(--on-dark)",
           padding: "clamp(28px, 4vw, 48px) clamp(20px, 5vw, 80px)",
         }}
       >
@@ -407,7 +407,7 @@ export default async function MarketingHome() {
                     fontWeight: 800,
                     fontSize: "clamp(22px, 2.8vw, 32px)",
                     lineHeight: 1,
-                    color: "var(--white)",
+                    color: "var(--on-dark)",
                   }}
                 >
                   {zero}
@@ -421,17 +421,17 @@ export default async function MarketingHome() {
                     fontWeight: 800,
                     fontSize: "clamp(28px, 3.5vw, 44px)",
                     lineHeight: 1,
-                    color: "var(--white)",
+                    color: "var(--on-dark)",
                   }}
                 />
               )}
               <span
-                style={{ fontSize: 14, fontWeight: 600, color: "rgba(251,250,245,.8)", lineHeight: 1.3 }}
+                style={{ fontSize: 14, fontWeight: 600, color: "var(--on-dark-soft)", lineHeight: 1.3 }}
                 aria-label={value > 0 ? `${value.toLocaleString()} ${label.toLowerCase()}` : undefined}
               >
                 {label}
               </span>
-              <span style={{ fontSize: 12, color: "rgba(251,250,245,.45)" }}>{sub}</span>
+              <span style={{ fontSize: 12, color: "var(--on-dark-faint)" }}>{sub}</span>
             </div>
           ))}
         </div>
@@ -723,7 +723,7 @@ export default async function MarketingHome() {
             {/* Right: composed seal + step indicator visual */}
             <div
               style={{
-                background: "var(--ink)",
+                background: "var(--surface-dark)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -752,12 +752,12 @@ export default async function MarketingHome() {
                           display: "inline-block",
                         }}
                       />
-                      <span style={{ fontSize: 11, color: "rgba(251,250,245,.55)", fontWeight: 600 }}>{label}</span>
+                      <span style={{ fontSize: 11, color: "var(--on-dark-soft)", fontWeight: 600 }}>{label}</span>
                     </div>
                   ))}
                 </div>
 
-                <p style={{ fontSize: 13, color: "rgba(251,250,245,.5)", margin: 0, maxWidth: 220 }}>
+                <p style={{ fontSize: 13, color: "var(--on-dark-faint)", margin: 0, maxWidth: 220 }}>
                   Your badge appears on every listing, application, and connection request.
                 </p>
               </div>

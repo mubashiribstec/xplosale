@@ -21,6 +21,12 @@
   --purple-deep: #6E1A8A;
   --brand-grad: linear-gradient(120deg, #327AD6, #9025B3);
   --white: #FBFAF5;
+  /* Permanently-dark surfaces (hero showcase, stats bar, footer) — these must
+     NOT flip in dark theme, since their content is hand-tuned light-on-dark. */
+  --surface-dark: #1A1613;
+  --on-dark: rgba(251,250,245,.95);
+  --on-dark-soft: rgba(251,250,245,.72);
+  --on-dark-faint: rgba(251,250,245,.5);
   --shadow: 0 1px 2px rgba(28,24,21,.04), 0 8px 30px rgba(28,24,21,.06);
   --shadow-lg: 0 2px 6px rgba(28,24,21,.06), 0 24px 60px rgba(28,24,21,.12);
   --r: 14px;

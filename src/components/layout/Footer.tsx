@@ -31,7 +31,7 @@ function FooterColumn({ title, links }: { title: string; links: { label: string;
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <p
         className="eyebrow"
-        style={{ color: "rgba(251,250,245,.4)", margin: 0 }}
+        style={{ color: "var(--on-dark-faint)", margin: 0 }}
       >
         {title}
       </p>
@@ -39,7 +39,7 @@ function FooterColumn({ title, links }: { title: string; links: { label: string;
         <Link
           key={label}
           href={href}
-          style={{ fontSize: 14, color: "rgba(251,250,245,.65)", textDecoration: "none" }}
+          style={{ fontSize: 14, color: "var(--on-dark-soft)", textDecoration: "none" }}
         >
           {label}
         </Link>
@@ -52,8 +52,8 @@ export default function Footer() {
   return (
     <footer
       style={{
-        background: "var(--ink)",
-        color: "rgba(251,250,245,.5)",
+        background: "var(--surface-dark)",
+        color: "var(--on-dark-faint)",
         padding: "clamp(48px, 6vw, 72px) clamp(20px, 5vw, 80px) clamp(28px, 4vw, 44px)",
       }}
     >
@@ -76,12 +76,12 @@ export default function Footer() {
               fontFamily: "var(--display)",
               fontWeight: 800,
               fontSize: 22,
-              color: "var(--white)",
+              color: "var(--on-dark)",
             }}
           >
             Xplosale
           </span>
-          <p style={{ fontSize: 14, lineHeight: 1.6, color: "rgba(251,250,245,.5)", margin: 0 }}>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--on-dark-faint)", margin: 0 }}>
             The marketplace where everyone is who they say they are — identity-verified buyers, sellers, employers, and professionals.
           </p>
           <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
@@ -97,7 +97,7 @@ export default function Footer() {
                   display: "grid",
                   placeItems: "center",
                   background: "rgba(251,250,245,.08)",
-                  color: "rgba(251,250,245,.7)",
+                  color: "var(--on-dark-soft)",
                 }}
               >
                 <Icon size={16} strokeWidth={1.8} />
@@ -123,10 +123,10 @@ export default function Footer() {
           paddingTop: "clamp(20px, 3vw, 28px)",
         }}
       >
-        <p style={{ fontSize: 12, margin: 0, color: "rgba(251,250,245,.35)" }}>
+        <p style={{ fontSize: 12, margin: 0, color: "var(--on-dark-faint)" }}>
           &copy; {new Date().getFullYear()} Xplosale. All rights reserved.
         </p>
-        <p style={{ fontSize: 12, margin: 0, color: "rgba(251,250,245,.35)" }}>
+        <p style={{ fontSize: 12, margin: 0, color: "var(--on-dark-faint)" }}>
           Made for buyers, sellers &amp; professionals who value trust.
         </p>
       </div>
